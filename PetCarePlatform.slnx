@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="nuget.config" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/aspire/">
+    <Project Path="src/aspire/AppHost/AppHost.csproj" Id="e8a87de2-ab79-42b8-9d36-e864c7950703" />
+    <Project Path="src/aspire/ServiceDefaults/ServiceDefaults.csproj" Id="2f9b1793-d8e1-4135-a944-1f33d10a7767" />
+  </Folder>
+  <Folder Name="/src/services/" />
+</Solution>
