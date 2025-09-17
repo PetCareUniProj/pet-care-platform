@@ -4,6 +4,7 @@
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
     <File Path="nuget.config" />
+    <File Path="Readme.md" />
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/aspire/">
