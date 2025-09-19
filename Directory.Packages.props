@@ -8,12 +8,9 @@
 		<!--Application-->
 		<PackageVersion Include="Mediator.Abstractions" Version="3.0.1" />
 		<PackageVersion Include="Mediator.SourceGenerator" Version="3.0.1" />
-		<PackageVersion Include="Scalar.AspNetCore" Version="2.8.3" />
-		<PackageVersion Include="Scrutor" Version="6.1.0" />
 		<PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
 		<!--API-->
-		<PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
-		<PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+
 		<!--Aspire AppHost-->
 		<PackageVersion Include="Aspire.Hosting.AppHost" Version="9.4.2" />
 		<PackageVersion Include="Aspire.Hosting.Keycloak" Version="9.4.2-preview.1.25428.12" />
@@ -23,6 +20,11 @@
 		<PackageVersion Include="CommunityToolkit.Aspire.Hosting.Java" Version="9.7.2" />
 		<PackageVersion Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.7.2" />
 		<!--Aspire ServiceDefaults-->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+    <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
+    <PackageVersion Include="Aspire.Keycloak.Authentication" Version="9.4.2-preview.1.25428.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
 		<PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.9.0" />
 		<PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.4.2" />
 		<PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />
