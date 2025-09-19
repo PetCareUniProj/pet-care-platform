@@ -12,4 +12,16 @@
     <Project Path="src/aspire/ServiceDefaults/ServiceDefaults.csproj" Id="2f9b1793-d8e1-4135-a944-1f33d10a7767" />
   </Folder>
   <Folder Name="/src/services/" />
+  <Folder Name="/src/services/catalog/">
+    <Project Path="src/services/catalog/Catalog.Api/Catalog.Api.csproj" />
+    <Project Path="src/services/catalog/Catalog.Application/Catalog.Application.csproj" Id="7baec65c-f237-490a-b927-7b9b4b9df5e8" />
+    <Project Path="src/services/catalog/Catalog.Domain/Catalog.Domain.csproj" Id="6ddfc93f-e4af-4ae3-b1be-8a246b8aa23e" />
+    <Project Path="src/services/catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj" Id="e9192aa4-3af6-4507-aa02-6d81555eb727" />
+  </Folder>
+  <Folder Name="/src/shared/">
+    <Project Path="src/shared/SharedKernel/SharedKernel.csproj" Id="3a8213f6-5b12-4569-bfa0-c912f39b1130" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Catalog.Api.Tests.Integrational/Catalog.Api.Tests.Integrational.csproj" Id="8b99bb43-9478-4771-adce-da22ba338efa" />
+  </Folder>
 </Solution>

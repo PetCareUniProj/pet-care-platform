@@ -17,4 +17,8 @@
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\services\catalog\Catalog.Api\Catalog.Api.csproj" />
+  </ItemGroup>
+
 </Project>

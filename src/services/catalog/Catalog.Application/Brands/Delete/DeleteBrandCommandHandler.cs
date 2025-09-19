@@ -1,0 +1,34 @@
+﻿using Catalog.Application.Abstractions.Data;
+using Catalog.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Catalog.Application.Brands.Delete;
+internal sealed class DeleteBrandCommandHandler : ICommandHandler<DeleteBrandCommand, Result>
+{
+    private readonly IApplicationDbContext _dbContext;
+
+    public DeleteBrandCommandHandler(IApplicationDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async ValueTask<Result> Handle(DeleteBrandCommand command, CancellationToken cancellationToken)
+    {
+        var brand = await _dbContext.CatalogBrands.SingleOrDefaultAsync(b => b.Id == command.Id, cancellationToken);
+
+        if (brand == null)
+        {
+            return Result.Failure(CatalogBrandErrors.NotFound(command.Id));
+        }
+
+        var hasItems = await _dbContext.CatalogItems.AnyAsync(i => i.CatalogBrandId == command.Id, cancellationToken);
+        if (hasItems)
+        {
+            return Result.Failure(CatalogBrandErrors.CannotDeleteWithItems(command.Id));
+        }
+
+        _dbContext.CatalogBrands.Remove(brand);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+}

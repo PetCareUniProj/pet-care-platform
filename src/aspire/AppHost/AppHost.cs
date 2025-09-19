@@ -1,3 +1,5 @@
+using Projects;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgres")
@@ -11,4 +13,10 @@ var keycloak = builder.AddKeycloak("keycloak", 8080)
     .WithDataVolume()
     .WithExternalHttpEndpoints()
     .WithLifetime(ContainerLifetime.Persistent);
+
+var _ = builder.AddProject<Catalog_Api>("catalog-api")
+    .WithReference(catalogDb)
+    .WithReference(keycloak)
+    .WaitFor(keycloak);
+
 builder.Build().Run();
