@@ -14,7 +14,7 @@ internal sealed class Get : IEndpoint
     public sealed class GetRequest : PagedRequest
     {
         public string? Name { get; init; }
-        public string? SortBy { get; init; } = "+name";
+        public string? SortBy { get; init; }
     }
 
     public void MapEndpoint(IEndpointRouteBuilder app)
@@ -40,7 +40,7 @@ internal sealed class Get : IEndpoint
         .WithTags(Tags.Brands)
         .WithName(Name)
         .WithSummary("Gets a paged, sorted list of brands")
-        .WithDescription("Retrieves a paged and sorted list of brands. Supports filtering by name and sorting by any field using the 'SortBy' query parameter (prefix with '-' for descending order, '+' or no prefix for ascending). Paging is controlled with 'Page' and 'PageSize' parameters.")
+        .WithDescription("Retrieves a paged and sorted list of brands. Supports filtering by name and sorting by any field using the 'SortBy' query parameter (prefix with '-' for descending order, no prefix for ascending). Paging is controlled with 'Page' and 'PageSize' parameters.")
         .Produces<BrandsResponse>(StatusCodes.Status200OK)
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
