@@ -20,7 +20,7 @@ internal sealed class UpdateBrandCommandHandler : ICommandHandler<UpdateBrandCom
 
         if (brand is null)
         {
-            return Result.Failure<BrandResponse>(CatalogBrandErrors.NotFound(command.Id));
+            return Result.Failure<BrandResponse>(BrandErrors.NotFound(command.Id));
         }
 
         var nameExists = await _dbContext.CatalogBrands
@@ -28,7 +28,7 @@ internal sealed class UpdateBrandCommandHandler : ICommandHandler<UpdateBrandCom
 
         if (nameExists)
         {
-            return Result.Failure<BrandResponse>(CatalogBrandErrors.NameAlreadyExists);
+            return Result.Failure<BrandResponse>(BrandErrors.NameAlreadyExists);
         }
 
         brand.Name = command.NewName;

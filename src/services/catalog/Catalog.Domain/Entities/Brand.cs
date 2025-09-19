@@ -1,13 +1,13 @@
 namespace Catalog.Domain.Entities;
 
-public class CatalogBrand
+public class Brand
 {
     public int Id { get; set; }
     public required string Name { get; set; }
 
     #region Navigation Properties
 
-    public ICollection<CatalogItem> CatalogItems { get; set; } = [];
+    public ICollection<Item> CatalogItems { get; set; } = [];
 
     #endregion
 }

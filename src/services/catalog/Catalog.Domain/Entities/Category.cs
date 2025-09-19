@@ -1,6 +1,6 @@
 namespace Catalog.Domain.Entities;
 
-public class CatalogCategory
+public class Category
 {
     public int Id { get; set; }
 

@@ -18,13 +18,13 @@ internal sealed class DeleteBrandCommandHandler : ICommandHandler<DeleteBrandCom
 
         if (brand == null)
         {
-            return Result.Failure(CatalogBrandErrors.NotFound(command.Id));
+            return Result.Failure(BrandErrors.NotFound(command.Id));
         }
 
         var hasItems = await _dbContext.CatalogItems.AnyAsync(i => i.CatalogBrandId == command.Id, cancellationToken);
         if (hasItems)
         {
-            return Result.Failure(CatalogBrandErrors.CannotDeleteWithItems(command.Id));
+            return Result.Failure(BrandErrors.CannotDeleteWithItems(command.Id));
         }
 
         _dbContext.CatalogBrands.Remove(brand);

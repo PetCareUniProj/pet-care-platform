@@ -59,8 +59,8 @@ public sealed class CreateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         errors!.Count.ShouldBe(1);
 
         var error = errors[0]!;
-        error["code"]!.GetValue<string>().ShouldBe(CatalogBrandErrors.NameIsRequired.Code);
-        error["description"]!.GetValue<string>().ShouldBe(CatalogBrandErrors.NameIsRequired.Description);
+        error["code"]!.GetValue<string>().ShouldBe(BrandErrors.NameIsRequired.Code);
+        error["description"]!.GetValue<string>().ShouldBe(BrandErrors.NameIsRequired.Description);
     }
 
     [Fact]
@@ -79,6 +79,6 @@ public sealed class CreateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         var error = await secondResponse.Content.ReadFromJsonAsync<ProblemDetails>();
         error!.Status.ShouldBe(409);
-        error.Title.ShouldBe(CatalogBrandErrors.NameAlreadyExists.Code);
+        error.Title.ShouldBe(BrandErrors.NameAlreadyExists.Code);
     }
 }

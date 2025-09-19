@@ -1,6 +1,6 @@
 namespace Catalog.Domain.Entities;
 
-public class CatalogItem
+public class Item
 {
     public int Id { get; set; }
 
@@ -14,11 +14,11 @@ public class CatalogItem
 
     public int CatalogCategoryId { get; set; }
 
-    public CatalogCategory? CatalogCategory { get; set; }
+    public Category? CatalogCategory { get; set; }
 
     public int CatalogBrandId { get; set; }
 
-    public CatalogBrand? CatalogBrand { get; set; }
+    public Brand? CatalogBrand { get; set; }
 
     // Quantity in stock
     public int AvailableStock { get; set; }

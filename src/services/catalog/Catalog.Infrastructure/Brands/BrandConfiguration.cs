@@ -2,10 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Catalog.Infrastructure.Catalog.Brands;
-internal sealed class BrandConfiguration : IEntityTypeConfiguration<CatalogBrand>
+namespace Catalog.Infrastructure.Brands;
+internal sealed class BrandConfiguration : IEntityTypeConfiguration<Brand>
 {
-    public void Configure(EntityTypeBuilder<CatalogBrand> builder)
+    public void Configure(EntityTypeBuilder<Brand> builder)
     {
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id)

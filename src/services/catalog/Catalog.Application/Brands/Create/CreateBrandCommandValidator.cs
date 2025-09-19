@@ -10,10 +10,10 @@ internal sealed class CreateBrandCommandValidator : AbstractValidator<CreateBran
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-                .WithErrorCode(CatalogBrandErrors.NameIsRequired.Code)
-                .WithMessage(CatalogBrandErrors.NameIsRequired.Description)
+                .WithErrorCode(BrandErrors.NameIsRequired.Code)
+                .WithMessage(BrandErrors.NameIsRequired.Description)
             .MaximumLength(255)
-                .WithErrorCode(CatalogBrandErrors.NameTooLong.Code)
-                .WithMessage(CatalogBrandErrors.NameTooLong.Description);
+                .WithErrorCode(BrandErrors.NameTooLong.Code)
+                .WithMessage(BrandErrors.NameTooLong.Description);
     }
 }

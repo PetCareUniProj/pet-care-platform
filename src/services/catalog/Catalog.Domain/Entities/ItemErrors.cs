@@ -1,7 +1,7 @@
 ﻿using SharedKernel;
 
 namespace Catalog.Domain.Entities;
-public static class CatalogItemErrors
+public static class ItemErrors
 {
     public static Error NotFound(int catalogItemId) => Error.NotFound(
         "CatalogItems.NotFound",

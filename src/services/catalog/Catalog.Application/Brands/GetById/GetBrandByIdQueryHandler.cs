@@ -23,7 +23,7 @@ internal sealed class GetBrandByIdQueryHandler : IQueryHandler<GetBrandByIdQuery
 
         if (response == null)
         {
-            return Result.Failure<BrandResponse>(CatalogBrandErrors.NotFound(query.Id));
+            return Result.Failure<BrandResponse>(BrandErrors.NotFound(query.Id));
         }
 
         return response;

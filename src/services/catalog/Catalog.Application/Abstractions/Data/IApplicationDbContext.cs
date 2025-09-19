@@ -5,9 +5,9 @@ namespace Catalog.Application.Abstractions.Data;
 
 public interface IApplicationDbContext
 {
-    DbSet<CatalogItem> CatalogItems { get; }
-    DbSet<CatalogBrand> CatalogBrands { get; }
-    DbSet<CatalogCategory> CatalogCategories { get; }
+    DbSet<Item> CatalogItems { get; }
+    DbSet<Brand> CatalogBrands { get; }
+    DbSet<Category> CatalogCategories { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

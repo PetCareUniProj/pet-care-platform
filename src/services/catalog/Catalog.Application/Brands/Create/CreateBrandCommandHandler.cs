@@ -19,10 +19,10 @@ internal sealed class CreateBrandCommandHandler : ICommandHandler<CreateBrandCom
 
         if (exists)
         {
-            return Result.Failure<BrandResponse>(CatalogBrandErrors.NameAlreadyExists);
+            return Result.Failure<BrandResponse>(BrandErrors.NameAlreadyExists);
         }
 
-        var brand = new CatalogBrand { Name = command.Name };
+        var brand = new Brand { Name = command.Name };
         _dbContext.CatalogBrands.Add(brand);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
