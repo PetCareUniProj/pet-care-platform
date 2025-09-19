@@ -1,4 +1,4 @@
-﻿using SharedKernel;
+using SharedKernel;
 
 namespace Catalog.Domain.Entities;
 public static class BrandErrors
@@ -10,14 +10,6 @@ public static class BrandErrors
     public static Error CannotDeleteWithItems(int brandId) => Error.Conflict(
         "CatalogBrands.CannotDeleteWithItems",
         $"The catalog brand with Id = '{brandId}' cannot be deleted because it has associated catalog items.");
-
-    public static readonly Error NameIsRequired = Error.Failure(
-        "CatalogBrands.NameIsRequired",
-        "Brand name is required.");
-
-    public static readonly Error NameTooLong = Error.Failure(
-        "CatalogBrands.NameTooLong",
-        "Brand name must not exceed 255 characters.");
 
     public static readonly Error NameAlreadyExists = Error.Conflict(
         "CatalogBrands.NameAlreadyExists",

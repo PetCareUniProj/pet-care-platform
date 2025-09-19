@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace Catalog.Application.Brands.Delete;
 internal sealed class DeleteBrandCommandValidator : AbstractValidator<DeleteBrandCommand>

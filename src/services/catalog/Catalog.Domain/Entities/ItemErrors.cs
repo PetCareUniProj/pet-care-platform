@@ -1,4 +1,4 @@
-﻿using SharedKernel;
+using SharedKernel;
 
 namespace Catalog.Domain.Entities;
 public static class ItemErrors

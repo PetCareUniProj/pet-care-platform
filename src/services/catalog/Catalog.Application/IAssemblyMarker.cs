@@ -1,2 +1,2 @@
-﻿namespace Catalog.Application;
+namespace Catalog.Application;
 internal interface IAssemblyMarker;

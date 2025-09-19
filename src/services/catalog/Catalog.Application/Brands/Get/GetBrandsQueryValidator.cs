@@ -1,10 +1,10 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace Catalog.Application.Brands.Get;
 internal sealed class GetBrandsQueryValidator : AbstractValidator<GetBrandsQuery>
 {
     private static readonly string[] AcceptableSortFields =
-{
+    {
         "name"
     };
     public GetBrandsQueryValidator()
@@ -20,6 +20,6 @@ internal sealed class GetBrandsQueryValidator : AbstractValidator<GetBrandsQuery
 
         RuleFor(x => x.PageSize)
             .InclusiveBetween(1, 25)
-            .WithMessage("You can get between 1 and 25 movies per page");
+            .WithMessage("You can get between 1 and 25 brands per page");
     }
 }

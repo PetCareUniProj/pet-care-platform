@@ -1,4 +1,4 @@
-﻿using Catalog.Application.Abstractions.Data;
+using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +13,7 @@ internal sealed class GetBrandByIdQueryHandler : IQueryHandler<GetBrandByIdQuery
 
     public async ValueTask<Result<BrandResponse>> Handle(GetBrandByIdQuery query, CancellationToken cancellationToken)
     {
-        var response = await _dbContext.CatalogBrands.Where(x => x.Id == query.Id)
+        var response = await _dbContext.Brands.Where(x => x.Id == query.Id)
             .Select(x => new BrandResponse()
             {
                 Id = x.Id,

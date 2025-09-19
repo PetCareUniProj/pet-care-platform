@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Catalog.Infrastructure.Database;
 public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
 {
-    public DbSet<Item> CatalogItems { get; set; }
+    public DbSet<Item> Items { get; set; }
 
-    public DbSet<Brand> CatalogBrands { get; set; }
+    public DbSet<Brand> Brands { get; set; }
 
-    public DbSet<Category> CatalogCategories { get; set; }
+    public DbSet<Category> Categories { get; set; }
     private readonly IMediator _mediator;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IMediator mediator)

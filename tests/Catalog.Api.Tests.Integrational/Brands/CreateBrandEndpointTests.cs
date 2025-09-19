@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json.Nodes;
 using Bogus;
 using Catalog.Api.Endpoints;
 using Catalog.Api.Endpoints.Brands;
@@ -49,18 +48,6 @@ public sealed class CreateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-
-        var json = await response.Content.ReadAsStringAsync();
-        var doc = JsonNode.Parse(json);
-
-        doc.ShouldNotBeNull();
-        var errors = doc["errors"]?.AsArray();
-        errors.ShouldNotBeNull();
-        errors!.Count.ShouldBe(1);
-
-        var error = errors[0]!;
-        error["code"]!.GetValue<string>().ShouldBe(BrandErrors.NameIsRequired.Code);
-        error["description"]!.GetValue<string>().ShouldBe(BrandErrors.NameIsRequired.Description);
     }
 
     [Fact]

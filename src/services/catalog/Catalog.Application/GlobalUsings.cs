@@ -1,2 +1,2 @@
-﻿global using Mediator;
+global using Mediator;
 global using SharedKernel;

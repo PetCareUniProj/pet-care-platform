@@ -1,4 +1,4 @@
-﻿using Catalog.Application.Abstractions.Data;
+using Catalog.Application.Abstractions.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Brands.Get;
@@ -12,7 +12,7 @@ internal class GetBrandsQueryHandler : IQueryHandler<GetBrandsQuery, Result<Bran
     }
     public async ValueTask<Result<BrandsResponse>> Handle(GetBrandsQuery query, CancellationToken cancellationToken)
     {
-        var brandsQuery = _dbContext.CatalogBrands.AsNoTracking();
+        var brandsQuery = _dbContext.Brands.AsNoTracking();
         if (!string.IsNullOrWhiteSpace(query.Name))
         {
             brandsQuery = brandsQuery.Where(b => b.Name.Contains(query.Name));

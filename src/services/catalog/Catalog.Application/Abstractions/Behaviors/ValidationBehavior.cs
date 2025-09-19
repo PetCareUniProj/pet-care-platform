@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace Catalog.Application.Abstractions.Behaviors;
 
@@ -77,4 +77,3 @@ internal sealed class ValidationBehavior<TMessage, TResponse> : IPipelineBehavio
         return genericMethod.Invoke(null, new object[] { validationError })!;
     }
 }
-

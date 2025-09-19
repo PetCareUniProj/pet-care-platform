@@ -1,2 +1,2 @@
-﻿namespace Catalog.Application.Brands;
+namespace Catalog.Application.Brands;
 public sealed class BrandsResponse : PagedResponse<BrandResponse>;

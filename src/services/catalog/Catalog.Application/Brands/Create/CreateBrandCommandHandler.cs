@@ -1,4 +1,4 @@
-﻿using Catalog.Application.Abstractions.Data;
+using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +14,7 @@ internal sealed class CreateBrandCommandHandler : ICommandHandler<CreateBrandCom
 
     public async ValueTask<Result<BrandResponse>> Handle(CreateBrandCommand command, CancellationToken cancellationToken)
     {
-        var exists = await _dbContext.CatalogBrands
+        var exists = await _dbContext.Brands
             .AnyAsync(b => b.Name == command.Name, cancellationToken);
 
         if (exists)
@@ -23,7 +23,7 @@ internal sealed class CreateBrandCommandHandler : ICommandHandler<CreateBrandCom
         }
 
         var brand = new Brand { Name = command.Name };
-        _dbContext.CatalogBrands.Add(brand);
+        _dbContext.Brands.Add(brand);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         var response = new BrandResponse
