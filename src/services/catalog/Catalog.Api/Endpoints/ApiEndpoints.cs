@@ -22,4 +22,15 @@ public static class ApiEndpoints
         public const string Update = $"{Base}/{{id:int}}";
         public const string Delete = $"{Base}/{{id:int}}";
     }
+
+    public static class Items
+    {
+        private const string Base = $"{ApiBase}/items";
+        public const string GetAll = Base;
+        public const string Get = $"{Base}/{{idOrSlug}}";
+        public const string GetPicture = $"{Base}/{{id:int}}/pic";
+        public const string Create = Base;
+        public const string Update = $"{Base}/{{id:int}}";
+        public const string Delete = $"{Base}/{{id:int}}";
+    }
 }
