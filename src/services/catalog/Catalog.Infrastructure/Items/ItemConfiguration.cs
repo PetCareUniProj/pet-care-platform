@@ -12,19 +12,23 @@ internal sealed class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.Property(t => t.Id)
             .UseIdentityAlwaysColumn();
 
+        builder.Property(x => x.Slug).IsRequired().HasMaxLength(50);
+
         builder.Property(x => x.Name).IsRequired().HasMaxLength(100);
+
+        builder.HasIndex(x => x.Slug).IsUnique();
 
         builder.HasOne(b => b.CatalogBrand)
             .WithMany(i => i.Items)
             .HasForeignKey(x => x.CatalogBrandId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(с => с.Categories)
             .WithMany(i => i.Items)
             .UsingEntity(
                 "catalog_item_categories",
                 l => l.HasOne(typeof(Category)).WithMany().HasForeignKey("category_id").HasPrincipalKey(nameof(Category.Id)).OnDelete(DeleteBehavior.Restrict),
-                r => r.HasOne(typeof(Item)).WithMany().HasForeignKey("item_id").HasPrincipalKey(nameof(Item.Id)).OnDelete(DeleteBehavior.Restrict),
+                r => r.HasOne(typeof(Item)).WithMany().HasForeignKey("item_id").HasPrincipalKey(nameof(Item.Id)).OnDelete(DeleteBehavior.Cascade),
                 j => j.HasKey("item_id", "category_id"));
     }
 }
