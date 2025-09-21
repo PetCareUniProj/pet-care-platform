@@ -12,7 +12,7 @@ namespace Catalog.Api.Tests.Integrational.Brands;
 public sealed class CreateBrandEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
     private readonly HttpClient _client;
-    private readonly Faker<Create.CreateRequest> _brandGenerator = new Faker<Create.CreateRequest>()
+    private readonly Faker<Create.CreateBrandRequest> _brandGenerator = new Faker<Create.CreateBrandRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public CreateBrandEndpointTests(CatalogApiFactory factory) : base(factory)
@@ -34,14 +34,14 @@ public sealed class CreateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         var brand = await response.Content.ReadFromJsonAsync<BrandResponse>();
         brand.ShouldNotBeNull();
         brand!.Name.ShouldBe(request.Name);
-        response.Headers.Location!.ToString().ShouldContain($"/brands/{brand.Id}");
+        response.Headers.Location!.ToString().ShouldContain($"/brand/{brand.Id}");
     }
 
     [Fact]
     public async Task CreateAsync_ShouldReturnBadRequest_WhenNameIsEmpty()
     {
         // Arrange
-        var request = new Create.CreateRequest { Name = string.Empty };
+        var request = new Create.CreateBrandRequest { Name = string.Empty };
 
         // Act
         var response = await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, request);

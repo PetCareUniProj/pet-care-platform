@@ -12,13 +12,7 @@ public class Item
 
     public string? PictureFileName { get; set; }
 
-    public int CatalogCategoryId { get; set; }
-
-    public Category? CatalogCategory { get; set; }
-
     public int CatalogBrandId { get; set; }
-
-    public Brand? CatalogBrand { get; set; }
 
     // Quantity in stock
     public int AvailableStock { get; set; }
@@ -33,4 +27,10 @@ public class Item
     /// True if item is on reorder
     /// </summary>
     public bool OnReorder { get; set; }
+
+    #region Navigation Properties
+    public Brand? CatalogBrand { get; set; }
+
+    public ICollection<Category> Categories { get; set; } = [];
+    #endregion
 }

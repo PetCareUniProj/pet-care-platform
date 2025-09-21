@@ -2,5 +2,5 @@
 
 public static class Tags
 {
-    public static string Brands = nameof(Brands);
+    public const string Brands = nameof(Brands);
 }

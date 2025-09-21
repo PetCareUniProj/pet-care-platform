@@ -10,7 +10,7 @@ namespace Catalog.Api.Tests.Integrational.Brands;
 public sealed class DeleteBrandEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
     private readonly HttpClient _client;
-    private readonly Faker<Create.CreateRequest> _brandGenerator = new Faker<Create.CreateRequest>()
+    private readonly Faker<Create.CreateBrandRequest> _brandGenerator = new Faker<Create.CreateBrandRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public DeleteBrandEndpointTests(CatalogApiFactory factory) : base(factory)
@@ -28,7 +28,7 @@ public sealed class DeleteBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         brand.ShouldNotBeNull();
 
         // Act
-        var response = await _client.DeleteAsync($"api/brands/{brand!.Id}");
+        var response = await _client.DeleteAsync($"api/brand/{brand!.Id}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
@@ -41,7 +41,7 @@ public sealed class DeleteBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         var nonExistentId = 999999; // Using a large number that's unlikely to exist
 
         // Act
-        var response = await _client.DeleteAsync($"api/brands/{nonExistentId}");
+        var response = await _client.DeleteAsync($"api/brand/{nonExistentId}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -57,10 +57,10 @@ public sealed class DeleteBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         brand.ShouldNotBeNull();
 
         // Delete the brand first
-        await _client.DeleteAsync($"api/brands/{brand!.Id}");
+        await _client.DeleteAsync($"api/brand/{brand!.Id}");
 
         // Act - Try to delete it again
-        var response = await _client.DeleteAsync($"api/brands/{brand.Id}");
+        var response = await _client.DeleteAsync($"api/brand/{brand.Id}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);

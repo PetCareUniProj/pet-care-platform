@@ -7,7 +7,7 @@ public class Brand
 
     #region Navigation Properties
 
-    public ICollection<Item> CatalogItems { get; set; } = [];
+    public ICollection<Item> Items { get; set; } = [];
 
     #endregion
 }

@@ -10,7 +10,7 @@ namespace Catalog.Api.Tests.Integrational.Brands;
 public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
     private readonly HttpClient _client;
-    private readonly Faker<Create.CreateRequest> _brandGenerator = new Faker<Create.CreateRequest>()
+    private readonly Faker<Create.CreateBrandRequest> _brandGenerator = new Faker<Create.CreateBrandRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public GetBrandEndpointTests(CatalogApiFactory factory) : base(factory)
@@ -29,7 +29,7 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
         }
 
         // Act
-        var response = await _client.GetAsync("api/brands");
+        var response = await _client.GetAsync("api/brand");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -44,11 +44,11 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
     {
         // Arrange
         var uniqueNamePart = $"TestBrand-{Guid.NewGuid()}";
-        var createRequest = new Create.CreateRequest { Name = uniqueNamePart };
+        var createRequest = new Create.CreateBrandRequest { Name = uniqueNamePart };
         await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
 
         // Act
-        var response = await _client.GetAsync($"api/brands?name={uniqueNamePart}");
+        var response = await _client.GetAsync($"api/brand?name={uniqueNamePart}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -66,12 +66,12 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
         var brandNames = new[] { "A_Brand", "B_Brand", "C_Brand" };
         foreach (var name in brandNames)
         {
-            var createRequest = new Create.CreateRequest { Name = name };
+            var createRequest = new Create.CreateBrandRequest { Name = name };
             await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         }
 
         // Act
-        var response = await _client.GetAsync("api/brands?sortBy=name&name=_Brand");
+        var response = await _client.GetAsync("api/brand?sortBy=name&name=_Brand");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -103,12 +103,12 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
         var brandNames = new[] { "Z_Brand", "Y_Brand", "X_Brand" };
         foreach (var name in brandNames)
         {
-            var createRequest = new Create.CreateRequest { Name = name };
+            var createRequest = new Create.CreateBrandRequest { Name = name };
             await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         }
 
         // Act
-        var response = await _client.GetAsync("api/brands?sortBy=-name&name=_Brand");
+        var response = await _client.GetAsync("api/brand?sortBy=-name&name=_Brand");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -136,13 +136,13 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
         var uniqueNamePart = $"PageTest-{Guid.NewGuid()}";
         for (var i = 0; i < 15; i++)
         {
-            var createRequest = new Create.CreateRequest { Name = $"{uniqueNamePart}-{i}" };
+            var createRequest = new Create.CreateBrandRequest { Name = $"{uniqueNamePart}-{i}" };
             await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         }
 
         // Act - Get first page
-        var firstPageResponse = await _client.GetAsync($"api/brands?name={uniqueNamePart}&page=1&pageSize=5");
-        var secondPageResponse = await _client.GetAsync($"api/brands?name={uniqueNamePart}&page=2&pageSize=5");
+        var firstPageResponse = await _client.GetAsync($"api/brand?name={uniqueNamePart}&page=1&pageSize=5");
+        var secondPageResponse = await _client.GetAsync($"api/brand?name={uniqueNamePart}&page=2&pageSize=5");
 
         // Assert
         firstPageResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -172,7 +172,7 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
         var nonExistentName = $"NonExistentBrand-{Guid.NewGuid()}";
 
         // Act
-        var response = await _client.GetAsync($"api/brands?name={nonExistentName}");
+        var response = await _client.GetAsync($"api/brand?name={nonExistentName}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);

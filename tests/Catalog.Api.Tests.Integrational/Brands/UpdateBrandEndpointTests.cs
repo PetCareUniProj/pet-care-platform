@@ -12,7 +12,7 @@ namespace Catalog.Api.Tests.Integrational.Brands;
 public sealed class UpdateBrandEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
     private readonly HttpClient _client;
-    private readonly Faker<Create.CreateRequest> _createBrandGenerator = new Faker<Create.CreateRequest>()
+    private readonly Faker<Create.CreateBrandRequest> _createBrandGenerator = new Faker<Create.CreateBrandRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
     private readonly Faker<Update.UpdateBrandRequest> _updateBrandGenerator = new Faker<Update.UpdateBrandRequest>()
         .RuleFor(x => x.NewName, faker => faker.Company.CompanyName());
@@ -34,7 +34,7 @@ public sealed class UpdateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         var updateRequest = _updateBrandGenerator.Generate();
 
         // Act
-        var response = await _client.PutAsJsonAsync($"api/brands/{brand!.Id}", updateRequest);
+        var response = await _client.PutAsJsonAsync($"api/brand/{brand!.Id}", updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -56,7 +56,7 @@ public sealed class UpdateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         var updateRequest = new Update.UpdateBrandRequest { NewName = string.Empty };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"api/brands/{brand!.Id}", updateRequest);
+        var response = await _client.PutAsJsonAsync($"api/brand/{brand!.Id}", updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -70,7 +70,7 @@ public sealed class UpdateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         var updateRequest = _updateBrandGenerator.Generate();
 
         // Act
-        var response = await _client.PutAsJsonAsync($"api/brands/{nonExistentId}", updateRequest);
+        var response = await _client.PutAsJsonAsync($"api/brand/{nonExistentId}", updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -96,7 +96,7 @@ public sealed class UpdateBrandEndpointTests : BaseIntegrationTest, IClassFixtur
         var updateRequest = new Update.UpdateBrandRequest { NewName = firstBrand!.Name };
 
         // Act
-        var response = await _client.PutAsJsonAsync($"api/brands/{secondBrand!.Id}", updateRequest);
+        var response = await _client.PutAsJsonAsync($"api/brand/{secondBrand!.Id}", updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);

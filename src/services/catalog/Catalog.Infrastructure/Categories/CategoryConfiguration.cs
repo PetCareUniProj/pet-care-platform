@@ -2,12 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Catalog.Infrastructure.Brands;
-internal sealed class BrandConfiguration : IEntityTypeConfiguration<Brand>
+namespace Catalog.Infrastructure.Categories;
+internal sealed class ItemConfiguration : IEntityTypeConfiguration<Category>
 {
-    public void Configure(EntityTypeBuilder<Brand> builder)
+    public void Configure(EntityTypeBuilder<Category> builder)
     {
-        builder.ToTable("brands");
+        builder.ToTable("categories");
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id)
             .UseIdentityAlwaysColumn();

@@ -10,7 +10,7 @@ namespace Catalog.Api.Tests.Integrational.Brands;
 public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
     private readonly HttpClient _client;
-    private readonly Faker<Create.CreateRequest> _brandGenerator = new Faker<Create.CreateRequest>()
+    private readonly Faker<Create.CreateBrandRequest> _brandGenerator = new Faker<Create.CreateBrandRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public GetBrandByIdEndpointTests(CatalogApiFactory factory) : base(factory)
@@ -28,7 +28,7 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
         createdBrand.ShouldNotBeNull();
 
         // Act
-        var response = await _client.GetAsync($"api/brands/{createdBrand!.Id}");
+        var response = await _client.GetAsync($"api/brand/{createdBrand!.Id}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -45,7 +45,7 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
         var nonExistentId = 999999; // Using a large number that's unlikely to exist
 
         // Act
-        var response = await _client.GetAsync($"api/brands/{nonExistentId}");
+        var response = await _client.GetAsync($"api/brand/{nonExistentId}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -61,10 +61,10 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
         createdBrand.ShouldNotBeNull();
 
         // Delete the brand
-        await _client.DeleteAsync($"api/brands/{createdBrand!.Id}");
+        await _client.DeleteAsync($"api/brand/{createdBrand!.Id}");
 
         // Act
-        var response = await _client.GetAsync($"api/brands/{createdBrand.Id}");
+        var response = await _client.GetAsync($"api/brand/{createdBrand.Id}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -77,7 +77,7 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
         var invalidId = "invalid";
 
         // Act
-        var response = await _client.GetAsync($"api/brands/{invalidId}");
+        var response = await _client.GetAsync($"api/brand/{invalidId}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);

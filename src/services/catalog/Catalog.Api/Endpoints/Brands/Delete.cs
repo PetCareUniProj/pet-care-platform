@@ -9,11 +9,6 @@ namespace Catalog.Api.Endpoints.Brands;
 internal sealed class Delete : IEndpoint
 {
     public const string Name = "DeleteBrand";
-    public sealed class DeleteRequest
-    {
-        public required int Id { get; init; }
-    }
-
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiEndpoints.Brands.Delete, async (

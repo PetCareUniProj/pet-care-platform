@@ -29,11 +29,4 @@
 	  <ProjectReference Include="..\Catalog.Domain\Catalog.Domain.csproj" />
 	</ItemGroup>
 
-
-	<ItemGroup>
-	  <Folder Include="Category\Get\" />
-	  <Folder Include="Category\GetById\" />
-	  <Folder Include="Category\Update\" />
-	</ItemGroup>
-
 </Project>

@@ -11,7 +11,7 @@ namespace Catalog.Api.Endpoints.Brands;
 internal sealed class Get : IEndpoint
 {
     public const string Name = "GetBrands";
-    public sealed class GetRequest : PagedRequest
+    public sealed class GetBrandRequest : PagedRequest
     {
         public string? Name { get; init; }
         public string? SortBy { get; init; }
@@ -20,7 +20,7 @@ internal sealed class Get : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiEndpoints.Brands.GetAll, async (
-            [AsParameters] GetRequest request,
+            [AsParameters] GetBrandRequest request,
             IMediator mediator,
             CancellationToken cancellationToken) =>
         {
