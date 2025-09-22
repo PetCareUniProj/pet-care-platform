@@ -1,6 +1,7 @@
 using System.Reflection;
 using Asp.Versioning;
 using Catalog.Api;
+using Catalog.Api.Auth;
 using Catalog.Api.Endpoints;
 using Catalog.Api.Extensions;
 using Catalog.Application;
@@ -11,6 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.AddDefaultAuthentication();
+
+builder.Services.AddAuthorization(x =>
+{
+    x.AddPolicy(AuthConstants.AdminUserPolicyName, p => p.RequireRole(AuthConstants.AdminUserRoleName));
+});
 
 builder.Services.AddApiVersioning(x =>
 {

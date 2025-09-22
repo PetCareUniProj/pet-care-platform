@@ -9,19 +9,19 @@ public static partial class Extensions
     {
         services.AddSwaggerGen(options =>
         {
-            var keycloakSection = configuration.GetSection("Keycloak");
+            var identitySection = configuration.GetSection("Identity");
 
-            if (keycloakSection.Exists())
+            if (identitySection.Exists())
             {
-                var authority = keycloakSection.GetRequiredValue("Authority");
-                var realm = keycloakSection.GetRequiredValue("Realm");
-
-                var scopes = keycloakSection.Exists()
-                  ? keycloakSection.GetRequiredSection("Scopes").GetChildren().ToDictionary(p => p.Key, p => p.Value)
+                var serviceName = identitySection.GetRequiredValue("ServiceName");
+                var realm = identitySection.GetRequiredValue("Realm");
+                var authority = identitySection.GetAuthorityUri(realm);
+                var scopes = identitySection.Exists()
+                  ? identitySection.GetRequiredSection("Scopes").GetChildren().ToDictionary(p => p.Key, p => p.Value)
                   : new Dictionary<string, string?>();
 
-                var authorizationUrl = $"{authority}/realms/{realm}/protocol/openid-connect/auth";
-                var tokenUrl = $"{authority}/realms/{realm}/protocol/openid-connect/token";
+                var authorizationUrl = $"{authority}/protocol/openid-connect/auth";
+                var tokenUrl = $"{authority}/protocol/openid-connect/token";
 
                 options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 {
@@ -57,5 +57,13 @@ public static partial class Extensions
         });
 
         return services;
+    }
+    private static string GetAuthorityUri(
+    this IConfiguration configuration,
+    string realm)
+    {
+        var serviceUrl = configuration.GetRequiredValue("Url");
+
+        return $"{serviceUrl}/realms/{realm}";
     }
 }

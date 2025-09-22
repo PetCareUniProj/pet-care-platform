@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -10,28 +12,61 @@ public static class AuthenticationExtensions
         var services = builder.Services;
         var configuration = builder.Configuration;
 
-        var keycloakSection = configuration.GetSection("Keycloak");
-
-        if (!keycloakSection.Exists())
+        var identitySection = configuration.GetSection("Identity");
+        var clientId = identitySection.GetRequiredValue("ClientId");
+        if (!identitySection.Exists())
         {
             return services;
         }
 
-        services.AddAuthentication()
+        services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddKeycloakJwtBearer(
-                serviceName: keycloakSection.GetRequiredValue("ServiceName"),
-                realm: keycloakSection.GetRequiredValue("Realm"),
+                serviceName: identitySection.GetRequiredValue("ServiceName"),
+                realm: identitySection.GetRequiredValue("Realm"),
                 options =>
                 {
-                    options.Audience = keycloakSection.GetRequiredValue("Audience");
 
                     if (builder.Environment.IsDevelopment())
                     {
+                        options.TokenValidationParameters.ValidAudiences = new[] { "account", clientId };
                         options.RequireHttpsMetadata = false;
                     }
-                });
+                    else
+                    {
+                        options.Audience = identitySection.GetRequiredValue("ClientId");
 
-        services.AddAuthorization();
+                    }
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnTokenValidated = context =>
+                        {
+                            var claimsIdentity = context.Principal!.Identity as ClaimsIdentity;
+                            var resourceAccess = context.Principal.FindFirst("resource_access")?.Value;
+                            if (resourceAccess != null)
+                            {
+                                var obj = System.Text.Json.JsonDocument.Parse(resourceAccess);
+                                if (obj.RootElement.TryGetProperty(clientId, out var catalogApi))
+                                {
+                                    if (catalogApi.TryGetProperty("roles", out var roles))
+                                    {
+                                        foreach (var role in roles.EnumerateArray())
+                                        {
+                                            claimsIdentity!.AddClaim(new Claim(ClaimsIdentity.DefaultRoleClaimType, role.GetString()!));
+                                        }
+                                    }
+                                }
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
 
         return services;
     }
