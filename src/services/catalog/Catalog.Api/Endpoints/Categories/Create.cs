@@ -1,4 +1,5 @@
-﻿using Catalog.Api.Extensions;
+﻿using Catalog.Api.Auth;
+using Catalog.Api.Extensions;
 using Catalog.Api.Infrastructure;
 using Catalog.Application.Categories;
 using Catalog.Application.Categories.Create;
@@ -33,6 +34,7 @@ internal sealed class Create : IEndpoint
         .WithDescription("Creates a new category with the specified name.")
         .Produces<CategoryResponse>(StatusCodes.Status201Created)
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
+        .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+        .RequireAuthorization(AuthConstants.AdminUserPolicyName);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Catalog.Api.Extensions;
+﻿using Catalog.Api.Auth;
+using Catalog.Api.Extensions;
 using Catalog.Api.Infrastructure;
 using Catalog.Application.Categories;
 using Catalog.Application.Categories.Update;
@@ -38,6 +39,7 @@ internal sealed class Update : IEndpoint
         .Produces<CategoryResponse>(StatusCodes.Status200OK)
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
         .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
-        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
+        .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+        .RequireAuthorization(AuthConstants.AdminUserPolicyName);
     }
 }

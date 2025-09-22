@@ -42,6 +42,7 @@ internal sealed class Get : IEndpoint
         .WithSummary("Gets a paged, sorted list of brands")
         .WithDescription("Retrieves a paged and sorted list of brands. Supports filtering by name and sorting by any field using the 'SortBy' query parameter (prefix with '-' for descending order, no prefix for ascending). Paging is controlled with 'Page' and 'PageSize' parameters.")
         .Produces<BrandsResponse>(StatusCodes.Status200OK)
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+        .AllowAnonymous();
     }
 }

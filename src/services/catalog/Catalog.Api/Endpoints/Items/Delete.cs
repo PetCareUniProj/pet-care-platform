@@ -1,4 +1,5 @@
 ﻿
+using Catalog.Api.Auth;
 using Catalog.Api.Extensions;
 using Catalog.Api.Infrastructure;
 using Catalog.Application.Items.Delete;
@@ -26,6 +27,7 @@ internal sealed class Delete : IEndpoint
         .WithDescription("Deletes an item by its identifier.")
         .Produces(StatusCodes.Status204NoContent)
         .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+        .RequireAuthorization(AuthConstants.AdminUserPolicyName);
     }
 }

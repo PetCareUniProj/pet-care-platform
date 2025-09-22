@@ -1,4 +1,5 @@
 ﻿
+using Catalog.Api.Auth;
 using Catalog.Api.Extensions;
 using Catalog.Api.Infrastructure;
 using Catalog.Application.Items;
@@ -57,6 +58,7 @@ internal sealed class Create : IEndpoint
         .WithDescription("Creates a new item with the specified details.")
         .Produces<ItemResponse>(StatusCodes.Status201Created)
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
+        .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+        .RequireAuthorization(AuthConstants.AdminUserPolicyName);
     }
 }

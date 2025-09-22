@@ -29,6 +29,7 @@ internal sealed class GetByIdOrSlug : IEndpoint
         .WithDescription("Retrieves a single item by its unique identifier or slug.")
         .Produces<ItemResponse>(StatusCodes.Status200OK)
         .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+        .AllowAnonymous();
     }
 }

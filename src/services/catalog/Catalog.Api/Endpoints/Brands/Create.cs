@@ -1,4 +1,5 @@
-﻿using Catalog.Api.Extensions;
+﻿using Catalog.Api.Auth;
+using Catalog.Api.Extensions;
 using Catalog.Api.Infrastructure;
 using Catalog.Application.Brands;
 using Catalog.Application.Brands.Create;
@@ -33,7 +34,8 @@ internal sealed class Create : IEndpoint
         .WithDescription("Creates a new brand with the specified name.")
         .Produces<BrandResponse>(StatusCodes.Status201Created)
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
+        .Produces<ProblemDetails>(StatusCodes.Status409Conflict)
+        .RequireAuthorization(AuthConstants.AdminUserPolicyName);
 
     }
 }

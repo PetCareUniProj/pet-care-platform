@@ -19,6 +19,8 @@
     <Project Path="src/services/catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj" Id="e9192aa4-3af6-4507-aa02-6d81555eb727" />
   </Folder>
   <Folder Name="/src/shared/">
+    <Project Path="src/shared/EventBus/EventBus.csproj" Id="b3dd9b64-95bc-4bb1-8e96-2b3ba649edd5" />
+    <Project Path="src/shared/EventBusRabbitMQ/EventBusRabbitMQ.csproj" Id="aad291ec-2d32-4651-8603-8811c0f7085f" />
     <Project Path="src/shared/SharedKernel/SharedKernel.csproj" Id="3a8213f6-5b12-4569-bfa0-c912f39b1130" />
   </Folder>
   <Folder Name="/tests/">

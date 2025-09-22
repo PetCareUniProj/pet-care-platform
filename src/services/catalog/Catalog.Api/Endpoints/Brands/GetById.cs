@@ -28,6 +28,7 @@ internal sealed class GetById : IEndpoint
         .WithDescription("Retrieves a single brand by its unique identifier.")
         .Produces<BrandResponse>(StatusCodes.Status200OK)
         .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+        .AllowAnonymous();
     }
 }
