@@ -11,7 +11,7 @@ namespace Catalog.Api.Endpoints.Brands;
 internal sealed class Create : IEndpoint
 {
     public const string Name = "CreateBrand";
-    public sealed class CreateBrandRequest
+    public sealed record CreateBrandRequest
     {
         public required string Name { get; init; }
     }

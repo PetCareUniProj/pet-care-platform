@@ -10,7 +10,7 @@ namespace Catalog.Api.Endpoints.Brands;
 internal sealed class Update : IEndpoint
 {
     public const string Name = "UpdateBrand";
-    public sealed class UpdateBrandRequest
+    public sealed record UpdateBrandRequest
     {
         public required string NewName { get; init; }
     }

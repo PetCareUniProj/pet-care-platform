@@ -10,7 +10,7 @@ namespace Catalog.Api.Endpoints.Categories;
 internal sealed class Update : IEndpoint
 {
     public const string Name = "UpdateCategory";
-    public sealed class UpdateCategoryRequest
+    public sealed record UpdateCategoryRequest
     {
         public required string NewName { get; init; }
     }

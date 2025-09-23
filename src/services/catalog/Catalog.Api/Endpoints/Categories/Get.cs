@@ -11,7 +11,7 @@ namespace Catalog.Api.Endpoints.Categories;
 internal sealed class Get : IEndpoint
 {
     public const string Name = "GetCategories";
-    public sealed class GetCategoriesRequest : PagedRequest
+    public sealed record GetCategoriesRequest : PagedRequest
     {
         public string? Name { get; init; }
         public string? SortBy { get; init; }

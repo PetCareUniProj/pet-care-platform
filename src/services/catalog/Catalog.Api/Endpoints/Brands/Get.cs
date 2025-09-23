@@ -11,7 +11,7 @@ namespace Catalog.Api.Endpoints.Brands;
 internal sealed class Get : IEndpoint
 {
     public const string Name = "GetBrands";
-    public sealed class GetBrandRequest : PagedRequest
+    public sealed record GetBrandRequest : PagedRequest
     {
         public string? Name { get; init; }
         public string? SortBy { get; init; }

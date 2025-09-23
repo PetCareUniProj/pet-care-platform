@@ -11,7 +11,7 @@ namespace Catalog.Api.Endpoints.Categories;
 internal sealed class Create : IEndpoint
 {
     public const string Name = "CreateCategory";
-    public sealed class CreateCategoryRequest
+    public sealed record CreateCategoryRequest
     {
         public required string Name { get; init; }
     }

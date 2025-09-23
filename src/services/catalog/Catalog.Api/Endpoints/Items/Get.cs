@@ -10,7 +10,7 @@ namespace Catalog.Api.Endpoints.Items;
 internal sealed class Get : IEndpoint
 {
     public const string Name = "GetItems";
-    public sealed class GetItemsRequest : PagedRequest
+    public sealed record GetItemsRequest : PagedRequest
     {
         public string? Name { get; init; }
         public int? BrandId { get; init; }
