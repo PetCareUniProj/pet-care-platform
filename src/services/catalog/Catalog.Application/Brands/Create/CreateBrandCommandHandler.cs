@@ -1,0 +1,38 @@
+using Catalog.Application.Abstractions.Data;
+using Catalog.Domain.Entities;
+using Catalog.Domain.Errors;
+using Microsoft.EntityFrameworkCore;
+
+namespace Catalog.Application.Brands.Create;
+internal sealed class CreateBrandCommandHandler : ICommandHandler<CreateBrandCommand, Result<BrandResponse>>
+{
+    private readonly IApplicationDbContext _dbContext;
+
+    public CreateBrandCommandHandler(IApplicationDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async ValueTask<Result<BrandResponse>> Handle(CreateBrandCommand command, CancellationToken cancellationToken)
+    {
+        var exists = await _dbContext.Brands
+            .AnyAsync(b => b.Name == command.Name, cancellationToken);
+
+        if (exists)
+        {
+            return Result.Failure<BrandResponse>(BrandErrors.NameAlreadyExists);
+        }
+
+        var brand = new Brand { Name = command.Name };
+        _dbContext.Brands.Add(brand);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var response = new BrandResponse
+        {
+            Id = brand.Id,
+            Name = brand.Name
+        };
+
+        return response;
+    }
+}

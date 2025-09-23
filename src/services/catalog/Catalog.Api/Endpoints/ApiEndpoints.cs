@@ -1,0 +1,36 @@
+﻿namespace Catalog.Api.Endpoints;
+
+public static class ApiEndpoints
+{
+    private const string ApiBase = $"api";
+    public static class Brands
+    {
+        private const string Base = $"{ApiBase}/brand";
+        public const string Create = Base;
+        public const string Get = $"{Base}/{{id:int}}";
+        public const string GetAll = Base;
+        public const string Update = $"{Base}/{{id:int}}";
+        public const string Delete = $"{Base}/{{id:int}}";
+    }
+
+    public static class Categories
+    {
+        private const string Base = $"{ApiBase}/category";
+        public const string Create = Base;
+        public const string Get = $"{Base}/{{id:int}}";
+        public const string GetAll = Base;
+        public const string Update = $"{Base}/{{id:int}}";
+        public const string Delete = $"{Base}/{{id:int}}";
+    }
+
+    public static class Items
+    {
+        private const string Base = $"{ApiBase}/items";
+        public const string GetAll = Base;
+        public const string Get = $"{Base}/{{idOrSlug}}";
+        public const string GetPicture = $"{Base}/{{id:int}}/pic";
+        public const string Create = Base;
+        public const string Update = $"{Base}/{{id:int}}";
+        public const string Delete = $"{Base}/{{id:int}}";
+    }
+}
