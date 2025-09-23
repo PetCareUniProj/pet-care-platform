@@ -1,7 +1,7 @@
 ﻿namespace SharedKernel;
-public class PagedResponse<TResponse>
+public record PagedResponse<TResponse>
 {
-    public required IEnumerable<TResponse> Items { get; init; } = Enumerable.Empty<TResponse>();
+    public required IEnumerable<TResponse> Items { get; init; } = [];
 
     public required int PageSize { get; init; }
 

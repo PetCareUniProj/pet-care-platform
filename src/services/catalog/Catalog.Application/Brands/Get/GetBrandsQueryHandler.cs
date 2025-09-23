@@ -2,7 +2,7 @@ using Catalog.Application.Abstractions.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Brands.Get;
-internal class GetBrandsQueryHandler : IQueryHandler<GetBrandsQuery, Result<BrandsResponse>>
+internal sealed class GetBrandsQueryHandler : IQueryHandler<GetBrandsQuery, Result<BrandsResponse>>
 {
     private readonly IApplicationDbContext _dbContext;
 

@@ -1,15 +1,15 @@
-﻿using Catalog.Application.Abstractions.Data;
+﻿using System.Linq.Expressions;
+using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Entities;
+using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Items.GetByIdOrSlug;
 
-internal sealed class GetItemByIdOrSlugQueryHandler : IQueryHandler<GetItemByIdOrSlugQuery, Result<ItemResponse>>
+internal sealed class GetItemByIdOrSlugQueryHandler(IApplicationDbContext dbContext)
+    : IQueryHandler<GetItemByIdOrSlugQuery, Result<ItemResponse>>
 {
-    private readonly IApplicationDbContext _dbContext;
-
-    public GetItemByIdOrSlugQueryHandler(IApplicationDbContext dbContext)
-        => _dbContext = dbContext;
+    private readonly IApplicationDbContext _dbContext = dbContext;
 
     public async ValueTask<Result<ItemResponse>> Handle(GetItemByIdOrSlugQuery query, CancellationToken cancellationToken)
     {
@@ -17,64 +17,40 @@ internal sealed class GetItemByIdOrSlugQueryHandler : IQueryHandler<GetItemByIdO
         {
             return Result.Failure<ItemResponse>(Error.NullValue);
         }
-        //TODO: optimize query(refac)
-        // Try to parse as int (Id)
-        if (int.TryParse(query.IdOrSlug, out var itemId))
+
+        Expression<Func<Item, ItemResponse>> itemProjection = item => new ItemResponse
         {
-            var itemById = await _dbContext.Items
-                .Where(x => x.Id == itemId)
-                .Select(x => new ItemResponse
-                {
-                    Id = x.Id,
-                    Slug = x.Slug,
-                    Name = x.Name,
-                    Description = x.Description,
-                    Price = x.Price,
-                    PictureFileName = x.PictureFileName,
-                    CatalogBrandId = x.CatalogBrandId,
-                    AvailableStock = x.AvailableStock,
-                    RestockThreshold = x.RestockThreshold,
-                    MaxStockThreshold = x.MaxStockThreshold,
-                    OnReorder = x.OnReorder,
-                    CategoryIds = x.Categories.Select(c => c.Id)
-                })
-                .SingleOrDefaultAsync(cancellationToken);
+            Id = item.Id,
+            Slug = item.Slug,
+            Name = item.Name,
+            Description = item.Description,
+            Price = item.Price,
+            PictureFileName = item.PictureFileName,
+            CatalogBrandId = item.CatalogBrandId,
+            AvailableStock = item.AvailableStock,
+            RestockThreshold = item.RestockThreshold,
+            MaxStockThreshold = item.MaxStockThreshold,
+            OnReorder = item.OnReorder,
+            CategoryIds = item.Categories.Select(c => c.Id)
+        };
 
-            if (itemById is null)
-            {
-                return Result.Failure<ItemResponse>(ItemErrors.NotFound(itemId));
-            }
+        var isNumeric = int.TryParse(query.IdOrSlug, out var itemId);
 
-            return Result.Success(itemById);
-        }
-        else
+        var queryable = _dbContext.Items.AsQueryable().AsNoTracking();
+
+        queryable = isNumeric ? queryable.Where(x => x.Id == itemId) : queryable.Where(x => x.Slug == query.IdOrSlug);
+
+        var item = await queryable
+            .Select(itemProjection)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (item is null)
         {
-            // Otherwise, treat as slug
-            var itemBySlug = await _dbContext.Items
-                .Where(x => x.Slug == query.IdOrSlug)
-                .Select(x => new ItemResponse
-                {
-                    Id = x.Id,
-                    Slug = x.Slug,
-                    Name = x.Name,
-                    Description = x.Description,
-                    Price = x.Price,
-                    PictureFileName = x.PictureFileName,
-                    CatalogBrandId = x.CatalogBrandId,
-                    AvailableStock = x.AvailableStock,
-                    RestockThreshold = x.RestockThreshold,
-                    MaxStockThreshold = x.MaxStockThreshold,
-                    OnReorder = x.OnReorder,
-                    CategoryIds = x.Categories.Select(c => c.Id)
-                })
-                .SingleOrDefaultAsync(cancellationToken);
-
-            if (itemBySlug is null)
-            {
-                return Result.Failure<ItemResponse>(ItemErrors.NotFoundBySlug(query.IdOrSlug));
-            }
-
-            return Result.Success(itemBySlug);
+            return isNumeric
+                ? Result.Failure<ItemResponse>(ItemErrors.NotFound(itemId))
+                : Result.Failure<ItemResponse>(ItemErrors.NotFoundBySlug(query.IdOrSlug));
         }
+
+        return Result.Success(item);
     }
 }

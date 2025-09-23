@@ -1,5 +1,5 @@
 ﻿namespace Catalog.Application.Items;
-public class ItemResponse
+public record ItemResponse
 {
     public int Id { get; init; }
     public required string Slug { get; init; }

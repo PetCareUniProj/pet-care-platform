@@ -9,7 +9,7 @@ internal sealed class GetCategoriesQueryValidator : AbstractValidator<GetCategor
     };
     public GetCategoriesQueryValidator()
     {
-        RuleFor(x => x.Name).MaximumLength(255);
+        RuleFor(x => x.Name).MaximumLength(100);
 
         RuleFor(x => x.SortField)
             .Must(x => x is null || AcceptableSortFields.Contains(x, StringComparer.OrdinalIgnoreCase))

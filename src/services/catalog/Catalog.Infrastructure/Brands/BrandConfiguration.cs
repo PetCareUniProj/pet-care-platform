@@ -12,7 +12,7 @@ internal sealed class BrandConfiguration : IEntityTypeConfiguration<Brand>
         builder.Property(t => t.Id)
             .UseIdentityAlwaysColumn();
 
-        builder.Property(x => x.Name).IsRequired().HasMaxLength(255);
+        builder.Property(x => x.Name).IsRequired().HasMaxLength(100);
         builder.HasIndex(x => x.Name).IsUnique();
     }
 }

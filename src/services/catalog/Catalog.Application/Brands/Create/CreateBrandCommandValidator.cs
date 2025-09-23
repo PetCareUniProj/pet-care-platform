@@ -7,6 +7,6 @@ internal sealed class CreateBrandCommandValidator : AbstractValidator<CreateBran
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-            .MaximumLength(255);
+            .MaximumLength(100);
     }
 }

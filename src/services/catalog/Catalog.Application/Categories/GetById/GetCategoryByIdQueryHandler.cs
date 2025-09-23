@@ -1,5 +1,5 @@
 using Catalog.Application.Abstractions.Data;
-using Catalog.Domain.Entities;
+using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Categories.GetById;
@@ -19,6 +19,7 @@ internal sealed class GetCategoryByIdQueryHandler : IQueryHandler<GetCategoryByI
                 Id = x.Id,
                 Name = x.Name
             })
+            .AsNoTracking()
             .SingleOrDefaultAsync(cancellationToken);
 
         if (response == null)

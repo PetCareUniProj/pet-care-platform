@@ -1,5 +1,6 @@
 ﻿using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Entities;
+using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Items.Create;

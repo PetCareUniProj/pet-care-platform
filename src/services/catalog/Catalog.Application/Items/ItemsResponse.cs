@@ -1,2 +1,2 @@
 ﻿namespace Catalog.Application.Items;
-public class ItemsResponse : PagedResponse<ItemResponse>;
+public record ItemsResponse : PagedResponse<ItemResponse>;

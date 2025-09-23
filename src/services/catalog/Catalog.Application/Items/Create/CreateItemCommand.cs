@@ -1,5 +1,5 @@
 ﻿namespace Catalog.Application.Items.Create;
-public sealed class CreateItemCommand : ICommand<Result<ItemResponse>>
+public sealed record CreateItemCommand : ICommand<Result<ItemResponse>>
 {
     public required string Slug { get; init; }
 

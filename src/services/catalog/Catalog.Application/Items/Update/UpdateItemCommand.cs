@@ -1,5 +1,5 @@
 ﻿namespace Catalog.Application.Items.Update;
-public sealed class UpdateItemCommand : ICommand<Result<ItemResponse>>
+public sealed record UpdateItemCommand : ICommand<Result<ItemResponse>>
 {
     public required int Id { get; init; }
 

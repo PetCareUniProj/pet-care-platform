@@ -1,6 +1,6 @@
 using SharedKernel;
 
-namespace Catalog.Domain.Entities;
+namespace Catalog.Domain.Errors;
 public static class CategoryErrors
 {
     public static Error NotFound(int categoryId) => Error.NotFound(

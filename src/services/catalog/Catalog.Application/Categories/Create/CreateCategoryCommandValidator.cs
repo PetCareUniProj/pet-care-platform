@@ -8,6 +8,6 @@ internal sealed class CreateCategoryCommandValidator : AbstractValidator<CreateC
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-            .MaximumLength(255);
+            .MaximumLength(100);
     }
 }
