@@ -11,17 +11,17 @@ namespace Catalog.Api.Tests.Integrational.Items;
 
 public sealed class DeleteItemEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly Faker<Create.CreateItemRequest> _itemGenerator;
     private readonly int _brandId;
     private readonly int _categoryId;
 
     public DeleteItemEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
+        // Create an authenticated client for seeding data
+        var adminClient = CreateAuthenticatedClientAsync("admin").GetAwaiter().GetResult();
 
         // Seed a brand
-        var brandResponse = _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
+        var brandResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
         {
             Name = "Test Brand " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -30,7 +30,7 @@ public sealed class DeleteItemEndpointTests : BaseIntegrationTest, IClassFixture
         _brandId = brand!.Id;
 
         // Seed a category
-        var categoryResponse = _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
+        var categoryResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
         {
             Name = "Test Category " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -55,8 +55,10 @@ public sealed class DeleteItemEndpointTests : BaseIntegrationTest, IClassFixture
 
     private async Task<int> CreateItemAsync()
     {
+        // Use admin client to create an item
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate();
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await adminClient.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
         response.EnsureSuccessStatusCode();
         var item = await response.Content.ReadFromJsonAsync<ItemResponse>();
         return item!.Id;
@@ -66,10 +68,11 @@ public sealed class DeleteItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task DeleteAsync_ShouldReturnNoContent_WhenItemExists()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
 
         // Act
-        var response = await _client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
+        var response = await client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
@@ -79,10 +82,11 @@ public sealed class DeleteItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task DeleteAsync_ShouldReturnNotFound_WhenItemDoesNotExist()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var nonExistentId = 999999;
 
         // Act
-        var response = await _client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", nonExistentId.ToString()));
+        var response = await client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", nonExistentId.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -92,16 +96,45 @@ public sealed class DeleteItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task DeleteAsync_ShouldReturnNotFound_WhenItemIsAlreadyDeleted()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
 
         // Delete the item first
-        var firstDelete = await _client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
+        var firstDelete = await client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
         firstDelete.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         // Act - Try to delete it again
-        var response = await _client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
+        var response = await client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldReturnUnauthorized_WhenUserIsNotAuthenticated()
+    {
+        // Arrange
+        var client = CreateClient();
+        var itemId = await CreateItemAsync();
+
+        // Act
+        var response = await client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldReturnForbidden_WhenUserIsTestUser()
+    {
+        // Arrange
+        var client = await CreateAuthenticatedClientAsync("test");
+        var itemId = await CreateItemAsync();
+
+        // Act
+        var response = await client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", itemId.ToString()));
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

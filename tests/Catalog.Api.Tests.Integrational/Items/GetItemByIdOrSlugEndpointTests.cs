@@ -11,17 +11,17 @@ namespace Catalog.Api.Tests.Integrational.Items;
 
 public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly int _brandId;
     private readonly int _categoryId;
     private readonly Faker<Create.CreateItemRequest> _itemGenerator;
 
     public GetItemByIdOrSlugEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
+        // Create an authenticated client for seeding data
+        var adminClient = CreateAuthenticatedClientAsync("admin").GetAwaiter().GetResult();
 
         // Seed a brand
-        var brandResponse = _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
+        var brandResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
         {
             Name = "Test Brand " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -30,7 +30,7 @@ public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClass
         _brandId = brand!.Id;
 
         // Seed a category
-        var categoryResponse = _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
+        var categoryResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
         {
             Name = "Test Category " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -55,8 +55,10 @@ public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClass
 
     private async Task<ItemResponse> CreateItemAsync()
     {
+        // Use admin client to create an item
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate();
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await adminClient.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
         response.EnsureSuccessStatusCode();
         var item = await response.Content.ReadFromJsonAsync<ItemResponse>();
         return item!;
@@ -66,10 +68,11 @@ public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClass
     public async Task GetByIdOrSlugAsync_ShouldReturnOk_WhenItemExists_ById()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var createdItem = await CreateItemAsync();
 
         // Act
-        var response = await _client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Id.ToString()));
+        var response = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Id.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -83,10 +86,11 @@ public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClass
     public async Task GetByIdOrSlugAsync_ShouldReturnOk_WhenItemExists_BySlug()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var createdItem = await CreateItemAsync();
 
         // Act
-        var response = await _client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Slug));
+        var response = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Slug));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -100,10 +104,11 @@ public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClass
     public async Task GetByIdOrSlugAsync_ShouldReturnNotFound_WhenItemDoesNotExist_ById()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var nonExistentId = 999999;
 
         // Act
-        var response = await _client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", nonExistentId.ToString()));
+        var response = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", nonExistentId.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -113,10 +118,11 @@ public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClass
     public async Task GetByIdOrSlugAsync_ShouldReturnNotFound_WhenItemDoesNotExist_BySlug()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var nonExistentSlug = "non-existent-slug-12345";
 
         // Act
-        var response = await _client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", nonExistentSlug));
+        var response = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", nonExistentSlug));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -126,16 +132,48 @@ public sealed class GetItemByIdOrSlugEndpointTests : BaseIntegrationTest, IClass
     public async Task GetByIdOrSlugAsync_ShouldReturnNotFound_WhenItemIsDeleted()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var createdItem = await CreateItemAsync();
-        var deleteResponse = await _client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", createdItem.Id.ToString()));
+        var deleteResponse = await client.DeleteAsync(ApiEndpoints.Items.Delete.Replace("{id:int}", createdItem.Id.ToString()));
         deleteResponse.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         // Act
-        var responseById = await _client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Id.ToString()));
-        var responseBySlug = await _client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Slug));
+        var responseById = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Id.ToString()));
+        var responseBySlug = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Slug));
 
         // Assert
         responseById.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         responseBySlug.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetByIdOrSlugAsync_ShouldReturnOk_WhenUserIsNotAuthenticated()
+    {
+        // Arrange
+        var client = CreateClient();
+        var createdItem = await CreateItemAsync();
+
+        // Act
+        var response = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Id.ToString()));
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetByIdOrSlugAsync_ShouldReturnOk_WhenUserIsTestUser()
+    {
+        // Arrange
+        var client = await CreateAuthenticatedClientAsync("test");
+        var createdItem = await CreateItemAsync();
+
+        // Act
+        var response = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", createdItem.Id.ToString()));
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var retrievedItem = await response.Content.ReadFromJsonAsync<ItemResponse>();
+        retrievedItem.ShouldNotBeNull();
+        retrievedItem!.Id.ShouldBe(createdItem.Id);
     }
 }

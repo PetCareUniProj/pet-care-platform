@@ -18,7 +18,7 @@ public sealed class GetItemsEndpointTests : BaseIntegrationTest, IClassFixture<C
 
     public GetItemsEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
+        _client = CreateAuthenticatedClientAsync("admin").GetAwaiter().GetResult();
 
         // Seed a brand
         var brandResponse = _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, new

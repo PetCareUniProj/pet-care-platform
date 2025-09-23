@@ -9,26 +9,27 @@ namespace Catalog.Api.Tests.Integrational.Categories;
 
 public sealed class GetCategoryByIdEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly Faker<Create.CreateCategoryRequest> _categoryGenerator = new Faker<Create.CreateCategoryRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public GetCategoryByIdEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
     }
 
     [Fact]
     public async Task GetByIdAsync_ShouldReturnOk_WhenCategoryExists()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var createRequest = _categoryGenerator.Generate();
-        var createResponse = await _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+        var createResponse = await client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
         var createdCategory = await createResponse.Content.ReadFromJsonAsync<CategoryResponse>();
         createdCategory.ShouldNotBeNull();
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync($"api/category/{createdCategory!.Id}");
+        var response = await anonClient.GetAsync(ApiEndpoints.Categories.Get.Replace("{id:int}", createdCategory!.Id.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -42,10 +43,11 @@ public sealed class GetCategoryByIdEndpointTests : BaseIntegrationTest, IClassFi
     public async Task GetByIdAsync_ShouldReturnNotFound_WhenCategoryDoesNotExist()
     {
         // Arrange
+        var anonClient = CreateClient();
         var nonExistentId = 999999; // Using a large number that's unlikely to exist
 
         // Act
-        var response = await _client.GetAsync($"api/category/{nonExistentId}");
+        var response = await anonClient.GetAsync(ApiEndpoints.Categories.Get.Replace("{id:int}", nonExistentId.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -55,16 +57,18 @@ public sealed class GetCategoryByIdEndpointTests : BaseIntegrationTest, IClassFi
     public async Task GetByIdAsync_ShouldReturnNotFound_WhenCategoryIsDeleted()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var createRequest = _categoryGenerator.Generate();
-        var createResponse = await _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+        var createResponse = await client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
         var createdCategory = await createResponse.Content.ReadFromJsonAsync<CategoryResponse>();
         createdCategory.ShouldNotBeNull();
 
-        // Delete the category
-        await _client.DeleteAsync($"api/category/{createdCategory!.Id}");
+        await client.DeleteAsync(ApiEndpoints.Categories.Delete.Replace("{id:int}", createdCategory!.Id.ToString()));
+
+        var anonClient = CreateClient();
 
         // Act
-        var response = await _client.GetAsync($"api/category/{createdCategory.Id}");
+        var response = await anonClient.GetAsync(ApiEndpoints.Categories.Get.Replace("{id:int}", createdCategory.Id.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -74,10 +78,11 @@ public sealed class GetCategoryByIdEndpointTests : BaseIntegrationTest, IClassFi
     public async Task GetByIdAsync_ShouldReturnNotFound_WhenIdIsInvalid()
     {
         // Arrange
+        var anonClient = CreateClient();
         var invalidId = "invalid";
 
         // Act
-        var response = await _client.GetAsync($"api/category/{invalidId}");
+        var response = await anonClient.GetAsync(ApiEndpoints.Categories.Get.Replace("{id:int}", invalidId.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);

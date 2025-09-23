@@ -9,27 +9,28 @@ namespace Catalog.Api.Tests.Integrational.Categories;
 
 public sealed class GetCategoryEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly Faker<Create.CreateCategoryRequest> _categoryGenerator = new Faker<Create.CreateCategoryRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public GetCategoryEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
     }
 
     [Fact]
     public async Task GetAsync_ShouldReturnOk_WhenRequestIsValid()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         for (var i = 0; i < 3; i++)
         {
             var createRequest = _categoryGenerator.Generate();
-            await _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync("api/category");
+        var response = await anonClient.GetAsync(ApiEndpoints.Categories.GetAll);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -43,12 +44,15 @@ public sealed class GetCategoryEndpointTests : BaseIntegrationTest, IClassFixtur
     public async Task GetAsync_ShouldReturnFilteredResults_WhenNameFilterIsProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var uniqueNamePart = $"TestCategory-{Guid.NewGuid()}";
         var createRequest = new Create.CreateCategoryRequest { Name = uniqueNamePart };
-        await _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+        await adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+
+        var anonClient = CreateClient();
 
         // Act
-        var response = await _client.GetAsync($"api/category?name={uniqueNamePart}");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Categories.GetAll}?name={uniqueNamePart}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -63,15 +67,18 @@ public sealed class GetCategoryEndpointTests : BaseIntegrationTest, IClassFixtur
     public async Task GetAsync_ShouldReturnSortedResultsAscending_WhenSortByIsProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var categoryNames = new[] { "A_Category", "B_Category", "C_Category" };
         foreach (var name in categoryNames)
         {
             var createRequest = new Create.CreateCategoryRequest { Name = name };
-            await _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync("api/category?sortBy=name&name=_Category");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Categories.GetAll}?sortBy=name&name=_Category");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -80,19 +87,16 @@ public sealed class GetCategoryEndpointTests : BaseIntegrationTest, IClassFixtur
         categoriesResponse!.Items.Count().ShouldBeGreaterThanOrEqualTo(3);
 
         // Verify ascending order
-        for (var i = 0; i < categoryNames.Length - 1; i++)
+        var matchingItems = categoriesResponse.Items
+            .Where(b => categoryNames.Contains(b.Name))
+            .OrderBy(b => b.Name)
+            .ToList();
+
+        matchingItems.Count.ShouldBeGreaterThanOrEqualTo(3);
+
+        for (var j = 0; j < matchingItems.Count - 1; j++)
         {
-            var matchingItems = categoriesResponse.Items
-                .Where(b => categoryNames.Contains(b.Name))
-                .OrderBy(b => b.Name)
-                .ToList();
-
-            matchingItems.Count.ShouldBeGreaterThanOrEqualTo(3);
-
-            for (var j = 0; j < matchingItems.Count - 1; j++)
-            {
-                (matchingItems[j].Name.CompareTo(matchingItems[j + 1].Name) <= 0).ShouldBeTrue();
-            }
+            (matchingItems[j].Name.CompareTo(matchingItems[j + 1].Name) <= 0).ShouldBeTrue();
         }
     }
 
@@ -100,15 +104,18 @@ public sealed class GetCategoryEndpointTests : BaseIntegrationTest, IClassFixtur
     public async Task GetAsync_ShouldReturnSortedResultsDescending_WhenSortByWithMinusIsProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var categoryNames = new[] { "Z_Category", "Y_Category", "X_Category" };
         foreach (var name in categoryNames)
         {
             var createRequest = new Create.CreateCategoryRequest { Name = name };
-            await _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync("api/category?sortBy=-name&name=_Category");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Categories.GetAll}?sortBy=-name&name=_Category");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -133,16 +140,19 @@ public sealed class GetCategoryEndpointTests : BaseIntegrationTest, IClassFixtur
     public async Task GetAsync_ShouldReturnPagedResults_WhenPagingParametersAreProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var uniqueNamePart = $"PageTest-{Guid.NewGuid()}";
         for (var i = 0; i < 15; i++)
         {
             var createRequest = new Create.CreateCategoryRequest { Name = $"{uniqueNamePart}-{i}" };
-            await _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act - Get first page
-        var firstPageResponse = await _client.GetAsync($"api/category?name={uniqueNamePart}&page=1&pageSize=5");
-        var secondPageResponse = await _client.GetAsync($"api/category?name={uniqueNamePart}&page=2&pageSize=5");
+        var firstPageResponse = await anonClient.GetAsync($"{ApiEndpoints.Categories.GetAll}?name={uniqueNamePart}&page=1&pageSize=5");
+        var secondPageResponse = await anonClient.GetAsync($"{ApiEndpoints.Categories.GetAll}?name={uniqueNamePart}&page=2&pageSize=5");
 
         // Assert
         firstPageResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -169,10 +179,11 @@ public sealed class GetCategoryEndpointTests : BaseIntegrationTest, IClassFixtur
     public async Task GetAsync_ShouldReturnEmptyResults_WhenNoMatchingCategories()
     {
         // Arrange
+        var anonClient = CreateClient();
         var nonExistentName = $"NonExistentCategory-{Guid.NewGuid()}";
 
         // Act
-        var response = await _client.GetAsync($"api/category?name={nonExistentName}");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Categories.GetAll}?name={nonExistentName}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);

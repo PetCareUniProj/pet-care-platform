@@ -9,13 +9,11 @@ namespace Catalog.Api.Tests.Integrational.Brands;
 
 public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly Faker<Create.CreateBrandRequest> _brandGenerator = new Faker<Create.CreateBrandRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public GetBrandByIdEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
     }
 
     [Fact]
@@ -23,12 +21,15 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
     {
         // Arrange
         var createRequest = _brandGenerator.Generate();
-        var createResponse = await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
+        var createResponse = await adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         var createdBrand = await createResponse.Content.ReadFromJsonAsync<BrandResponse>();
         createdBrand.ShouldNotBeNull();
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync($"api/brand/{createdBrand!.Id}");
+        var response = await anonClient.GetAsync(ApiEndpoints.Brands.Get.Replace("{id:int}", createdBrand!.Id.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -42,10 +43,11 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
     public async Task GetByIdAsync_ShouldReturnNotFound_WhenBrandDoesNotExist()
     {
         // Arrange
+        var anonClient = CreateClient();
         var nonExistentId = 999999; // Using a large number that's unlikely to exist
 
         // Act
-        var response = await _client.GetAsync($"api/brand/{nonExistentId}");
+        var response = await anonClient.GetAsync(ApiEndpoints.Brands.Get.Replace("{id:int}", nonExistentId.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -56,15 +58,17 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
     {
         // Arrange
         var createRequest = _brandGenerator.Generate();
-        var createResponse = await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
+        var createResponse = await adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         var createdBrand = await createResponse.Content.ReadFromJsonAsync<BrandResponse>();
         createdBrand.ShouldNotBeNull();
 
-        // Delete the brand
-        await _client.DeleteAsync($"api/brand/{createdBrand!.Id}");
+        await adminClient.DeleteAsync(ApiEndpoints.Brands.Delete.Replace("{id:int}", createdBrand!.Id.ToString()));
+
+        var anonClient = CreateClient();
 
         // Act
-        var response = await _client.GetAsync($"api/brand/{createdBrand.Id}");
+        var response = await anonClient.GetAsync(ApiEndpoints.Brands.Get.Replace("{id:int}", createdBrand.Id.ToString()));
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -74,10 +78,11 @@ public sealed class GetBrandByIdEndpointTests : BaseIntegrationTest, IClassFixtu
     public async Task GetByIdAsync_ShouldReturnNotFound_WhenIdIsInvalid()
     {
         // Arrange
+        var anonClient = CreateClient();
         var invalidId = "invalid";
 
         // Act
-        var response = await _client.GetAsync($"api/brand/{invalidId}");
+        var response = await anonClient.GetAsync($"api/brand/{invalidId}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);

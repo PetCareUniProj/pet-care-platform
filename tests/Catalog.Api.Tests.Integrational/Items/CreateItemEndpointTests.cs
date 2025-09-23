@@ -12,17 +12,17 @@ namespace Catalog.Api.Tests.Integrational.Items;
 
 public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly int _brandId;
     private readonly int _categoryId;
     private readonly Faker<Create.CreateItemRequest> _itemGenerator;
 
     public CreateItemEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
+        // Create an authenticated client for seeding data
+        var adminClient = CreateAuthenticatedClientAsync("admin").GetAwaiter().GetResult();
 
         // Seed a brand
-        var brandResponse = _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
+        var brandResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
         {
             Name = "Test Brand " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -31,7 +31,7 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
         _brandId = brand!.Id;
 
         // Seed a category
-        var categoryResponse = _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
+        var categoryResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
         {
             Name = "Test Category " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -58,10 +58,11 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnCreated_WhenDataIsValid()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate();
 
         // Act
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -76,10 +77,11 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnBadRequest_WhenNameIsEmpty()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate() with { Name = string.Empty };
 
         // Act
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -89,10 +91,11 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnBadRequest_WhenSlugIsInvalid()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate() with { Slug = "INVALID SLUG!" };
 
         // Act
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -102,12 +105,13 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnBadRequest_WhenPriceIsZeroOrNegative()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var requestZero = _itemGenerator.Generate() with { Price = 0 };
         var requestNegative = _itemGenerator.Generate() with { Price = -10 };
 
         // Act
-        var responseZero = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, requestZero);
-        var responseNegative = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, requestNegative);
+        var responseZero = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, requestZero);
+        var responseNegative = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, requestNegative);
 
         // Assert
         responseZero.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -118,13 +122,14 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnConflict_WhenSlugAlreadyExists()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate();
 
         // Act
-        var firstResponse = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var firstResponse = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
         firstResponse.StatusCode.ShouldBe(HttpStatusCode.Created);
 
-        var secondResponse = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var secondResponse = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
 
         // Assert
         secondResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -136,10 +141,11 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnBadRequest_WhenBrandDoesNotExist()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate() with { CatalogBrandId = 999999 };
 
         // Act
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -149,10 +155,11 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnBadRequest_WhenCategoryDoesNotExist()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate() with { CategoryIds = new List<int> { 1, 999999 } };
 
         // Act
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -162,12 +169,41 @@ public sealed class CreateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task CreateAsync_ShouldReturnBadRequest_WhenMaxStockThresholdLessThanRestockThreshold()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate() with { RestockThreshold = 10, MaxStockThreshold = 5 };
 
         // Act
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnUnauthorized_WhenUserIsNotAuthenticated()
+    {
+        // Arrange
+        var client = CreateClient();
+        var request = _itemGenerator.Generate();
+
+        // Act
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ShouldReturnForbidden_WhenUserIsTestUser()
+    {
+        // Arrange
+        var client = await CreateAuthenticatedClientAsync("test");
+        var request = _itemGenerator.Generate();
+
+        // Act
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

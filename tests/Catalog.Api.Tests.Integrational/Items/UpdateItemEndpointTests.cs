@@ -12,17 +12,17 @@ namespace Catalog.Api.Tests.Integrational.Items;
 
 public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly int _brandId;
     private readonly int _categoryId;
     private readonly Faker<Create.CreateItemRequest> _itemGenerator;
 
     public UpdateItemEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
+        // Create an authenticated client for seeding data
+        var adminClient = CreateAuthenticatedClientAsync("admin").GetAwaiter().GetResult();
 
         // Seed a brand
-        var brandResponse = _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
+        var brandResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, new
         {
             Name = "Test Brand " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -31,7 +31,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         _brandId = brand!.Id;
 
         // Seed a category
-        var categoryResponse = _client.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
+        var categoryResponse = adminClient.PostAsJsonAsync(ApiEndpoints.Categories.Create, new
         {
             Name = "Test Category " + Guid.NewGuid()
         }).GetAwaiter().GetResult();
@@ -56,8 +56,10 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
 
     private async Task<int> CreateItemAsync()
     {
+        // Use admin client to create an item
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var request = _itemGenerator.Generate();
-        var response = await _client.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
+        var response = await adminClient.PostAsJsonAsync(ApiEndpoints.Items.Create, request);
         response.EnsureSuccessStatusCode();
         var item = await response.Content.ReadFromJsonAsync<ItemResponse>();
         return item!.Id;
@@ -67,6 +69,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnOk_WhenDataIsValid()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
         var updateRequest = new Update.UpdateItemRequest
         {
@@ -84,7 +87,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -99,6 +102,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnNotFound_WhenItemDoesNotExist()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var updateRequest = new Update.UpdateItemRequest
         {
             Slug = "notfound-slug",
@@ -115,7 +119,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", "999999"), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", "999999"), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -125,6 +129,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnBadRequest_WhenNameIsEmpty()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
         var updateRequest = new Update.UpdateItemRequest
         {
@@ -142,7 +147,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -152,6 +157,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnBadRequest_WhenSlugIsInvalid()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
         var updateRequest = new Update.UpdateItemRequest
         {
@@ -169,7 +175,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -179,6 +185,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnBadRequest_WhenPriceIsZeroOrNegative()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
         var updateRequestZero = new Update.UpdateItemRequest
         {
@@ -197,8 +204,8 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         var updateRequestNegative = updateRequestZero with { Price = -10 };
 
         // Act
-        var responseZero = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequestZero);
-        var responseNegative = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequestNegative);
+        var responseZero = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequestZero);
+        var responseNegative = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequestNegative);
 
         // Assert
         responseZero.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -209,11 +216,12 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnConflict_WhenSlugAlreadyExists()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId1 = await CreateItemAsync();
         var itemId2 = await CreateItemAsync();
 
         // Get item1 details
-        var getResponse = await _client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", itemId1.ToString()));
+        var getResponse = await client.GetAsync(ApiEndpoints.Items.Get.Replace("{idOrSlug}", itemId1.ToString()));
         getResponse.EnsureSuccessStatusCode();
         var item1 = await getResponse.Content.ReadFromJsonAsync<ItemResponse>();
 
@@ -234,7 +242,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId2.ToString()), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId2.ToString()), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -246,6 +254,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnBadRequest_WhenBrandDoesNotExist()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
         var updateRequest = new Update.UpdateItemRequest
         {
@@ -263,7 +272,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -273,6 +282,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnBadRequest_WhenCategoryDoesNotExist()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
         var updateRequest = new Update.UpdateItemRequest
         {
@@ -290,7 +300,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -300,6 +310,7 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
     public async Task UpdateAsync_ShouldReturnBadRequest_WhenMaxStockThresholdLessThanRestockThreshold()
     {
         // Arrange
+        var client = await CreateAuthenticatedClientAsync("admin");
         var itemId = await CreateItemAsync();
         var updateRequest = new Update.UpdateItemRequest
         {
@@ -317,9 +328,65 @@ public sealed class UpdateItemEndpointTests : BaseIntegrationTest, IClassFixture
         };
 
         // Act
-        var response = await _client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldReturnUnauthorized_WhenUserIsNotAuthenticated()
+    {
+        // Arrange
+        var client = CreateClient();
+        var itemId = await CreateItemAsync();
+        var updateRequest = new Update.UpdateItemRequest
+        {
+            Slug = "valid-slug",
+            Name = "Valid Name",
+            Description = "Desc",
+            Price = 10,
+            PictureFileName = "pic.jpg",
+            CatalogBrandId = _brandId,
+            AvailableStock = 1,
+            RestockThreshold = 1,
+            MaxStockThreshold = 10,
+            OnReorder = false,
+            CategoryIds = new List<int> { _categoryId }
+        };
+
+        // Act
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldReturnForbidden_WhenUserIsTestUser()
+    {
+        // Arrange
+        var client = await CreateAuthenticatedClientAsync("test");
+        var itemId = await CreateItemAsync();
+        var updateRequest = new Update.UpdateItemRequest
+        {
+            Slug = "valid-slug",
+            Name = "Valid Name",
+            Description = "Desc",
+            Price = 10,
+            PictureFileName = "pic.jpg",
+            CatalogBrandId = _brandId,
+            AvailableStock = 1,
+            RestockThreshold = 1,
+            MaxStockThreshold = 10,
+            OnReorder = false,
+            CategoryIds = new List<int> { _categoryId }
+        };
+
+        // Act
+        var response = await client.PutAsJsonAsync(ApiEndpoints.Items.Update.Replace("{id:int}", itemId.ToString()), updateRequest);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

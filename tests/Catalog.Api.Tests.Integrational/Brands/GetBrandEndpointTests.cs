@@ -9,27 +9,28 @@ namespace Catalog.Api.Tests.Integrational.Brands;
 
 public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<CatalogApiFactory>
 {
-    private readonly HttpClient _client;
     private readonly Faker<Create.CreateBrandRequest> _brandGenerator = new Faker<Create.CreateBrandRequest>()
         .RuleFor(x => x.Name, faker => faker.Company.CompanyName());
 
     public GetBrandEndpointTests(CatalogApiFactory factory) : base(factory)
     {
-        _client = factory.CreateClient();
     }
 
     [Fact]
     public async Task GetAsync_ShouldReturnOk_WhenRequestIsValid()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         for (var i = 0; i < 3; i++)
         {
             var createRequest = _brandGenerator.Generate();
-            await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync("api/brand");
+        var response = await anonClient.GetAsync(ApiEndpoints.Brands.GetAll);
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -43,12 +44,15 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
     public async Task GetAsync_ShouldReturnFilteredResults_WhenNameFilterIsProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var uniqueNamePart = $"TestBrand-{Guid.NewGuid()}";
         var createRequest = new Create.CreateBrandRequest { Name = uniqueNamePart };
-        await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+        await adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+
+        var anonClient = CreateClient();
 
         // Act
-        var response = await _client.GetAsync($"api/brand?name={uniqueNamePart}");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Brands.GetAll}?name={uniqueNamePart}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -63,15 +67,18 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
     public async Task GetAsync_ShouldReturnSortedResultsAscending_WhenSortByIsProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var brandNames = new[] { "A_Brand", "B_Brand", "C_Brand" };
         foreach (var name in brandNames)
         {
             var createRequest = new Create.CreateBrandRequest { Name = name };
-            await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync("api/brand?sortBy=name&name=_Brand");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Brands.GetAll}?sortBy=name&name=_Brand");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -80,19 +87,16 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
         brandsResponse!.Items.Count().ShouldBeGreaterThanOrEqualTo(3);
 
         // Verify ascending order
-        for (var i = 0; i < brandNames.Length - 1; i++)
+        var matchingItems = brandsResponse.Items
+            .Where(b => brandNames.Contains(b.Name))
+            .OrderBy(b => b.Name)
+            .ToList();
+
+        matchingItems.Count.ShouldBeGreaterThanOrEqualTo(3);
+
+        for (var j = 0; j < matchingItems.Count - 1; j++)
         {
-            var matchingItems = brandsResponse.Items
-                .Where(b => brandNames.Contains(b.Name))
-                .OrderBy(b => b.Name)
-                .ToList();
-
-            matchingItems.Count.ShouldBeGreaterThanOrEqualTo(3);
-
-            for (var j = 0; j < matchingItems.Count - 1; j++)
-            {
-                (matchingItems[j].Name.CompareTo(matchingItems[j + 1].Name) <= 0).ShouldBeTrue();
-            }
+            (matchingItems[j].Name.CompareTo(matchingItems[j + 1].Name) <= 0).ShouldBeTrue();
         }
     }
 
@@ -100,15 +104,18 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
     public async Task GetAsync_ShouldReturnSortedResultsDescending_WhenSortByWithMinusIsProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var brandNames = new[] { "Z_Brand", "Y_Brand", "X_Brand" };
         foreach (var name in brandNames)
         {
             var createRequest = new Create.CreateBrandRequest { Name = name };
-            await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act
-        var response = await _client.GetAsync("api/brand?sortBy=-name&name=_Brand");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Brands.GetAll}?sortBy=-name&name=_Brand");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -133,16 +140,19 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
     public async Task GetAsync_ShouldReturnPagedResults_WhenPagingParametersAreProvided()
     {
         // Arrange
+        var adminClient = await CreateAuthenticatedClientAsync("admin");
         var uniqueNamePart = $"PageTest-{Guid.NewGuid()}";
         for (var i = 0; i < 15; i++)
         {
             var createRequest = new Create.CreateBrandRequest { Name = $"{uniqueNamePart}-{i}" };
-            await _client.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
+            await adminClient.PostAsJsonAsync(ApiEndpoints.Brands.Create, createRequest);
         }
 
+        var anonClient = CreateClient();
+
         // Act - Get first page
-        var firstPageResponse = await _client.GetAsync($"api/brand?name={uniqueNamePart}&page=1&pageSize=5");
-        var secondPageResponse = await _client.GetAsync($"api/brand?name={uniqueNamePart}&page=2&pageSize=5");
+        var firstPageResponse = await anonClient.GetAsync($"{ApiEndpoints.Brands.GetAll}?name={uniqueNamePart}&page=1&pageSize=5");
+        var secondPageResponse = await anonClient.GetAsync($"{ApiEndpoints.Brands.GetAll}?name={uniqueNamePart}&page=2&pageSize=5");
 
         // Assert
         firstPageResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -169,10 +179,11 @@ public sealed class GetBrandEndpointTests : BaseIntegrationTest, IClassFixture<C
     public async Task GetAsync_ShouldReturnEmptyResults_WhenNoMatchingBrands()
     {
         // Arrange
+        var anonClient = CreateClient();
         var nonExistentName = $"NonExistentBrand-{Guid.NewGuid()}";
 
         // Act
-        var response = await _client.GetAsync($"api/brand?name={nonExistentName}");
+        var response = await anonClient.GetAsync($"{ApiEndpoints.Brands.GetAll}?name={nonExistentName}");
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
