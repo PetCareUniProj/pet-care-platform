@@ -420,3 +420,24 @@ FodyWeavers.xsd
 
 #C# Generated
 Generated/
+
+# Nestjs specific
+/dist
+/node_modules
+/build
+/tmp
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# dotenv environment variable files
+.env
+.env.development
+.env.test
+.env.production
+
+# temp directory
+.temp
+.tmp
