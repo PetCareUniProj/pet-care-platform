@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\services\basket\Basket.Api\Basket.Api.csproj" />
     <ProjectReference Include="..\..\services\catalog\Catalog.Api\Catalog.Api.csproj" />
   </ItemGroup>
 
