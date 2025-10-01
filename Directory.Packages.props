@@ -5,43 +5,50 @@
   <ItemGroup>
     <!--Static Analyzers-->
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
+	  
     <!--Application-->
     <PackageVersion Include="Mediator.Abstractions" Version="3.0.1" />
     <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.9" />
+	  
     <!--Infrastucture-->
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageVersion Include="EFCore.NamingConventions" Version="9.0.0" />
+	  
     <!--API-->
     <PackageVersion Include="Aspire.RabbitMQ.Client" Version="9.4.2" />
     <PackageVersion Include="Aspire.StackExchange.Redis" Version="9.4.2" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9" />
+	  
+	<!--Shared-->
+	<PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.9" />
+	  
     <!--Aspire AppHost-->
-    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="9.4.2" />
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.4.2" />
-    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="9.4.2-preview.1.25428.12" />
-    <PackageVersion Include="Aspire.Hosting.NodeJs" Version="9.4.2" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="9.4.2" />
-    <PackageVersion Include="Aspire.Hosting.Redis" Version="9.4.2" />
-    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Java" Version="9.7.2" />
-    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.7.2" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="9.5.0" />
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.5.0" />
+    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="9.5.0-preview.1.25474.7" />
+    <PackageVersion Include="Aspire.Hosting.NodeJs" Version="9.5.0" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="9.5.0" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="9.5.0" />
+    <PackageVersion Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.8.0" />
+	  
     <!--Aspire ServiceDefaults-->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.5" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
     <PackageVersion Include="Aspire.Keycloak.Authentication" Version="9.4.2-preview.1.25428.12" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.9.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.4.2" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="9.5.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.13.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.12.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.12.0-beta.1" />
+	  
     <!--Tests-->
     <PackageVersion Include="Bogus" Version="35.6.3" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.9" />

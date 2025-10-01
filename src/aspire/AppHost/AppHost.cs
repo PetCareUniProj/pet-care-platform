@@ -11,6 +11,8 @@ var postgres = builder.AddPostgres("postgres", port: 5432)
     .WithLifetime(ContainerLifetime.Persistent);
 
 var catalogDb = postgres.AddDatabase("catalogDb");
+var orderDb = postgres.AddDatabase("orderingDb");
+var subscriptionDb = postgres.AddDatabase("subscriptionDb");
 
 var keycloak = builder.AddKeycloak("keycloak", 8080)
     .WithDataVolume()
@@ -25,11 +27,31 @@ var basketApi = builder.AddProject<Basket_Api>("basket-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
-redis.WithParentRelationship(basketApi);
+var orderingApi = builder.AddNpmApp("ordering-api", "../../services/ordering", "start:dev")
+    .WithNpmPackageInstallation()
+    .WithHttpEndpoint(env: "PORT")
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WithReference(orderDb).WaitFor(orderDb)
+    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
-var _ = builder.AddProject<Catalog_Api>("catalog-api")
+builder.AddNpmApp("subscription-api", "../../services/subscription", "start:dev")
+    .WithNpmPackageInstallation()
+    .WithHttpEndpoint(env: "PORT")
+    .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WithReference(subscriptionDb).WaitFor(subscriptionDb)
+    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
+
+var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
     .WithReference(catalogDb)
     .WithReference(rabbitMq).WaitFor(rabbitMq)
+    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
+
+builder.AddNpmApp("store-web", "../../store", "start:dev")
+    .WithNpmPackageInstallation()
+    .WithHttpEndpoint(env: "PORT")
+    .WithReference(orderingApi).WaitFor(orderingApi)
+    .WithReference(basketApi).WaitFor(basketApi)
+    .WithReference(catalogApi).WaitFor(catalogApi)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
 builder.Build().Run();
