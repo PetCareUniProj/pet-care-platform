@@ -21,6 +21,9 @@
     <Project Path="src/services/catalog/Catalog.Domain/Catalog.Domain.csproj" Id="6ddfc93f-e4af-4ae3-b1be-8a246b8aa23e" />
     <Project Path="src/services/catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj" Id="e9192aa4-3af6-4507-aa02-6d81555eb727" />
   </Folder>
+  <Folder Name="/src/services/ordering/">
+    <Project Path="src/services/ordering/Ordering.Api/Ordering.Api.csproj" />
+  </Folder>
   <Folder Name="/src/shared/">
     <Project Path="src/shared/EventBus/EventBus.csproj" Id="b3dd9b64-95bc-4bb1-8e96-2b3ba649edd5" />
     <Project Path="src/shared/EventBusRabbitMQ/EventBusRabbitMQ.csproj" Id="aad291ec-2d32-4651-8603-8811c0f7085f" />

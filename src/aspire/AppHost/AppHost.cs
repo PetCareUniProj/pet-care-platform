@@ -27,9 +27,7 @@ var basketApi = builder.AddProject<Basket_Api>("basket-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
-var orderingApi = builder.AddNpmApp("ordering-api", "../../services/ordering", "start:dev")
-    .WithNpmPackageInstallation()
-    .WithHttpEndpoint(env: "PORT")
+var orderingApi = builder.AddProject<Ordering_Api>("ordering-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WithReference(orderDb).WaitFor(orderDb)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
