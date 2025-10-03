@@ -1,4 +1,3 @@
-using Ordering.Domain.AggregatesModel.OrderAggregate;
 using SharedKernel;
 
 namespace Ordering.Domain.Events;

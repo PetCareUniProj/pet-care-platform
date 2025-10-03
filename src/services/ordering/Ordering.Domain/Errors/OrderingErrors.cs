@@ -47,6 +47,19 @@ public static class OrderingErrors
 
         public static Error InvalidStatusChange(string to, string from) =>
             Error.Failure("Order.InvalidStatusChange", $"Cannot change order status from {from} to {to}.");
+
+        public static readonly Error InvalidRecurrenceInterval =
+            Error.Failure("Order.InvalidRecurrenceInterval", "The recurrence interval must be greater than zero.");
+
+        public static readonly Error NotRecurringOrder =
+            Error.Failure("Order.NotRecurringOrder", "The order is not marked as recurring.");
+
+        // New Errors
+        public static readonly Error InvalidNextRecurrenceDate =
+            Error.Failure("Order.InvalidNextRecurrenceDate", "The next recurrence date must be in the future.");
+
+        public static readonly Error InvalidRecurrenceUpdate =
+            Error.Failure("Order.InvalidRecurrenceUpdate", "At least one of the recurrence interval or next recurrence date must be provided.");
     }
 
     public static class OrderItem
