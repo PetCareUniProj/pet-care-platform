@@ -23,6 +23,7 @@
   </Folder>
   <Folder Name="/src/services/ordering/">
     <Project Path="src/services/ordering/Ordering.Api/Ordering.Api.csproj" />
+    <Project Path="src/services/ordering/Ordering.Domain/Ordering.Domain.csproj" Id="afc9cdad-e5b3-41be-90ee-0be04b92d838" />
   </Folder>
   <Folder Name="/src/shared/">
     <Project Path="src/shared/EventBus/EventBus.csproj" Id="b3dd9b64-95bc-4bb1-8e96-2b3ba649edd5" />
