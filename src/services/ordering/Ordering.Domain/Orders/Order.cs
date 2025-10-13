@@ -1,11 +1,6 @@
-﻿using Ordering.Domain.AggregatesModel.BuyerAggregate;
-using Ordering.Domain.Errors;
-using Ordering.Domain.Events;
-using SharedKernel;
+﻿namespace Ordering.Domain.Orders;
 
-namespace Ordering.Domain.AggregatesModel.OrderAggregate;
-
-public class Order : Entity, IAggregateRoot
+public class Order : Entity
 {
     public int Id { get; private set; }
     public DateTime OrderDate { get; private set; }

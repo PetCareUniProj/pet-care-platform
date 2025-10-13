@@ -1,15 +1,4 @@
-﻿using SharedKernel;
+﻿namespace Ordering.Domain.Events;
 
-namespace Ordering.Domain.Events;
-
-public sealed class OrderCancelledDueToStockRejectionDomainEvent : IDomainEvent
-{
-    public int OrderId { get; }
-    public IEnumerable<int> RejectedProductIds { get; }
-
-    public OrderCancelledDueToStockRejectionDomainEvent(int orderId, IEnumerable<int> rejectedProductIds)
-    {
-        OrderId = orderId;
-        RejectedProductIds = rejectedProductIds;
-    }
-}
+public sealed record OrderCancelledDueToStockRejectionDomainEvent(int OrderId, IEnumerable<int> RejectedProductIds)
+    : IDomainEvent;

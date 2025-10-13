@@ -1,10 +1,6 @@
-﻿using Ordering.Domain.Errors;
-using Ordering.Domain.Events;
-using SharedKernel;
+﻿namespace Ordering.Domain.Buyers;
 
-namespace Ordering.Domain.AggregatesModel.BuyerAggregate;
-
-public class Buyer : Entity, IAggregateRoot
+public class Buyer : Entity
 {
     public int Id { get; private set; }
     public string IdentityGuid { get; private set; }

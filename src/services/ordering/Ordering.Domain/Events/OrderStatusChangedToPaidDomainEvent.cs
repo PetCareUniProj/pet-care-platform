@@ -1,20 +1,7 @@
-using SharedKernel;
-
-namespace Ordering.Domain.Events;
+﻿namespace Ordering.Domain.Events;
 
 /// <summary>
 /// Event used when the order is paid
 /// </summary>
-public class OrderStatusChangedToPaidDomainEvent
-    : IDomainEvent
-{
-    public int OrderId { get; }
-    public IEnumerable<OrderItem> OrderItems { get; }
-
-    public OrderStatusChangedToPaidDomainEvent(int orderId,
-        IEnumerable<OrderItem> orderItems)
-    {
-        OrderId = orderId;
-        OrderItems = orderItems;
-    }
-}
+public sealed record OrderStatusChangedToPaidDomainEvent(int OrderId, IEnumerable<OrderItem> OrderItems)
+    : IDomainEvent;

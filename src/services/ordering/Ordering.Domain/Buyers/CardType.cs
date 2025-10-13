@@ -1,4 +1,4 @@
-﻿namespace Ordering.Domain.AggregatesModel.BuyerAggregate;
+﻿namespace Ordering.Domain.Buyers;
 
 public sealed class CardType
 {

@@ -1,7 +1,4 @@
-﻿using Ordering.Domain.Errors;
-using SharedKernel;
-
-namespace Ordering.Domain.AggregatesModel.OrderAggregate;
+﻿namespace Ordering.Domain.Orders;
 
 public class Address : ValueObject
 {

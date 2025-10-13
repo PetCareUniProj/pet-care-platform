@@ -1,7 +1,4 @@
-﻿using Ordering.Domain.Errors;
-using SharedKernel;
-
-namespace Ordering.Domain.AggregatesModel.BuyerAggregate;
+﻿namespace Ordering.Domain.Buyers;
 
 public class PaymentMethod : Entity
 {

@@ -1,5 +1,4 @@
-﻿using Ordering.Domain.Errors;
-using SharedKernel;
+﻿namespace Ordering.Domain.Orders;
 
 public class OrderItem : Entity
 {

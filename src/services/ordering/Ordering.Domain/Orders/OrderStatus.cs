@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Ordering.Domain.AggregatesModel.OrderAggregate;
+namespace Ordering.Domain.Orders;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum OrderStatus
