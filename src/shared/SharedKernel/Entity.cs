@@ -11,4 +11,5 @@ public abstract class Entity
 #pragma warning disable CA1030 // Use events where appropriate
     protected void Raise(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
 #pragma warning restore CA1030 // Use events where appropriate
+
 }
