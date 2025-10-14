@@ -1,7 +1,9 @@
-﻿global using System.Security.Claims;
-global using System.Text.Json;
+﻿global using System.Text.Json;
 global using Basket.Api.Extensions;
 global using Basket.Api.Repositories;
+global using EventBus.Abstractions;
+global using EventBus.Events;
+global using EventBus.Extensions;
 global using Grpc.Core;
 global using ServiceDefaults;
 global using StackExchange.Redis;
