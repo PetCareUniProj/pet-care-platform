@@ -11,6 +11,7 @@
 		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
 		<PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
 		<PackageVersion Include="Scrutor" Version="6.1.0" />
+
 		<!--Infrastucture-->
 		<PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 		<PackageVersion Include="EFCore.NamingConventions" Version="9.0.0" />
@@ -26,7 +27,6 @@
 		<PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.9" />
 		<PackageVersion Include="Microsoft.Extensions.Resilience" Version="9.9.0" />
 		<PackageVersion Include="MailKit" Version="4.14.1" />
-
 		<!--Aspire AppHost-->
 		<PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="9.5.0" />
 		<PackageVersion Include="Aspire.Hosting.AppHost" Version="9.5.0" />
@@ -34,6 +34,7 @@
 		<PackageVersion Include="Aspire.Hosting.NodeJs" Version="9.5.0" />
 		<PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="9.5.0" />
 		<PackageVersion Include="Aspire.Hosting.Redis" Version="9.5.0" />
+		<PackageVersion Include="Scalar.Aspire" Version="0.5.4" />
 		<PackageVersion Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.8.0" />
 		<!--Aspire ServiceDefaults-->
 		<PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
@@ -49,7 +50,6 @@
 		<PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
 		<PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.12.0" />
 		<PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.12.0-beta.1" />
-
 		<!--Tests-->
 		<PackageVersion Include="Bogus" Version="35.6.3" />
 		<PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.9" />
