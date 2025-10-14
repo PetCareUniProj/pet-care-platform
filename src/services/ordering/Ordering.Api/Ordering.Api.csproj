@@ -13,4 +13,7 @@
     <ProjectReference Include="..\Ordering.Infrastructure\Ordering.Infrastructure\Ordering.Infrastructure.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Ordering.Api.Tests.Integrational" />
+	</ItemGroup>
 </Project>

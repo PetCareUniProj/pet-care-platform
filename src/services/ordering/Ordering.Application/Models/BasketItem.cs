@@ -1,5 +1,5 @@
 ﻿namespace Ordering.Application.Models;
-public class BasketItem
+public record BasketItem
 {
     public required string Id { get; init; }
     public int ProductId { get; init; }

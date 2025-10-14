@@ -26,17 +26,16 @@ internal sealed class CreateDraft : IEndpoint
             };
             var result = await mediator.Send(createOrderCommand, cancellationToken);
             return result.Match(
-            //TODO: order => Results.CreatedAtRoute(GetById.Name, new { id = order.Id }, order),
-            Results.Ok,
+             order => Results.CreatedAtRoute(GetOrderById.Name, new { id = order.Id }, order),
             CustomResults.Problem);
         })
-            .WithName(Name)
-            .WithTags(Tags.Orders)
-            .WithDescription("Creates a new order draft.")
-            .Produces(StatusCodes.Status200OK)
-            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
-            .Produces<ProblemDetails>(StatusCodes.Status403Forbidden);
+        .WithName(Name)
+        .WithTags(Tags.Orders)
+        .WithDescription("Creates a new order draft.")
+        .Produces(StatusCodes.Status200OK)
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+        .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
+        .RequireAuthorization();
 
     }
 }

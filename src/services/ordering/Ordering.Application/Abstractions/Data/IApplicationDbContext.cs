@@ -8,6 +8,10 @@ public interface IApplicationDbContext
 {
     DbSet<Order> Orders { get; }
     DbSet<Buyer> Buyers { get; }
+    DbSet<OrderItem> OrderItems { get; }
+    DbSet<CardType> CardTypes { get; }
+    DbSet<PaymentMethod> Payments { get; }
+
     bool HasActiveTransaction { get; }
     DatabaseFacade Database { get; }
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);

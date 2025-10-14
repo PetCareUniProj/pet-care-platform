@@ -2,6 +2,7 @@
 
 public record OrderDraftResponse
 {
+    public int Id { get; init; }
     public IEnumerable<OrderItemDTO> OrderItems { get; init; } = [];
     public decimal Total { get; init; }
 
@@ -9,6 +10,7 @@ public record OrderDraftResponse
     {
         return new OrderDraftResponse()
         {
+            Id = order.Id,
             OrderItems = order.OrderItems.Select(oi => new OrderItemDTO
             {
                 Discount = oi.Discount,

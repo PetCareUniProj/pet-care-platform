@@ -30,7 +30,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "card_type",
+                name: "card_types",
                 schema: "public",
                 columns: table => new
                 {
@@ -39,7 +39,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_card_type", x => x.id);
+                    table.PrimaryKey("pk_card_types", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -61,7 +61,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "payment_method",
+                name: "payments",
                 schema: "public",
                 columns: table => new
                 {
@@ -72,18 +72,18 @@ namespace Ordering.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_payment_method", x => x.id);
+                    table.PrimaryKey("pk_payments", x => x.id);
                     table.ForeignKey(
-                        name: "fk_payment_method_buyers_buyer_id",
+                        name: "fk_payments_buyers_buyer_id",
                         column: x => x.buyer_id,
                         principalSchema: "public",
                         principalTable: "buyers",
                         principalColumn: "id");
                     table.ForeignKey(
-                        name: "fk_payment_method_card_type_card_type_id",
+                        name: "fk_payments_card_types_card_type_id",
                         column: x => x.card_type_id,
                         principalSchema: "public",
-                        principalTable: "card_type",
+                        principalTable: "card_types",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -115,16 +115,16 @@ namespace Ordering.Infrastructure.Database.Migrations
                         principalTable: "buyers",
                         principalColumn: "id");
                     table.ForeignKey(
-                        name: "fk_orders_payment_method_payment_method_id",
+                        name: "fk_orders_payments_payment_method_id",
                         column: x => x.PaymentMethodId,
                         principalSchema: "public",
-                        principalTable: "payment_method",
+                        principalTable: "payments",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "order_item",
+                name: "order_items",
                 schema: "public",
                 columns: table => new
                 {
@@ -140,9 +140,9 @@ namespace Ordering.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_order_item", x => x.id);
+                    table.PrimaryKey("pk_order_items", x => x.id);
                     table.ForeignKey(
-                        name: "fk_order_item_orders_order_id",
+                        name: "fk_order_items_orders_order_id",
                         column: x => x.order_id,
                         principalSchema: "public",
                         principalTable: "orders",
@@ -151,9 +151,9 @@ namespace Ordering.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "ix_order_item_order_id",
+                name: "ix_order_items_order_id",
                 schema: "public",
-                table: "order_item",
+                table: "order_items",
                 column: "order_id");
 
             migrationBuilder.CreateIndex(
@@ -169,15 +169,15 @@ namespace Ordering.Infrastructure.Database.Migrations
                 column: "PaymentMethodId");
 
             migrationBuilder.CreateIndex(
-                name: "ix_payment_method_buyer_id",
+                name: "ix_payments_buyer_id",
                 schema: "public",
-                table: "payment_method",
+                table: "payments",
                 column: "buyer_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_payment_method_card_type_id",
+                name: "ix_payments_card_type_id",
                 schema: "public",
-                table: "payment_method",
+                table: "payments",
                 column: "card_type_id");
         }
 
@@ -189,7 +189,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "order_item",
+                name: "order_items",
                 schema: "public");
 
             migrationBuilder.DropTable(
@@ -197,7 +197,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "payment_method",
+                name: "payments",
                 schema: "public");
 
             migrationBuilder.DropTable(
@@ -205,7 +205,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "card_type",
+                name: "card_types",
                 schema: "public");
         }
     }

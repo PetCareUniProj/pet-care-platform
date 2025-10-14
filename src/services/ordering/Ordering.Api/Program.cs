@@ -16,7 +16,7 @@ app.MapOpenApi();
 
 if (app.Environment.IsDevelopment())
 {
-    app.ApplyMigrations();
+    //app.ApplyMigrations();
 }
 
 app.UseHttpsRedirection();
@@ -24,3 +24,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 await app.RunAsync();
+
+public partial class Program { }

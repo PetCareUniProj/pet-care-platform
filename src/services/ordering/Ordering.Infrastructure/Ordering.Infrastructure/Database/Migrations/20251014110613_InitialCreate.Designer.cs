@@ -12,7 +12,7 @@ using Ordering.Infrastructure.Database;
 namespace Ordering.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251013211042_InitialCreate")]
+    [Migration("20251014110613_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -102,9 +102,9 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("Id")
-                        .HasName("pk_card_type");
+                        .HasName("pk_card_types");
 
-                    b.ToTable("card_type", "public");
+                    b.ToTable("card_types", "public");
                 });
 
             modelBuilder.Entity("Ordering.Domain.Buyers.PaymentMethod", b =>
@@ -125,15 +125,15 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .HasColumnName("card_type_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_payment_method");
+                        .HasName("pk_payments");
 
                     b.HasIndex("BuyerId")
-                        .HasDatabaseName("ix_payment_method_buyer_id");
+                        .HasDatabaseName("ix_payments_buyer_id");
 
                     b.HasIndex("CardTypeId")
-                        .HasDatabaseName("ix_payment_method_card_type_id");
+                        .HasDatabaseName("ix_payments_card_type_id");
 
-                    b.ToTable("payment_method", "public");
+                    b.ToTable("payments", "public");
                 });
 
             modelBuilder.Entity("Ordering.Domain.Orders.Order", b =>
@@ -235,12 +235,12 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .HasColumnName("units");
 
                     b.HasKey("Id")
-                        .HasName("pk_order_item");
+                        .HasName("pk_order_items");
 
                     b.HasIndex("OrderId")
-                        .HasDatabaseName("ix_order_item_order_id");
+                        .HasDatabaseName("ix_order_items_order_id");
 
-                    b.ToTable("order_item", "public");
+                    b.ToTable("order_items", "public");
                 });
 
             modelBuilder.Entity("Ordering.Domain.Buyers.PaymentMethod", b =>
@@ -248,14 +248,14 @@ namespace Ordering.Infrastructure.Database.Migrations
                     b.HasOne("Ordering.Domain.Buyers.Buyer", null)
                         .WithMany("PaymentMethods")
                         .HasForeignKey("BuyerId")
-                        .HasConstraintName("fk_payment_method_buyers_buyer_id");
+                        .HasConstraintName("fk_payments_buyers_buyer_id");
 
                     b.HasOne("Ordering.Domain.Buyers.CardType", "CardType")
                         .WithMany()
                         .HasForeignKey("CardTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_payment_method_card_type_card_type_id");
+                        .HasConstraintName("fk_payments_card_types_card_type_id");
 
                     b.Navigation("CardType");
                 });
@@ -271,7 +271,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .WithMany()
                         .HasForeignKey("PaymentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_orders_payment_method_payment_method_id");
+                        .HasConstraintName("fk_orders_payments_payment_method_id");
 
                     b.OwnsOne("Ordering.Domain.Orders.Address", "Address", b1 =>
                         {
@@ -301,7 +301,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_order_item_orders_order_id");
+                        .HasConstraintName("fk_order_items_orders_order_id");
                 });
 
             modelBuilder.Entity("Ordering.Domain.Buyers.Buyer", b =>

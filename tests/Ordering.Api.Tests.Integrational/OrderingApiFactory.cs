@@ -1,17 +1,17 @@
-﻿using Catalog.Application.Abstractions.Data;
-using Catalog.Infrastructure.Database;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Ordering.Application.Abstractions.Data;
+using Ordering.Infrastructure.Database;
 using Testcontainers.Keycloak;
 using Testcontainers.PostgreSql;
 
-namespace Catalog.Api.Tests.Integrational;
+namespace Ordering.Api.Tests.Integrational;
 
-public class CatalogApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class OrderingApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
     .WithDatabase("testdb")

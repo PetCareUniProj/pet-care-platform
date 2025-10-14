@@ -2,11 +2,14 @@
 
 public static class ApiEndpoints
 {
-    private const string ApiBase = "api";
+    private const string ApiBase = "api/orders";
 
     public static class Orders
     {
-        private const string Base = $"{ApiBase}/orders";
-        public const string CreateDraft = $"{Base}/drafts";
+        private const string Base = $"{ApiBase}";
+        public const string CreateDraft = $"{Base}/draft";
+        public const string GetCardTypes = $"{Base}/cardtypes";
+        public const string GetById = $"{Base}/{{id:int}}";
+        public const string GetByUser = $"{Base}/";
     }
 }

@@ -16,10 +16,17 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<Buyer> Buyers { get; set; }
 
+    public DbSet<OrderItem> OrderItems { get; set; }
+
+    public DbSet<CardType> CardTypes { get; set; }
+
+    public DbSet<PaymentMethod> Payments { get; set; }
+
     private readonly IDomainEventsDispatcher _domainEventsDispatcher;
 
     private IDbContextTransaction? _currentTransaction;
     public bool HasActiveTransaction => _currentTransaction != null;
+
     public IDbContextTransaction GetCurrentTransaction() => _currentTransaction;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IDomainEventsDispatcher domainEventsDispatcher)

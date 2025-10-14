@@ -7,6 +7,7 @@ using Ordering.Api.Infrastructure;
 using Ordering.Application;
 using Ordering.Application.Abstractions.Authentication;
 using Ordering.Infrastructure;
+using Ordering.Infrastructure.Database;
 using ServiceDefaults;
 
 namespace Ordering.Api.Extensions;
@@ -29,6 +30,7 @@ internal static class Extensions
         builder.Services
             .AddApplication()
             .AddInfrastructure(configuration);
+        services.AddMigration<ApplicationDbContext, ApplicationDbContextSeed>();
 
         builder.AddRabbitMqEventBus("eventbus")
             .AddEventBusSubscriptions();
