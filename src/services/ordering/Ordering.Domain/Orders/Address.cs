@@ -19,7 +19,7 @@ public class Address : ValueObject
         ZipCode = zipcode;
     }
 
-    public static Result<Address> Create(string street, string city, string state, string country, string zipcode)
+    public static Result<Address> Create(string? street, string? city, string? state, string? country, string? zipcode)
     {
         if (string.IsNullOrWhiteSpace(street))
         {

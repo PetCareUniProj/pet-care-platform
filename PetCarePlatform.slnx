@@ -1,4 +1,4 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/Solution Items/">
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
@@ -23,9 +23,9 @@
   </Folder>
   <Folder Name="/src/services/ordering/">
     <Project Path="src/services/ordering/Ordering.Api/Ordering.Api.csproj" />
-    <Project Path="src/services/ordering/Ordering.Application/Ordering.Application.csproj" Id="7e793b23-ddf2-4ddd-b64c-555c2c56961d" />
+    <Project Path="src/services/ordering/Ordering.Application/Ordering.Application.csproj" Id="40a5a1e4-a58a-466e-804c-21bef745149b" />
     <Project Path="src/services/ordering/Ordering.Domain/Ordering.Domain.csproj" Id="afc9cdad-e5b3-41be-90ee-0be04b92d838" />
-    <Project Path="src/services/ordering/Ordering.Infrastructure/Ordering.Infrastructure.csproj" Id="26bdb76b-9ceb-424f-9445-93f1eabc028e" />
+    <Project Path="src/services/ordering/Ordering.Infrastructure/Ordering.Infrastructure/Ordering.Infrastructure.csproj" Id="9c91114a-2d10-472e-bc32-dc00084f3c08" />
   </Folder>
   <Folder Name="/src/shared/">
     <Project Path="src/shared/EventBus/EventBus.csproj" Id="b3dd9b64-95bc-4bb1-8e96-2b3ba649edd5" />

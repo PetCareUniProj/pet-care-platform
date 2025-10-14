@@ -2,24 +2,25 @@
 
 public class Buyer : Entity
 {
-    public int Id { get; private set; }
-    public string IdentityGuid { get; private set; }
+    public Guid Id { get; private set; }
     public string Name { get; private set; }
+    public string Email { get; private set; }
 
     private readonly List<PaymentMethod> _paymentMethods = new();
     public IEnumerable<PaymentMethod> PaymentMethods => _paymentMethods.AsReadOnly();
 
     protected Buyer() { }
 
-    private Buyer(string identity, string name)
+    private Buyer(Guid id, string name, string email)
     {
-        IdentityGuid = identity;
+        Id = id;
         Name = name;
+        Email = email;
     }
 
-    public static Result<Buyer> Create(string identity, string name)
+    public static Result<Buyer> Create(Guid id, string name, string email)
     {
-        if (string.IsNullOrWhiteSpace(identity))
+        if (id == Guid.Empty)
         {
             return Result.Failure<Buyer>(OrderingErrors.Buyer.NullIdentity);
         }
@@ -29,7 +30,12 @@ public class Buyer : Entity
             return Result.Failure<Buyer>(OrderingErrors.Buyer.NullName);
         }
 
-        return Result.Success(new Buyer(identity, name));
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Result.Failure<Buyer>(OrderingErrors.Buyer.NullEmail);
+        }
+
+        return Result.Success(new Buyer(id, name, email));
     }
 
     public Result<PaymentMethod> VerifyOrAddPaymentMethod(
@@ -39,7 +45,7 @@ public class Buyer : Entity
         var existingPayment = _paymentMethods
             .SingleOrDefault(p => p.IsEqualTo(cardTypeId, cardNumber, expiration));
 
-        if (existingPayment != null)
+        if (existingPayment is not null)
         {
             Raise(new BuyerAndPaymentMethodVerifiedDomainEvent(this, existingPayment, orderId));
             return Result.Success(existingPayment);

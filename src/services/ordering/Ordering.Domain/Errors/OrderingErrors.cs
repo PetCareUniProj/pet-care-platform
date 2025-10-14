@@ -21,6 +21,15 @@ public static class OrderingErrors
 
         public static readonly Error NullName =
             Error.Problem("Buyer.NullName", "Name must be provided.");
+
+        public static readonly Error NullEmail =
+            Error.Problem("Buyer.NullEmail", "Email must be provided.");
+
+        public static readonly Error AllreadyExists =
+            Error.Problem("Buyer.AlreadyExists", "The buyer with the same IdentityGuid already exists.");
+
+        public static readonly Error NotExsists =
+            Error.Problem("Buyer.NotExists", "The buyer does not exist.");
     }
 
     public static class PaymentMethod

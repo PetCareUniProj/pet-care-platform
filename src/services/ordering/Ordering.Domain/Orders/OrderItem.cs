@@ -8,6 +8,7 @@ public class OrderItem : Entity
     public decimal Discount { get; private set; }
     public int Units { get; private set; }
     public int ProductId { get; private set; }
+    public int Id { get; private set; }
 
     protected OrderItem() { }
 

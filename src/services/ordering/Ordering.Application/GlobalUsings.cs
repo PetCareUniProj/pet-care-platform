@@ -1,0 +1,9 @@
+﻿global using EventBus.Events;
+global using Mediator;
+global using Ordering.Application.Abstractions.Behaviors;
+global using Ordering.Application.Abstractions.Data;
+global using Ordering.Application.IntegrationalEvents.Events;
+global using Ordering.Domain.Buyers;
+global using Ordering.Domain.Events;
+global using Ordering.Domain.Orders;
+global using SharedKernel;

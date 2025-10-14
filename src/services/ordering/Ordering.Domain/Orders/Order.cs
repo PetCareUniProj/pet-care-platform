@@ -5,47 +5,70 @@ public class Order : Entity
     public int Id { get; private set; }
     public DateTime OrderDate { get; private set; }
     public Address Address { get; private set; }
-    public int? BuyerId { get; private set; }
+    public Guid? BuyerId { get; private set; }
     public Buyer Buyer { get; }
     public OrderStatus OrderStatus { get; private set; }
-    public string Description { get; private set; }
+    public string? Description { get; private set; }
 
     public bool IsRecurring { get; private set; }
     public TimeSpan? RecurrenceInterval { get; private set; }
     public DateTime? NextRecurrenceDate { get; private set; }
     public int? ParentOrderId { get; private set; }
 
-    private bool _isDraft;
+    public bool IsDraft => OrderStatus == OrderStatus.Draft;
 
     private readonly List<OrderItem> _orderItems = new();
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
 
     public int? PaymentId { get; private set; }
 
-    public static Order NewDraft() => new() { _isDraft = true };
+    public static Order NewDraft(Guid buyerId, string buyerName, string buyerEmail)
+    {
+        var order = new Order
+        {
+            OrderStatus = OrderStatus.Draft
+        };
+        order.Raise(new OrderDraftedDomainEvent(order, buyerId, buyerName, buyerEmail));
+        return order;
+    }
 
     protected Order() { }
 
-    private Order(Address address, int? buyerId = null, int? paymentMethodId = null)
+    private Order(Address address, int cardTypeId, string cardNumber, string cardSecurityNumber,
+            string cardHolderName, DateTime cardExpiration, Guid buyerId, int? paymentMethodId = null)
     {
         Address = address;
         BuyerId = buyerId;
         PaymentId = paymentMethodId;
         OrderStatus = OrderStatus.Submitted;
         OrderDate = DateTime.UtcNow;
+        AddOrderStartedDomainEvent(buyerId, cardTypeId, cardNumber,
+                    cardSecurityNumber, cardHolderName, cardExpiration);
+
     }
 
-    public static Result<Order> Create(Address address, int? buyerId = null, int? paymentMethodId = null)
+    public static Result<Order> Create(Address address, int cardTypeId, string cardNumber, string cardSecurityNumber,
+            string cardHolderName, DateTime cardExpiration, Guid buyerId, int? paymentMethodId = null)
     {
         if (address is null)
         {
             return Result.Failure<Order>(OrderingErrors.Order.NullAddress);
         }
 
-        return Result.Success(new Order(address, buyerId, paymentMethodId));
+        return Result.Success(new Order(address, cardTypeId, cardNumber, cardSecurityNumber, cardHolderName,
+            cardExpiration, buyerId, paymentMethodId));
     }
 
-    public static Result<Order> CreateRecurringOrder(Address address, int? buyerId, int? paymentMethodId, TimeSpan recurrenceInterval)
+    public static Result<Order> CreateRecurringOrder(
+        Address address,
+        Guid buyerId,
+        int cardTypeId,
+        string cardNumber,
+        string cardSecurityNumber,
+        string cardHolderName,
+        DateTime cardExpiration,
+        int? paymentMethodId,
+        TimeSpan recurrenceInterval)
     {
         if (address is null)
         {
@@ -57,51 +80,91 @@ public class Order : Entity
             return Result.Failure<Order>(OrderingErrors.Order.InvalidRecurrenceInterval);
         }
 
-        // Create a new order
-        var newOrder = new Order(address, buyerId, paymentMethodId)
+        var newOrder = new Order(
+            address,
+            cardTypeId,
+            cardNumber,
+            cardSecurityNumber,
+            cardHolderName,
+            cardExpiration,
+            buyerId,
+            paymentMethodId)
         {
             IsRecurring = true,
             RecurrenceInterval = recurrenceInterval,
             NextRecurrenceDate = DateTime.UtcNow.Add(recurrenceInterval)
         };
 
-        newOrder.Raise(new RecurringOrderCreatedDomainEvent(newOrder.Id, null, recurrenceInterval, newOrder.NextRecurrenceDate.Value));
+        newOrder.Raise(new RecurringOrderCreatedDomainEvent(
+            newOrder.Id,
+            null,
+            recurrenceInterval,
+            newOrder.NextRecurrenceDate.Value));
 
         return Result.Success(newOrder);
     }
 
-    public Result<Order> CreateRecurringOrderFromExisting(TimeSpan recurrenceInterval)
+    //public Result<Order> CreateRecurringOrderFromExisting(TimeSpan recurrenceInterval)
+    //{
+    //    if (recurrenceInterval <= TimeSpan.Zero)
+    //    {
+    //        return Result.Failure<Order>(OrderingErrors.Order.InvalidRecurrenceInterval);
+    //    }
+
+    //    // Clone the current order
+    //    var newOrder = new Order(Address, BuyerId, PaymentId)
+    //    {
+    //        ParentOrderId = Id,
+    //        IsRecurring = true,
+    //        RecurrenceInterval = recurrenceInterval,
+    //        NextRecurrenceDate = DateTime.UtcNow.Add(recurrenceInterval)
+    //    };
+
+    //    // Copy order items
+    //    foreach (var item in _orderItems)
+    //    {
+    //        var itemResult = newOrder.AddOrderItem(item.ProductId, item.ProductName, item.UnitPrice, item.Discount, item.PictureUrl, item.Units);
+    //        if (itemResult.IsFailure)
+    //        {
+    //            return Result.Failure<Order>(itemResult.Error);
+    //        }
+    //    }
+
+    //    // Raise domain event
+    //    newOrder.Raise(new RecurringOrderCreatedDomainEvent(newOrder.Id, Id, recurrenceInterval, newOrder.NextRecurrenceDate.Value));
+
+    //    return Result.Success(newOrder);
+    //}
+    public Result UpdateFromDraft(
+    Address address,
+    int cardTypeId,
+    string cardNumber,
+    string cardSecurityNumber,
+    string cardHolderName,
+    DateTime cardExpiration,
+    Guid buyerId,
+    int? paymentMethodId = null)
     {
-        if (recurrenceInterval <= TimeSpan.Zero)
+        if (!IsDraft)
         {
-            return Result.Failure<Order>(OrderingErrors.Order.InvalidRecurrenceInterval);
+            return Result.Failure(OrderingErrors.Order.InvalidStatusChange(OrderStatus.Submitted.ToString(), OrderStatus.ToString()));
         }
 
-        // Clone the current order
-        var newOrder = new Order(Address, BuyerId, PaymentId)
+        if (address is null)
         {
-            ParentOrderId = Id,
-            IsRecurring = true,
-            RecurrenceInterval = recurrenceInterval,
-            NextRecurrenceDate = DateTime.UtcNow.Add(recurrenceInterval)
-        };
-
-        // Copy order items
-        foreach (var item in _orderItems)
-        {
-            var itemResult = newOrder.AddOrderItem(item.ProductId, item.ProductName, item.UnitPrice, item.Discount, item.PictureUrl, item.Units);
-            if (itemResult.IsFailure)
-            {
-                return Result.Failure<Order>(itemResult.Error);
-            }
+            return Result.Failure(OrderingErrors.Order.NullAddress);
         }
 
-        // Raise domain event
-        newOrder.Raise(new RecurringOrderCreatedDomainEvent(newOrder.Id, Id, recurrenceInterval, newOrder.NextRecurrenceDate.Value));
+        Address = address;
+        BuyerId = buyerId;
+        PaymentId = paymentMethodId;
+        OrderStatus = OrderStatus.Submitted;
+        OrderDate = DateTime.UtcNow;
 
-        return Result.Success(newOrder);
+        AddOrderStartedDomainEvent(buyerId, cardTypeId, cardNumber, cardSecurityNumber, cardHolderName, cardExpiration);
+
+        return Result.Success();
     }
-
     public Result AddOrderItem(int productId, string productName, decimal unitPrice, decimal discount, string pictureUrl, int units = 1)
     {
         var existingOrderForProduct = _orderItems.SingleOrDefault(o => o.ProductId == productId);
@@ -187,7 +250,7 @@ public class Order : Entity
         return Result.Success();
     }
 
-    public void SetPaymentMethodVerified(int buyerId, int paymentId)
+    public void SetPaymentMethodVerified(Guid buyerId, int paymentId)
     {
         BuyerId = buyerId;
         PaymentId = paymentId;
@@ -261,6 +324,14 @@ public class Order : Entity
             var itemsStockRejectedDescription = string.Join(", ", itemsStockRejectedProductNames);
             Description = $"The product items don't have stock: ({itemsStockRejectedDescription}).";
         }
+    }
+
+    private void AddOrderStartedDomainEvent(Guid buyerId, int cardTypeId, string cardNumber, string cardSecurityNumber, string cardHolderName, DateTime cardExpiration)
+    {
+        var orderStartedDomainEvent = new OrderStartedDomainEvent(this, buyerId, cardTypeId,
+                                                            cardNumber, cardSecurityNumber,
+                                                            cardHolderName, cardExpiration);
+        this.Raise(orderStartedDomainEvent);
     }
 
     public decimal GetTotal() => _orderItems.Sum(o => o.Units * o.UnitPrice);
