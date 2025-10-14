@@ -1,4 +1,7 @@
-﻿namespace Ordering.Api.Extensions;
+﻿using Microsoft.EntityFrameworkCore;
+using Ordering.Infrastructure.Database;
+
+namespace Ordering.Api.Extensions;
 
 public static class MigrationExtensions
 {
@@ -6,9 +9,9 @@ public static class MigrationExtensions
     {
         using var scope = app.ApplicationServices.CreateScope();
 
-        //using var dbContext =
-        //    scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        //dbContext.Database.EnsureDeleted();
-        //dbContext.Database.Migrate();
+        using var dbContext =
+            scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        dbContext.Database.EnsureDeleted();
+        dbContext.Database.Migrate();
     }
 }
