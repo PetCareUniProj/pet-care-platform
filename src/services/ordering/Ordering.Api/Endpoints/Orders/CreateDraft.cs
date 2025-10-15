@@ -5,6 +5,7 @@ using Ordering.Api.Extensions;
 using Ordering.Api.Infrastructure;
 using Ordering.Application.Abstractions.Authentication;
 using Ordering.Application.Models;
+using Ordering.Application.Orders;
 using Ordering.Application.Orders.CreateDraft;
 
 namespace Ordering.Api.Endpoints.Orders;
@@ -35,7 +36,7 @@ internal sealed class CreateDraft : IEndpoint
         .WithName(Name)
         .WithTags(Tags.Orders)
         .WithDescription("Creates a new order draft.")
-        .Produces(StatusCodes.Status200OK)
+        .Produces<OrderDraftResponse>(StatusCodes.Status201Created)
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
         .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
         .RequireAuthorization();
