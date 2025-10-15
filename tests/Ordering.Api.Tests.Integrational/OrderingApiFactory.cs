@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
 using Ordering.Application.Abstractions.Data;
 using Ordering.Infrastructure.Database;
 using Testcontainers.Keycloak;
@@ -58,7 +59,16 @@ public class OrderingApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                     .UseSnakeCaseNamingConvention());
 
             services.TryAddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+            // Remove existing IOrderingIntegrationEventService implementation
+            var integrationEventServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IOrderingIntegrationEventService));
+            if (integrationEventServiceDescriptor is not null)
+            {
+                services.Remove(integrationEventServiceDescriptor);
+            }
 
+            // Add mocked IOrderingIntegrationEventService
+            var mockIntegrationEventService = Substitute.For<IOrderingIntegrationEventService>();
+            services.AddSingleton(mockIntegrationEventService);
         });
     }
 }

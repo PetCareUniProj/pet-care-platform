@@ -20,7 +20,7 @@ public class PaymentMethod : Entity
         _securityNumber = securityNumber;
         _cardHolderName = cardHolderName;
         _alias = alias;
-        _expiration = expiration;
+        _expiration = DateTime.SpecifyKind(expiration, DateTimeKind.Utc);
         _cardTypeId = cardTypeId;
     }
 

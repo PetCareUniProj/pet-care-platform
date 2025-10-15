@@ -1,10 +1,10 @@
 ﻿using FluentValidation;
 
 namespace Ordering.Application.Orders.Create;
-internal sealed class CreateCommandValidator
-    : AbstractValidator<CreateCommand>
+internal sealed class CreateOrderCommandValidator
+    : AbstractValidator<CreateOrderCommand>
 {
-    public CreateCommandValidator()
+    public CreateOrderCommandValidator()
     {
         RuleFor(x => x.BuyerId)
             .NotEmpty();
@@ -49,14 +49,7 @@ internal sealed class CreateCommandValidator
             .MaximumLength(7);
 
         RuleFor(x => x.CardTypeId)
-            .GreaterThan(0);
-
-        RuleFor(x => x.OrderItems)
-            .NotNull()
-            .Must(items => items.Any())
-            .WithMessage("Order must contain at least one item.");
-
-        RuleForEach(x => x.OrderItems)
-            .SetValidator(new OrderItemDTOValidator());
+            .GreaterThan(0)
+            .LessThanOrEqualTo(3);
     }
 }

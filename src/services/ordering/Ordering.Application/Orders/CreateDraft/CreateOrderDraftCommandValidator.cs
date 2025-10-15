@@ -28,8 +28,6 @@ internal sealed class BasketItemValidator : AbstractValidator<BasketItem>
 {
     public BasketItemValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty();
 
         RuleFor(x => x.ProductId)
             .GreaterThan(0);

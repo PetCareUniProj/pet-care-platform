@@ -1,7 +1,6 @@
 ﻿namespace Ordering.Application.Models;
 public record BasketItem
 {
-    public required string Id { get; init; }
     public int ProductId { get; init; }
     public required string ProductName { get; init; }
     public decimal UnitPrice { get; init; }

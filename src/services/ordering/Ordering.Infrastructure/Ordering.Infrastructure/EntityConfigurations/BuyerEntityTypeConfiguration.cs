@@ -8,10 +8,14 @@ internal sealed class BuyerEntityTypeConfiguration
 {
     public void Configure(EntityTypeBuilder<Buyer> builder)
     {
+        builder.Ignore(b => b.DomainEvents);
+
         builder.HasKey(b => b.Id);
+
         builder.Property(b => b.Name)
             .IsRequired()
             .HasMaxLength(100);
+
         builder.Property(b => b.Email).IsRequired();
         builder.HasMany(b => b.PaymentMethods).WithOne();
 

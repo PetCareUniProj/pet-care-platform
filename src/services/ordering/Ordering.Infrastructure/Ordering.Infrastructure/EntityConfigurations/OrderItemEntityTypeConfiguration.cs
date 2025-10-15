@@ -8,11 +8,11 @@ internal sealed class OrderItemEntityTypeConfiguration
 {
     public void Configure(EntityTypeBuilder<OrderItem> builder)
     {
-
-        builder.HasKey(o => o.Id);
-        builder.Property(o => o.Id)
-            .UseIdentityColumn();
         builder.Ignore(b => b.DomainEvents);
+
+        builder.Property(o => o.Id)
+            .UseHiLo("orderitemseq");
+
         builder.Property<int>("OrderId");
     }
 }

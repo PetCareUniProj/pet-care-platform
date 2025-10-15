@@ -12,7 +12,10 @@ namespace Ordering.Api.Endpoints.Orders;
 internal sealed class CreateDraft : IEndpoint
 {
     public const string Name = "CreateOrderDraft";
-    public sealed record CreateOrderDraftRequest(IEnumerable<BasketItem> Items);
+    public record CreateOrderDraftRequest
+    {
+        public IEnumerable<BasketItem> Items { get; init; } = [];
+    }
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiEndpoints.Orders.CreateDraft, async (CreateOrderDraftRequest request, IIdentityService identity, IMediator mediator, CancellationToken cancellationToken) =>

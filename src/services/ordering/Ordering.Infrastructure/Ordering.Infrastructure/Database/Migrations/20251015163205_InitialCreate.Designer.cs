@@ -12,7 +12,7 @@ using Ordering.Infrastructure.Database;
 namespace Ordering.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251014110613_InitialCreate")]
+    [Migration("20251015163205_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,6 +25,15 @@ namespace Ordering.Infrastructure.Database.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.HasSequence("orderitemseq")
+                .IncrementsBy(10);
+
+            modelBuilder.HasSequence("orderseq")
+                .IncrementsBy(10);
+
+            modelBuilder.HasSequence("paymentseq")
+                .IncrementsBy(10);
 
             modelBuilder.Entity("IntegrationEventLogEF.IntegrationEventLogEntry", b =>
                 {
@@ -114,15 +123,38 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<int>("Id"), "paymentseq");
 
-                    b.Property<Guid?>("BuyerId")
+                    b.Property<Guid>("BuyerId")
                         .HasColumnType("uuid")
                         .HasColumnName("buyer_id");
 
-                    b.Property<int>("CardTypeId")
+                    b.Property<string>("_alias")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("Alias");
+
+                    b.Property<string>("_cardHolderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("CardHolderName");
+
+                    b.Property<string>("_cardNumber")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)")
+                        .HasColumnName("CardNumber");
+
+                    b.Property<int>("_cardTypeId")
                         .HasColumnType("integer")
-                        .HasColumnName("card_type_id");
+                        .HasColumnName("CardTypeId");
+
+                    b.Property<DateTime>("_expiration")
+                        .HasMaxLength(25)
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("Expiration");
 
                     b.HasKey("Id")
                         .HasName("pk_payments");
@@ -130,7 +162,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                     b.HasIndex("BuyerId")
                         .HasDatabaseName("ix_payments_buyer_id");
 
-                    b.HasIndex("CardTypeId")
+                    b.HasIndex("_cardTypeId")
                         .HasDatabaseName("ix_payments_card_type_id");
 
                     b.ToTable("payments", "public");
@@ -143,7 +175,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<int>("Id"), "orderseq");
 
                     b.Property<Guid?>("BuyerId")
                         .HasColumnType("uuid")
@@ -202,7 +234,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseHiLo(b.Property<int>("Id"), "orderitemseq");
 
                     b.Property<decimal>("Discount")
                         .HasColumnType("numeric")
@@ -248,11 +280,13 @@ namespace Ordering.Infrastructure.Database.Migrations
                     b.HasOne("Ordering.Domain.Buyers.Buyer", null)
                         .WithMany("PaymentMethods")
                         .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("fk_payments_buyers_buyer_id");
 
                     b.HasOne("Ordering.Domain.Buyers.CardType", "CardType")
                         .WithMany()
-                        .HasForeignKey("CardTypeId")
+                        .HasForeignKey("_cardTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_payments_card_types_card_type_id");

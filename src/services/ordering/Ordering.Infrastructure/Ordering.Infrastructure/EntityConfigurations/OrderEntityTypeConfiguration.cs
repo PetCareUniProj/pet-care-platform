@@ -9,12 +9,19 @@ internal sealed class OrderEntityTypeConfiguration
 {
     public void Configure(EntityTypeBuilder<Order> builder)
     {
-        builder.HasKey(o => o.Id);
+        builder.Ignore(b => b.DomainEvents);
+
         builder.Property(o => o.Id)
-            .UseIdentityColumn();
+            .UseHiLo("orderseq");
         //Address value object persisted as owned entity type supported since EF Core 2.0
         builder
             .OwnsOne(o => o.Address);
+
+        builder.Property(o => o.OrderDate)
+            .HasConversion(d => d != null ? DateTime.SpecifyKind(d, DateTimeKind.Utc) : d, v => v);
+
+        builder.Property(o => o.NextRecurrenceDate)
+            .HasConversion(d => d != null ? DateTime.SpecifyKind(d.Value, DateTimeKind.Utc) : d, v => v);
 
         builder
             .Property(o => o.OrderStatus)

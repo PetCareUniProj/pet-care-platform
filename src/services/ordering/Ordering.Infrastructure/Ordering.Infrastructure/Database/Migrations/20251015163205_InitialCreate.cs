@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -14,6 +13,21 @@ namespace Ordering.Infrastructure.Database.Migrations
         {
             migrationBuilder.EnsureSchema(
                 name: "public");
+
+            migrationBuilder.CreateSequence(
+                name: "orderitemseq",
+                schema: "public",
+                incrementBy: 10);
+
+            migrationBuilder.CreateSequence(
+                name: "orderseq",
+                schema: "public",
+                incrementBy: 10);
+
+            migrationBuilder.CreateSequence(
+                name: "paymentseq",
+                schema: "public",
+                incrementBy: 10);
 
             migrationBuilder.CreateTable(
                 name: "buyers",
@@ -65,10 +79,13 @@ namespace Ordering.Infrastructure.Database.Migrations
                 schema: "public",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    card_type_id = table.Column<int>(type: "integer", nullable: false),
-                    buyer_id = table.Column<Guid>(type: "uuid", nullable: true)
+                    id = table.Column<int>(type: "integer", nullable: false),
+                    CardTypeId = table.Column<int>(type: "integer", nullable: false),
+                    buyer_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Alias = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CardHolderName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CardNumber = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
+                    Expiration = table.Column<DateTime>(type: "timestamp with time zone", maxLength: 25, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -78,10 +95,11 @@ namespace Ordering.Infrastructure.Database.Migrations
                         column: x => x.buyer_id,
                         principalSchema: "public",
                         principalTable: "buyers",
-                        principalColumn: "id");
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "fk_payments_card_types_card_type_id",
-                        column: x => x.card_type_id,
+                        column: x => x.CardTypeId,
                         principalSchema: "public",
                         principalTable: "card_types",
                         principalColumn: "id",
@@ -93,8 +111,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 schema: "public",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id = table.Column<int>(type: "integer", nullable: false),
                     order_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     buyer_id = table.Column<Guid>(type: "uuid", nullable: true),
                     order_status = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
@@ -128,8 +145,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 schema: "public",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id = table.Column<int>(type: "integer", nullable: false),
                     product_name = table.Column<string>(type: "text", nullable: false),
                     picture_url = table.Column<string>(type: "text", nullable: false),
                     unit_price = table.Column<decimal>(type: "numeric", nullable: false),
@@ -178,7 +194,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                 name: "ix_payments_card_type_id",
                 schema: "public",
                 table: "payments",
-                column: "card_type_id");
+                column: "CardTypeId");
         }
 
         /// <inheritdoc />
@@ -206,6 +222,18 @@ namespace Ordering.Infrastructure.Database.Migrations
 
             migrationBuilder.DropTable(
                 name: "card_types",
+                schema: "public");
+
+            migrationBuilder.DropSequence(
+                name: "orderitemseq",
+                schema: "public");
+
+            migrationBuilder.DropSequence(
+                name: "orderseq",
+                schema: "public");
+
+            migrationBuilder.DropSequence(
+                name: "paymentseq",
                 schema: "public");
         }
     }
