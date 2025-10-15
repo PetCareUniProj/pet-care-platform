@@ -25,11 +25,11 @@ public static class OrderingErrors
         public static readonly Error NullEmail =
             Error.Problem("Buyer.NullEmail", "Email must be provided.");
 
-        public static readonly Error AllreadyExists =
+        public static readonly Error AlreadyExists =
             Error.Problem("Buyer.AlreadyExists", "The buyer with the same IdentityGuid already exists.");
 
-        public static readonly Error NotExsists =
-            Error.Problem("Buyer.NotExists", "The buyer does not exist.");
+        public static readonly Error NotExists =
+            Error.NotFound("Buyer.NotExists", "The buyer does not exist.");
     }
 
     public static class PaymentMethod
@@ -49,6 +49,9 @@ public static class OrderingErrors
 
     public static class Order
     {
+        public static Error NotFound(int orderId) =>
+            Error.NotFound("Order.NotFound", $"Order with id {orderId} was not found.");
+
         public static readonly Error NullAddress =
             Error.Problem("Order.NullAddress", "Address must be provided.");
 

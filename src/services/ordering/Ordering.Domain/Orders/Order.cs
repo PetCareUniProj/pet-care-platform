@@ -26,6 +26,7 @@ public class Order : Entity
     {
         var order = new Order
         {
+            BuyerId = buyerId,
             OrderStatus = OrderStatus.Draft
         };
         order.Raise(new OrderDraftedDomainEvent(order, buyerId, buyerName, buyerEmail));

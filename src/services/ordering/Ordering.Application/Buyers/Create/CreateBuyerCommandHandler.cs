@@ -14,7 +14,7 @@ internal sealed class CreateBuyerCommandHandler(IApplicationDbContext applicatio
 
         if (exstingBuyer is not null)
         {
-            return Result.Failure(OrderingErrors.Buyer.AllreadyExists);
+            return Result.Failure(OrderingErrors.Buyer.AlreadyExists);
         }
 
         var buyerResult = Buyer.Create(command.Id, command.Name, command.Email);
