@@ -1,12 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-using Bogus;
-using Ordering.Api.Endpoints;
-using Ordering.Api.Endpoints.Orders;
-using Ordering.Application.Models;
-using Ordering.Application.Orders;
-
-namespace Ordering.Api.Tests.Integrational.Orders;
+﻿namespace Ordering.Api.Tests.Integrational.Orders;
 
 public sealed class CreateOrderEndpointTests : BaseIntegrationTest, IClassFixture<OrderingApiFactory>
 {

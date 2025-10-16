@@ -64,6 +64,8 @@ internal static class MigrateDbContextExtensions
 
         try
         {
+            await context.Database.EnsureDeletedAsync();
+            //TODO: REMOVE
             await context.Database.MigrateAsync();
             await seeder(context, services);
         }

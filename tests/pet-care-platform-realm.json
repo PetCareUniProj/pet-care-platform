@@ -313,7 +313,17 @@
       ],
       "public-client-web": [],
       "security-admin-console": [],
-      "ordering-api": [],
+      "ordering-api": [
+        {
+          "id": "c3dfe1f2-29d0-4c4b-91c6-7d6c17a1a5e9",
+          "name": "Admin",
+          "description": "",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "10fd2344-0c8e-46e3-8000-3fb81738be29",
+          "attributes": {}
+        }
+      ],
       "admin-cli": [],
       "account-console": [],
       "basket-api": [],
@@ -497,7 +507,8 @@
       "requiredActions": [],
       "realmRoles": [ "default-roles-pet-care-platform" ],
       "clientRoles": {
-        "catalog-api": [ "Admin" ]
+        "catalog-api": [ "Admin" ],
+        "ordering-api": ["Admin"]
       },
       "notBefore": 0,
       "groups": []

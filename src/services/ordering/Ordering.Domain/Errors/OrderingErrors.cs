@@ -52,6 +52,9 @@ public static class OrderingErrors
         public static Error NotFound(int orderId) =>
             Error.NotFound("Order.NotFound", $"Order with id {orderId} was not found.");
 
+        public static readonly Error NotFoundForUser =
+            Error.NotFound("Order.NotFound", "No orders found for the specified user.");
+
         public static readonly Error NullAddress =
             Error.Problem("Order.NullAddress", "Address must be provided.");
 

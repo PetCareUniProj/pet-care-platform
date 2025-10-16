@@ -11,6 +11,7 @@ public static class ApiEndpoints
         public const string Create = $"{Base}";
         public const string GetCardTypes = $"{Base}/cardtypes";
         public const string GetById = $"{Base}/{{id:int}}";
-        public const string GetByUser = $"{Base}/";
+        public const string GetByUser = $"{Base}/user/me";
+        public const string GetByUserId = $"{Base}/user/{{userId:guid}}";
     }
 }

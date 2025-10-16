@@ -35,7 +35,7 @@
     <Project Path="src/shared/SharedKernel/SharedKernel.csproj" Id="3a8213f6-5b12-4569-bfa0-c912f39b1130" />
   </Folder>
   <Folder Name="/tests/">
-    <File Path="tests/test-realm.json" />
+    <File Path="tests/pet-care-platform-realm.json" />
     <Project Path="tests/Basket.Unit.Tests/Basket.Unit.Tests.csproj" />
     <Project Path="tests/Catalog.Api.Tests.Integrational/Catalog.Api.Tests.Integrational.csproj" Id="8b99bb43-9478-4771-adce-da22ba338efa" />
     <Project Path="tests/Ordering.Api.Tests.Integrational/Ordering.Api.Tests.Integrational.csproj" Id="464f4121-1b90-42ad-9873-3d8c9a86f87c" />
