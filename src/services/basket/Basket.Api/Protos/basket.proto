@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 option csharp_namespace = "Basket.Api.Grpc";
 
@@ -18,8 +18,8 @@ message CustomerBasketResponse {
 }
 
 message BasketItem {
-    int32 product_id = 2;
-    int32 quantity = 6;
+    int32 product_id = 1;
+    int32 quantity = 5;
 }
 
 message UpdateBasketRequest {
