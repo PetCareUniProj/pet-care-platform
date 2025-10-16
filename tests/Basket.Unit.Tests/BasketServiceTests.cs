@@ -36,15 +36,33 @@ public sealed class BasketServiceTests
     public async Task GetBasket_ShouldReturnItems_WhenUserIdIsValidGuid()
     {
         // Arrange
-        var userId = Guid.NewGuid();
         var mockRepository = Substitute.For<IBasketRepository>();
-        List<BasketItem> items = [new BasketItem { Id = "some-id" }];
-        mockRepository.GetBasketAsync(userId)
-            .Returns(Task.FromResult(new CustomerBasket { BuyerId = userId, Items = items })!);
-        BasketService service = new(mockRepository, NullLogger<BasketService>.Instance);
+        var items = new List<BasketItem>
+    {
+        new BasketItem
+        {
+            ProductId = 1,
+            ProductName = "bob",
+            Quantity = 1,
+            UnitPrice = 20,
+            OldUnitPrice = 20,
+            PictureUrl = "asd"
+        }
+    };
+        mockRepository.GetBasketAsync(Guid.Parse("c3dfe1f2-29d0-4c4b-91c6-7d6c17a1a5e9"))
+            .Returns(Task.FromResult(new CustomerBasket
+            {
+                BuyerId = Guid.Parse("c3dfe1f2-29d0-4c4b-91c6-7d6c17a1a5e9"),
+                Items = items
+            })!);
+
+        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance);
         var serverCallContext = TestServerCallContext.Create();
-        DefaultHttpContext httpContext = new();
-        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(NameIdentifierClaimType, userId.ToString())]));
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+        new Claim(NameIdentifierClaimType, "c3dfe1f2-29d0-4c4b-91c6-7d6c17a1a5e9")
+        }));
         serverCallContext.SetUserState("__HttpContext", httpContext);
 
         // Act
@@ -83,10 +101,12 @@ public sealed class BasketServiceTests
     {
         // Arrange
         var mockRepository = Substitute.For<IBasketRepository>();
-        BasketService service = new(mockRepository, NullLogger<BasketService>.Instance);
+        var items = new List<BasketItem> { new BasketItem() };
+        mockRepository.GetBasketAsync(Guid.Parse("c3dfe1f2-29d0-4c4b-91c6-7d6c17a1a5e9"))
+            .Returns(Task.FromResult(new CustomerBasket { BuyerId = Guid.Parse("c3dfe1f2-29d0-4c4b-91c6-7d6c17a1a5e9"), Items = items })!);
+        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance);
         var serverCallContext = TestServerCallContext.Create();
-        DefaultHttpContext httpContext = new();
-        httpContext.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("other-claim", "value")]));
+        var httpContext = new DefaultHttpContext();
         serverCallContext.SetUserState("__HttpContext", httpContext);
 
         // Act
@@ -103,7 +123,7 @@ public sealed class BasketServiceTests
         // Arrange
         var userId = Guid.NewGuid();
         var mockRepository = Substitute.For<IBasketRepository>();
-        CustomerBasket updatedBasket = new() { BuyerId = userId, Items = [new BasketItem { Id = "item-1", ProductId = 1, Quantity = 2 }] };
+        CustomerBasket updatedBasket = new() { BuyerId = userId, Items = [new BasketItem { ProductId = 1, Quantity = 2 }] };
 
         mockRepository.UpdateBasketAsync(Arg.Any<CustomerBasket>())
             .Returns(Task.FromResult(updatedBasket)!);
