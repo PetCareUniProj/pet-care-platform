@@ -26,6 +26,8 @@
     <Project Path="src/services/ordering/Ordering.Application/Ordering.Application.csproj" Id="40a5a1e4-a58a-466e-804c-21bef745149b" />
     <Project Path="src/services/ordering/Ordering.Domain/Ordering.Domain.csproj" Id="afc9cdad-e5b3-41be-90ee-0be04b92d838" />
     <Project Path="src/services/ordering/Ordering.Infrastructure/Ordering.Infrastructure/Ordering.Infrastructure.csproj" Id="9c91114a-2d10-472e-bc32-dc00084f3c08" />
+    <Project Path="src/services/ordering/OrderProcessor/OrderProcessor.csproj" />
+    <Project Path="src/services/ordering/PaymentProcessor/PaymentProcessor.csproj" />
   </Folder>
   <Folder Name="/src/shared/">
     <Project Path="src/shared/EventBus/EventBus.csproj" Id="b3dd9b64-95bc-4bb1-8e96-2b3ba649edd5" />
