@@ -1,15 +1,17 @@
 ﻿using System.Reflection;
 using Asp.Versioning;
 using EventBus.Abstractions;
+using EventBus.Extensions;
 using Microsoft.OpenApi.Models;
 using Ordering.Api.Auth;
 using Ordering.Api.Infrastructure;
 using Ordering.Application;
 using Ordering.Application.Abstractions.Authentication;
+using Ordering.Application.IntegrationalEvents.Events;
+using Ordering.Application.IntegrationalEvents.Handlers;
 using Ordering.Infrastructure;
 using Ordering.Infrastructure.Database;
 using ServiceDefaults;
-
 namespace Ordering.Api.Extensions;
 
 internal static class Extensions
@@ -97,5 +99,10 @@ internal static class Extensions
 
     private static void AddEventBusSubscriptions(this IEventBusBuilder eventBus)
     {
+        eventBus.AddSubscription<GracePeriodConfirmedIntegrationEvent, GracePeriodConfirmedIntegrationEventHandler>();
+        eventBus.AddSubscription<OrderStockConfirmedIntegrationEvent, OrderStockConfirmedIntegrationEventHandler>();
+        eventBus.AddSubscription<OrderStockRejectedIntegrationEvent, OrderStockRejectedIntegrationEventHandler>();
+        eventBus.AddSubscription<OrderPaymentFailedIntegrationEvent, OrderPaymentFailedIntegrationEventHandler>();
+        eventBus.AddSubscription<OrderPaymentSucceededIntegrationEvent, OrderPaymentSucceededIntegrationEventHandler>();
     }
 }

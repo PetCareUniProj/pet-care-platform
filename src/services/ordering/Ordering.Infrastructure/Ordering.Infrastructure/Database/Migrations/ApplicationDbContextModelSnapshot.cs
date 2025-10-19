@@ -310,6 +310,31 @@ namespace Ordering.Infrastructure.Database.Migrations
                                 .HasColumnType("integer")
                                 .HasColumnName("id");
 
+                            b1.Property<string>("City")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("address_city");
+
+                            b1.Property<string>("Country")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("address_country");
+
+                            b1.Property<string>("State")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("address_state");
+
+                            b1.Property<string>("Street")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("address_street");
+
+                            b1.Property<string>("ZipCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("address_zip_code");
+
                             b1.HasKey("OrderId");
 
                             b1.ToTable("orders", "public");
@@ -319,8 +344,7 @@ namespace Ordering.Infrastructure.Database.Migrations
                                 .HasConstraintName("fk_orders_orders_id");
                         });
 
-                    b.Navigation("Address")
-                        .IsRequired();
+                    b.Navigation("Address");
 
                     b.Navigation("Buyer");
                 });

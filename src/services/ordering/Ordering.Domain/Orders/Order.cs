@@ -4,7 +4,7 @@ public class Order : Entity
 {
     public int Id { get; private set; }
     public DateTime OrderDate { get; private set; }
-    public Address Address { get; private set; }
+    public Address? Address { get; private set; }
     public Guid? BuyerId { get; private set; }
     public Buyer Buyer { get; }
     public OrderStatus OrderStatus { get; private set; }
@@ -163,7 +163,7 @@ public class Order : Entity
         OrderDate = DateTime.UtcNow;
 
         AddOrderStartedDomainEvent(buyerId, cardTypeId, cardNumber, cardSecurityNumber, cardHolderName, cardExpiration);
-
+        SetAwaitingValidationStatus();
         return Result.Success();
     }
     public Result AddOrderItem(int productId, string productName, decimal unitPrice, decimal discount, string pictureUrl, int units = 1)

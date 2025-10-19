@@ -10,6 +10,7 @@ internal sealed class GetOrderByIdQueryHandler
     {
         var orderQuery = dbContext.Orders
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(o => o.OrderItems)
             .Include(o => o.Address)
             .Where(o => o.Id == query.OrderId);

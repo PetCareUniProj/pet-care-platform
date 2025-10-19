@@ -113,6 +113,11 @@ namespace Ordering.Infrastructure.Database.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false),
                     order_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    address_street = table.Column<string>(type: "text", nullable: true),
+                    address_city = table.Column<string>(type: "text", nullable: true),
+                    address_state = table.Column<string>(type: "text", nullable: true),
+                    address_country = table.Column<string>(type: "text", nullable: true),
+                    address_zip_code = table.Column<string>(type: "text", nullable: true),
                     buyer_id = table.Column<Guid>(type: "uuid", nullable: true),
                     order_status = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),

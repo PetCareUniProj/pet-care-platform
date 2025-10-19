@@ -28,7 +28,4 @@
 		<ProjectReference Include="..\..\..\shared\IntegrationEventLogEF\IntegrationEventLogEF.csproj" />
 		<ProjectReference Include="..\Ordering.Domain\Ordering.Domain.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="IntegrationalEvents\Handlers\" />
-	</ItemGroup>
 </Project>

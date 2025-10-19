@@ -14,8 +14,14 @@ internal sealed class OrderEntityTypeConfiguration
         builder.Property(o => o.Id)
             .UseHiLo("orderseq");
         //Address value object persisted as owned entity type supported since EF Core 2.0
-        builder
-            .OwnsOne(o => o.Address);
+        builder.OwnsOne(o => o.Address, a =>
+        {
+            a.Property(ad => ad.Street).HasColumnName("address_street").IsRequired();
+            a.Property(ad => ad.City).HasColumnName("address_city").IsRequired();
+            a.Property(ad => ad.State).HasColumnName("address_state").IsRequired();
+            a.Property(ad => ad.Country).HasColumnName("address_country").IsRequired();
+            a.Property(ad => ad.ZipCode).HasColumnName("address_zip_code").IsRequired();
+        });
 
         builder.Property(o => o.OrderDate)
             .HasConversion(d => d != null ? DateTime.SpecifyKind(d, DateTimeKind.Utc) : d, v => v);
