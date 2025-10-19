@@ -22,6 +22,8 @@
     <ProjectReference Include="..\..\services\basket\Basket.Api\Basket.Api.csproj" />
     <ProjectReference Include="..\..\services\catalog\Catalog.Api\Catalog.Api.csproj" />
     <ProjectReference Include="..\..\services\ordering\Ordering.Api\Ordering.Api.csproj" />
+    <ProjectReference Include="..\..\services\ordering\OrderProcessor\OrderProcessor.csproj" />
+    <ProjectReference Include="..\..\services\ordering\PaymentProcessor\PaymentProcessor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -33,6 +33,11 @@ var orderingApi = builder.AddProject<Ordering_Api>("ordering-api")
     .WithReference(orderDb).WaitFor(orderDb)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
+builder.AddProject<OrderProcessor>("orderprocessor")
+        .WithReference(orderDb).WaitFor(orderDb);
+
+builder.AddProject<PaymentProcessor>("paymentprocessor");
+
 builder.AddNpmApp("subscription-api", "../../services/subscription", "start:dev")
     .WithNpmPackageInstallation()
     .WithHttpEndpoint(env: "PORT")
