@@ -1,6 +1,9 @@
 ﻿using Catalog.Application.Abstractions.Data;
+using Catalog.Application.Abstractions.IntegrationalEvents;
 using Catalog.Infrastructure.Database;
+using Catalog.Infrastructure.IntegrationalEvents;
 using Catalog.Infrastructure.Time;
+using IntegrationEventLogEF.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +23,8 @@ public static class DependencyInjection
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
-
+        services.AddTransient<IIntegrationEventLogService, IntegrationEventLogService<ApplicationDbContext>>();
+        services.AddTransient<ICatalogIntegrationEventService, CatalogIntegrationEventService>();
         return services;
     }
 

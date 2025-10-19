@@ -1,8 +1,10 @@
 ﻿namespace Ordering.Application.DomainEventHandlers;
-internal sealed class OrderStatusChangedToStockConfirmedDomainEventHandler : IDomainEventHandler<OrderStatusChangedToStockConfirmedDomainEvent>
+internal sealed class OrderStatusChangedToStockConfirmedDomainEventHandler
+    (IOrderingIntegrationEventService orderingIntegrationEventService) : IDomainEventHandler<OrderStatusChangedToStockConfirmedDomainEvent>
 {
-    public Task Handle(OrderStatusChangedToStockConfirmedDomainEvent domainEvent, CancellationToken cancellationToken)
+    public async Task Handle(OrderStatusChangedToStockConfirmedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var integrationalEvent = new OrderStatusChangedToStockConfirmedIntegrationEvent(domainEvent.OrderId);
+        await orderingIntegrationEventService.AddAndSaveEventAsync(integrationalEvent);
     }
 }

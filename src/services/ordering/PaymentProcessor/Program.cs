@@ -2,7 +2,7 @@
 
 builder.AddServiceDefaults();
 
-builder.AddRabbitMqEventBus("EventBus")
+builder.AddRabbitMqEventBus("eventbus")
     .AddSubscription<OrderStatusChangedToStockConfirmedIntegrationEvent, OrderStatusChangedToStockConfirmedIntegrationEventHandler>();
 
 builder.Services.AddOptions<PaymentOptions>()

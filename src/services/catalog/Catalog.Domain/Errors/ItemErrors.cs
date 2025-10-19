@@ -1,4 +1,4 @@
-using SharedKernel;
+﻿using SharedKernel;
 
 namespace Catalog.Domain.Errors;
 public static class ItemErrors
@@ -14,6 +14,10 @@ public static class ItemErrors
     public static Error OutOfStock(int catalogItemId) => Error.Problem(
         "CatalogItems.OutOfStock",
         $"The catalog item with Id = '{catalogItemId}' is out of stock.");
+
+    public static Error InvalidQuantity(int catalogItemId) => Error.Problem(
+        "CatalogItems.InvalidQuantity",
+        $"The specified quantity for catalog item with Id = '{catalogItemId}' is invalid.");
 
     public static Error ExceedsMaxStock(int catalogItemId, int maxStock) => Error.Problem(
         "CatalogItems.ExceedsMaxStock",

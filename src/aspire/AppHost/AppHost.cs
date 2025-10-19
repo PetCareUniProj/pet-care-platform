@@ -8,8 +8,8 @@ var rabbitMq = builder.AddRabbitMQ("eventbus")
 
 var postgres = builder.AddPostgres("postgres", port: 5432)
     .WithDataVolume()
-    .WithPgAdmin()
-    .WithLifetime(ContainerLifetime.Persistent);
+    .WithPgAdmin();
+//.WithLifetime(ContainerLifetime.Persistent);
 
 var catalogDb = postgres.AddDatabase("catalogDb");
 var orderDb = postgres.AddDatabase("orderingDb");
@@ -34,9 +34,11 @@ var orderingApi = builder.AddProject<Ordering_Api>("ordering-api")
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
 builder.AddProject<OrderProcessor>("orderprocessor")
-        .WithReference(orderDb).WaitFor(orderDb);
+        .WithReference(orderDb).WaitFor(orderDb)
+        .WithReference(rabbitMq).WaitFor(rabbitMq);
 
-builder.AddProject<PaymentProcessor>("paymentprocessor");
+builder.AddProject<PaymentProcessor>("paymentprocessor")
+    .WithReference(rabbitMq).WaitFor(rabbitMq);
 
 builder.AddNpmApp("subscription-api", "../../services/subscription", "start:dev")
     .WithNpmPackageInstallation()

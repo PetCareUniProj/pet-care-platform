@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using Ordering.Infrastructure.Database;
 
-namespace Ordering.Api.Extensions;
+namespace Microsoft.AspNetCore.Hosting;
 
 internal static class MigrateDbContextExtensions
 {
@@ -64,8 +63,6 @@ internal static class MigrateDbContextExtensions
 
         try
         {
-            await context.Database.EnsureDeletedAsync();
-            //TODO: REMOVE
             await context.Database.MigrateAsync();
             await seeder(context, services);
         }
@@ -90,4 +87,8 @@ internal static class MigrateDbContextExtensions
             return Task.CompletedTask;
         }
     }
+}
+public interface IDbSeeder<in TContext> where TContext : DbContext
+{
+    Task SeedAsync(TContext context);
 }

@@ -1,6 +1,7 @@
 ﻿using Ordering.Domain.Buyers;
+using Ordering.Infrastructure.Database;
 
-namespace Ordering.Infrastructure.Database;
+namespace Ordering.Api.Infrastructure;
 public sealed class ApplicationDbContextSeed : IDbSeeder<ApplicationDbContext>
 {
     public async Task SeedAsync(ApplicationDbContext context)
