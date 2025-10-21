@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "48d52524-7380-4fb7-96b5-8d0cace215c9",
   "realm": "pet-care-platform",
   "notBefore": 0,
@@ -882,10 +882,10 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "https://localhost:7083/*"
+        "*"
       ],
       "webOrigins": [
-        "https://localhost:7083"
+        "*"
       ],
       "notBefore": 0,
       "bearerOnly": false,
