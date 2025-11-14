@@ -10,10 +10,10 @@ public class IntegrationEventLogService<TContext> : IIntegrationEventLogService,
     public IntegrationEventLogService(TContext context)
     {
         _context = context;
-        _eventTypes = Assembly.Load(Assembly.GetEntryAssembly().FullName)
-            .GetTypes()
-            .Where(t => t.Name.EndsWith(nameof(IntegrationEvent)))
-            .ToArray();
+        _eventTypes = AppDomain.CurrentDomain.GetAssemblies()
+               .SelectMany(assembly => assembly.GetTypes())
+               .Where(t => t.Name.EndsWith(nameof(IntegrationEvent)))
+               .ToArray();
     }
 
     public async Task<IEnumerable<IntegrationEventLogEntry>> RetrieveEventLogsPendingToPublishAsync(Guid transactionId)

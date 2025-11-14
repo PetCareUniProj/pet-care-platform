@@ -1,19 +1,4 @@
-﻿using Ordering.Domain.AggregatesModel.BuyerAggregate;
-using SharedKernel;
+﻿namespace Ordering.Domain.Events;
 
-namespace Ordering.Domain.Events;
-
-public class BuyerAndPaymentMethodVerifiedDomainEvent
-    : IDomainEvent
-{
-    public Buyer Buyer { get; private set; }
-    public PaymentMethod Payment { get; private set; }
-    public int OrderId { get; private set; }
-
-    public BuyerAndPaymentMethodVerifiedDomainEvent(Buyer buyer, PaymentMethod payment, int orderId)
-    {
-        Buyer = buyer;
-        Payment = payment;
-        OrderId = orderId;
-    }
-}
+public sealed record BuyerAndPaymentMethodVerifiedDomainEvent(Buyer Buyer, PaymentMethod Payment, int OrderId)
+    : IDomainEvent;

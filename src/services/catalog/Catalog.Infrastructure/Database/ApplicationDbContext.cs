@@ -1,5 +1,6 @@
 ﻿using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Entities;
+using IntegrationEventLogEF;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +25,7 @@ public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
         modelBuilder.HasDefaultSchema(Schemas.Default);
+        modelBuilder.UseIntegrationEventLogs();
     }
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

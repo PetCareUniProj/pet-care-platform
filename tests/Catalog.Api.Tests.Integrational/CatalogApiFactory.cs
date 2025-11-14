@@ -20,7 +20,7 @@ public class CatalogApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     .Build();
 
     private readonly KeycloakContainer _keycloakContainer = new KeycloakBuilder()
-        .WithImage("quay.io/keycloak/keycloak:26.2")
+        .WithImage("quay.io/keycloak/keycloak:26.3")
         .WithResourceMapping("./pet-care-platform-realm.json", "/opt/keycloak/data/import")
         .WithCommand("--import-realm")
         .Build();

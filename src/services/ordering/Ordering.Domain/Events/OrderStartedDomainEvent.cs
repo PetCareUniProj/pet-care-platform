@@ -1,15 +1,11 @@
-﻿using Ordering.Domain.AggregatesModel.OrderAggregate;
-using SharedKernel;
-
-namespace Ordering.Domain.Events;
+﻿namespace Ordering.Domain.Events;
 
 /// <summary>
 /// Event used when an order is created
 /// </summary>
-public record class OrderStartedDomainEvent(
+public sealed record OrderStartedDomainEvent(
     Order Order,
-    string UserId,
-    string UserName,
+    Guid BuyerId,
     int CardTypeId,
     string CardNumber,
     string CardSecurityNumber,
