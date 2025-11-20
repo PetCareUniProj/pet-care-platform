@@ -15,7 +15,8 @@ public class OrderPaymentFailedIntegrationEventHandler
 
         var command = new CancelOrderCommand
         {
-            OrderId = @event.OrderId
+            OrderId = @event.OrderId,
+            IsApp = true
         };
 
         logger.LogInformation(

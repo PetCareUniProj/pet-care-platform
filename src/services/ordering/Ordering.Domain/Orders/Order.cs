@@ -357,6 +357,7 @@ public class Order : Entity
         }
 
         OrderStatus = OrderStatus.Cancelled;
+        CancelRecurrence();
         Description = "The order was cancelled.";
         Raise(new OrderCancelledDomainEvent(this));
         return Result.Success();

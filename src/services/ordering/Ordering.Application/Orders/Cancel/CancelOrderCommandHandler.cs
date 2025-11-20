@@ -1,14 +1,22 @@
 ﻿using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Orders.Cancel;
+
 internal sealed class CancelOrderCommandHandler
     (IApplicationDbContext dbContext)
     : ICommandHandler<CancelOrderCommand, Result>
 {
     public async ValueTask<Result> Handle(CancelOrderCommand command, CancellationToken cancellationToken)
     {
+
         var order = await dbContext.Orders
             .FindAsync([command.OrderId], cancellationToken);
+        var isUserOrder = order?.BuyerId == command.Identity;
+
+        if (!command.IsAdmin && !command.IsApp && !isUserOrder)
+        {
+            return Result.Failure(OrderingErrors.Order.NotFoundForUser);
+        }
 
         if (order is null)
         {
