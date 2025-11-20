@@ -15,6 +15,8 @@ internal sealed class CreateDraft : IEndpoint
     public const string Name = "CreateOrderDraft";
     public record CreateOrderDraftRequest
     {
+        public required bool IsRecurring { get; init; }
+        public TimeSpan? RecurrenceInterval { get; init; }
         public IEnumerable<BasketItem> Items { get; init; } = [];
     }
     public void MapEndpoint(IEndpointRouteBuilder app)
@@ -26,7 +28,9 @@ internal sealed class CreateDraft : IEndpoint
                 BuyerId = identity.GetUserIdentity(),
                 BuyerEmail = identity.GetEmail()!,
                 BuyerName = identity.GetFirstName()!,
-                Items = request.Items
+                Items = request.Items,
+                IsRecurring = request.IsRecurring,
+                RecurrenceInterval = request.RecurrenceInterval
             };
             var result = await mediator.Send(createOrderCommand, cancellationToken);
             return result.Match(

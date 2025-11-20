@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Api.Tests.Integrational.Orders;
+
 public sealed class GetOrdersByUserEndpointTests : BaseIntegrationTest, IClassFixture<OrderingApiFactory>
 {
     private readonly HttpClient _testClient;
@@ -12,6 +13,7 @@ public sealed class GetOrdersByUserEndpointTests : BaseIntegrationTest, IClassFi
     {
         var draftRequest = new CreateDraft.CreateOrderDraftRequest
         {
+            IsRecurring = false,
             Items = new Faker<BasketItem>()
                 .RuleFor(x => x.ProductId, faker => faker.Random.Int(1, 1000))
                 .RuleFor(x => x.ProductName, faker => faker.Commerce.ProductName())
