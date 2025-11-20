@@ -5,7 +5,8 @@ public record OrderDraftResponse
     public int Id { get; init; }
     public IEnumerable<OrderItemDTO> OrderItems { get; init; } = [];
     public decimal Total { get; init; }
-
+    public bool IsRecurring { get; init; }
+    public TimeSpan? RecurrenceInterval { get; init; }
     public static OrderDraftResponse FromOrder(Order order)
     {
         return new OrderDraftResponse()
@@ -20,7 +21,9 @@ public record OrderDraftResponse
                 Units = oi.Units,
                 ProductName = oi.ProductName
             }),
-            Total = order.GetTotal()
+            IsRecurring = order.IsRecurring,
+            RecurrenceInterval = order.RecurrenceInterval,
+            Total = order.GetTotal(),
         };
     }
 }

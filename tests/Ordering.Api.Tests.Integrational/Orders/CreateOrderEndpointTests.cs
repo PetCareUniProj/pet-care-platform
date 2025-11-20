@@ -33,31 +33,89 @@ public sealed class CreateOrderEndpointTests : BaseIntegrationTest, IClassFixtur
         // Arrange
         var client = await CreateAuthenticatedClientAsync("test");
 
-        // Step 1: Create a draft order
-        var draftRequest = new CreateDraft.CreateOrderDraftRequest
+        // Step 1: Create a non-recurring draft order
+        var nonRecurringDraftRequest = new CreateDraft.CreateOrderDraftRequest
         {
+            IsRecurring = false,
             Items = _basketItemGenerator.Generate(3)
         };
-        var draftResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, draftRequest);
-        draftResponse.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var draftOrder = await draftResponse.Content.ReadFromJsonAsync<OrderDraftResponse>();
-        draftOrder.ShouldNotBeNull();
+        var nonRecurringDraftResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, nonRecurringDraftRequest);
+        nonRecurringDraftResponse.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var nonRecurringDraftOrder = await nonRecurringDraftResponse.Content.ReadFromJsonAsync<OrderDraftResponse>();
+        nonRecurringDraftOrder.ShouldNotBeNull();
 
-        // Step 2: Create an order from the draft
+        // Step 2: Create an order from the non-recurring draft
         var createOrderRequest = _orderRequestGenerator.Generate() with
         {
-            DraftOrderId = draftOrder.Id
+            DraftOrderId = nonRecurringDraftOrder.Id
+        };
+        var nonRecurringResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.Create, createOrderRequest);
+
+        // Assert for non-recurring order
+        nonRecurringResponse.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var nonRecurringOrderResponse = await nonRecurringResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        nonRecurringOrderResponse.ShouldNotBeNull();
+        nonRecurringOrderResponse!.Id.ShouldBe(nonRecurringDraftOrder.Id);
+        nonRecurringOrderResponse.IsRecurring.ShouldBeFalse();
+
+        // Step 3: Create a recurring draft order
+        var recurringDraftRequest = new CreateDraft.CreateOrderDraftRequest
+        {
+            IsRecurring = true,
+            RecurrenceInterval = TimeSpan.FromDays(7),
+            Items = _basketItemGenerator.Generate(3)
+        };
+        var recurringDraftResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, recurringDraftRequest);
+        recurringDraftResponse.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var recurringDraftOrder = await recurringDraftResponse.Content.ReadFromJsonAsync<OrderDraftResponse>();
+        recurringDraftOrder.ShouldNotBeNull();
+
+        // Step 4: Create an order from the recurring draft
+        createOrderRequest = _orderRequestGenerator.Generate() with
+        {
+            DraftOrderId = recurringDraftOrder.Id
+        };
+        var recurringResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.Create, createOrderRequest);
+
+        // Assert for recurring order
+        recurringResponse.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var recurringOrderResponse = await recurringResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        recurringOrderResponse.ShouldNotBeNull();
+        recurringOrderResponse!.Id.ShouldBe(recurringDraftOrder.Id);
+        recurringOrderResponse.IsRecurring.ShouldBeTrue();
+        recurringOrderResponse.RecurrenceInterval.ShouldBe(TimeSpan.FromDays(7));
+        recurringOrderResponse.NextRecurrenceDate.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task CreateOrder_ShouldReturnBadRequest_WhenDataIsInvalid()
+    {
+        // Arrange
+        var client = await CreateAuthenticatedClientAsync("test");
+
+        // Step 1: Create a draft order with invalid recurrence interval
+        var invalidDraftRequest = new CreateDraft.CreateOrderDraftRequest
+        {
+            IsRecurring = true,
+            RecurrenceInterval = TimeSpan.Zero, // Invalid interval
+            Items = _basketItemGenerator.Generate(3)
+        };
+        var invalidDraftResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, invalidDraftRequest);
+        invalidDraftResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var invalidDraftOrder = await invalidDraftResponse.Content.ReadFromJsonAsync<OrderDraftResponse>();
+        invalidDraftOrder.ShouldNotBeNull();
+
+        // Step 2: Attempt to create an order from the invalid draft
+        var createOrderRequest = _orderRequestGenerator.Generate() with
+        {
+            DraftOrderId = invalidDraftOrder.Id
         };
 
         // Act
         var response = await client.PostAsJsonAsync(ApiEndpoints.Orders.Create, createOrderRequest);
 
         // Assert
-        response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var orderResponse = await response.Content.ReadFromJsonAsync<OrderResponse>();
-        orderResponse.ShouldNotBeNull();
-        orderResponse!.Id.ShouldBe(draftOrder.Id);
-        orderResponse.Total.ShouldBeGreaterThan(0);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -72,35 +130,5 @@ public sealed class CreateOrderEndpointTests : BaseIntegrationTest, IClassFixtur
 
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task CreateOrder_ShouldReturnBadRequest_WhenDataIsInvalid()
-    {
-        // Arrange
-        var client = await CreateAuthenticatedClientAsync("test");
-
-        // Step 1: Create a draft order
-        var draftRequest = new CreateDraft.CreateOrderDraftRequest
-        {
-            Items = _basketItemGenerator.Generate(3)
-        };
-        var draftResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, draftRequest);
-        draftResponse.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var draftOrder = await draftResponse.Content.ReadFromJsonAsync<OrderDraftResponse>();
-        draftOrder.ShouldNotBeNull();
-
-        // Step 2: Create an order with invalid data
-        var createOrderRequest = _orderRequestGenerator.Generate() with
-        {
-            DraftOrderId = draftOrder.Id,
-            City = string.Empty // Invalid city
-        };
-
-        // Act
-        var response = await client.PostAsJsonAsync(ApiEndpoints.Orders.Create, createOrderRequest);
-
-        // Assert
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 }

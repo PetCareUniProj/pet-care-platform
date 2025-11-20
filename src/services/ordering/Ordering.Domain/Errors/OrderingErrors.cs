@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Domain.Errors;
+
 public static class OrderingErrors
 {
     public static class Address
@@ -72,6 +73,16 @@ public static class OrderingErrors
 
         public static readonly Error InvalidRecurrenceUpdate =
             Error.Problem("Order.InvalidRecurrenceUpdate", "At least one of the recurrence interval or next recurrence date must be provided.");
+
+        public static readonly Error InvalidBuyerId =
+            Error.Problem("Order.InvalidBuyerId", "The buyer ID must not be empty.");
+
+        public static readonly Error InvalidBuyerName =
+            Error.Problem("Order.InvalidBuyerName", "The buyer name must not be null or whitespace.");
+
+        public static readonly Error InvalidBuyerEmail =
+            Error.Problem("Order.InvalidBuyerEmail", "The buyer email must not be null or whitespace.");
+
     }
 
     public static class OrderItem

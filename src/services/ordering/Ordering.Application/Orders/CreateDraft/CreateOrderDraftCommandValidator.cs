@@ -2,6 +2,7 @@
 using Ordering.Application.Models;
 
 namespace Ordering.Application.Orders.CreateDraft;
+
 internal sealed class CreateOrderDraftCommandValidator : AbstractValidator<CreateOrderDraftCommand>
 {
     //REVIEW: need model review
@@ -21,6 +22,11 @@ internal sealed class CreateOrderDraftCommandValidator : AbstractValidator<Creat
 
         RuleForEach(x => x.Items)
             .SetValidator(new BasketItemValidator());
+
+        RuleFor(x => x.RecurrenceInterval)
+            .GreaterThan(TimeSpan.Zero)
+            .When(x => x.IsRecurring)
+            .WithMessage("Recurrence interval must be greater than zero for recurring orders.");
     }
 }
 

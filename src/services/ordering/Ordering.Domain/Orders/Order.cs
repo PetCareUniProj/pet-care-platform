@@ -22,17 +22,67 @@ public class Order : Entity
 
     public int? PaymentId { get; private set; }
 
-    public static Order NewDraft(Guid buyerId, string buyerName, string buyerEmail)
+    public static Result<Order> NewDraft(Guid buyerId, string buyerName, string buyerEmail)
     {
+        if (buyerId == Guid.Empty)
+        {
+            return Result.Failure<Order>(OrderingErrors.Order.InvalidBuyerId);
+        }
+
+        if (string.IsNullOrWhiteSpace(buyerName))
+        {
+            return Result.Failure<Order>(OrderingErrors.Order.InvalidBuyerName);
+        }
+
+        if (string.IsNullOrWhiteSpace(buyerEmail))
+        {
+            return Result.Failure<Order>(OrderingErrors.Order.InvalidBuyerEmail);
+        }
+
         var order = new Order
         {
             BuyerId = buyerId,
             OrderStatus = OrderStatus.Draft
         };
+
         order.Raise(new OrderDraftedDomainEvent(order, buyerId, buyerName, buyerEmail));
-        return order;
+        return Result.Success(order);
     }
 
+    public static Result<Order> CreateRecurringDraft(Guid buyerId, string buyerName, string buyerEmail, TimeSpan recurrenceInterval)
+    {
+        if (buyerId == Guid.Empty)
+        {
+            return Result.Failure<Order>(OrderingErrors.Order.InvalidBuyerId);
+        }
+
+        if (string.IsNullOrWhiteSpace(buyerName))
+        {
+            return Result.Failure<Order>(OrderingErrors.Order.InvalidBuyerName);
+        }
+
+        if (string.IsNullOrWhiteSpace(buyerEmail))
+        {
+            return Result.Failure<Order>(OrderingErrors.Order.InvalidBuyerEmail);
+        }
+
+        if (recurrenceInterval <= TimeSpan.Zero)
+        {
+            return Result.Failure<Order>(OrderingErrors.Order.InvalidRecurrenceInterval);
+        }
+
+        var order = new Order
+        {
+            BuyerId = buyerId,
+            OrderStatus = OrderStatus.Draft,
+            IsRecurring = true,
+            RecurrenceInterval = recurrenceInterval,
+            NextRecurrenceDate = DateTime.UtcNow.Add(recurrenceInterval)
+        };
+
+        order.Raise(new OrderDraftedDomainEvent(order, buyerId, buyerName, buyerEmail));
+        return Result.Success(order);
+    }
     protected Order() { }
 
     private Order(Address address, int cardTypeId, string cardNumber, string cardSecurityNumber,
