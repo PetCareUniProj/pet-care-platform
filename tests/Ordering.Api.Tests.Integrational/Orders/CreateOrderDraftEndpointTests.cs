@@ -1,12 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-using Bogus;
-using Ordering.Api.Endpoints;
-using Ordering.Api.Endpoints.Orders;
-using Ordering.Application.Models;
-using Ordering.Application.Orders;
-
-namespace Ordering.Api.Tests.Integrational.Orders;
+﻿namespace Ordering.Api.Tests.Integrational.Orders;
 
 public sealed class CreateOrderDraftEndpointTests : BaseIntegrationTest, IClassFixture<OrderingApiFactory>
 {
@@ -23,11 +15,55 @@ public sealed class CreateOrderDraftEndpointTests : BaseIntegrationTest, IClassF
     }
 
     [Fact]
+    public async Task CreateDraft_ShouldReturnCreated_WhenRecurringOrderIsValid()
+    {
+        // Arrange
+        var request = new CreateDraft.CreateOrderDraftRequest
+        {
+            IsRecurring = true,
+            RecurrenceInterval = TimeSpan.FromDays(7),
+            Items = _basketItemGenerator.Generate(3)
+        };
+        var client = await CreateAuthenticatedClientAsync("test");
+
+        // Act
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, request);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var draftResponse = await response.Content.ReadFromJsonAsync<OrderDraftResponse>();
+        draftResponse.ShouldNotBeNull();
+        draftResponse!.IsRecurring.ShouldBeTrue();
+        draftResponse.RecurrenceInterval.ShouldBe(TimeSpan.FromDays(7));
+        draftResponse.Total.ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task CreateDraft_ShouldReturnBadRequest_WhenRecurrenceIntervalIsInvalid()
+    {
+        // Arrange
+        var request = new CreateDraft.CreateOrderDraftRequest
+        {
+            IsRecurring = true,
+            RecurrenceInterval = TimeSpan.Zero, // Invalid interval
+            Items = _basketItemGenerator.Generate(3)
+        };
+        var client = await CreateAuthenticatedClientAsync("test");
+
+        // Act
+        var response = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, request);
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task CreateDraft_ShouldReturnCreated_WhenDataIsValid()
     {
         // Arrange
         var request = new CreateDraft.CreateOrderDraftRequest
         {
+            IsRecurring = false, // Non-recurring order
             Items = _basketItemGenerator.Generate(3)
         };
         var client = await CreateAuthenticatedClientAsync("test");
@@ -49,6 +85,7 @@ public sealed class CreateOrderDraftEndpointTests : BaseIntegrationTest, IClassF
         // Arrange
         var request = new CreateDraft.CreateOrderDraftRequest
         {
+            IsRecurring = false,
             Items = _basketItemGenerator.Generate(3)
         };
         var client = CreateClient(); // Non-authenticated client
@@ -66,6 +103,7 @@ public sealed class CreateOrderDraftEndpointTests : BaseIntegrationTest, IClassF
         // Arrange
         var request = new CreateDraft.CreateOrderDraftRequest
         {
+            IsRecurring = false,
             Items = Enumerable.Empty<BasketItem>()
         };
         var client = await CreateAuthenticatedClientAsync("test");

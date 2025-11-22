@@ -38,6 +38,7 @@ public sealed class GetOrdersByUserIdEndpointTests : BaseIntegrationTest, IClass
     {
         var draftRequest = new CreateDraft.CreateOrderDraftRequest
         {
+            IsRecurring = false,
             Items = _basketItemGenerator.Generate(3)
         };
         var draftResponse = await client.PostAsJsonAsync(ApiEndpoints.Orders.CreateDraft, draftRequest);

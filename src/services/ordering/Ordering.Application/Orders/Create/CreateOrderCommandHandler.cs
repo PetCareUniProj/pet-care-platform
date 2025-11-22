@@ -2,6 +2,7 @@
 using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Orders.Create;
+
 internal sealed class CreateOrderCommandHandler(IApplicationDbContext dbContext, IOrderingIntegrationEventService orderingIntegrationEventService) : ICommandHandler<CreateOrderCommand, Result<OrderResponse>>
 {
     public async ValueTask<Result<OrderResponse>> Handle(CreateOrderCommand command, CancellationToken cancellationToken)
@@ -48,6 +49,15 @@ internal sealed class CreateOrderCommandHandler(IApplicationDbContext dbContext,
         if (updateResult.IsFailure)
         {
             return Result.Failure<OrderResponse>(updateResult.Error);
+        }
+
+        if (draftOrder.IsRecurring)
+        {
+            var recurrenceResult = draftOrder.ScheduleRecurrence(draftOrder.RecurrenceInterval);
+            if (recurrenceResult.IsFailure)
+            {
+                return Result.Failure<OrderResponse>(recurrenceResult.Error);
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
