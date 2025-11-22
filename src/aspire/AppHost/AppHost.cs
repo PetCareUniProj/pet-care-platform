@@ -8,8 +8,8 @@ var rabbitMq = builder.AddRabbitMQ("eventbus")
 
 var postgres = builder.AddPostgres("postgres", port: 5432)
     .WithDataVolume()
-    .WithPgAdmin();
-//.WithLifetime(ContainerLifetime.Persistent);
+    .WithPgAdmin()
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var catalogDb = postgres.AddDatabase("catalogDb");
 var orderDb = postgres.AddDatabase("orderingDb");
