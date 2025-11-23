@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { ScrollView, Text, View, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function UnloggedHomeScreen() {
   const scrollY = new Animated.Value(0);
@@ -175,10 +176,14 @@ export default function UnloggedHomeScreen() {
               </Text>
             </View>
             <View className="w-full gap-3">
-              <TouchableOpacity className="w-full bg-orange-500 py-4 rounded-2xl items-center shadow-lg shadow-orange-200 active:scale-[0.98]">
+              <TouchableOpacity
+                className="w-full bg-orange-500 py-4 rounded-2xl items-center shadow-lg shadow-orange-200 active:scale-[0.98]"
+                onPress={() => router.push('/(auth)/register')}>
                 <Text className="text-white font-bold text-lg">Зареєструватися</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="w-full bg-white border border-gray-200 py-4 rounded-2xl items-center active:bg-gray-50">
+              <TouchableOpacity
+                className="w-full bg-white border border-gray-200 py-4 rounded-2xl items-center active:bg-gray-50"
+                onPress={() => router.push('/(auth)/login')}>
                 <Text className="text-gray-700 font-bold text-lg">Увійти</Text>
               </TouchableOpacity>
             </View>
