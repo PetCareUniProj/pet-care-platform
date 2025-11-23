@@ -1,9 +1,11 @@
 // Login screen
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { authService } from '@/services/api';
 import { LoginCredentials } from '@/types/auth.types';
 import { validators } from '@/utils/validation';
@@ -50,79 +52,131 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="flex-1 p-6">
-        <View className="mb-8">
-          <Text className="text-3xl font-bold text-gray-800 mb-2">Вхід</Text>
-          <Text className="text-gray-600">Вітаємо назад! Увійдіть до свого акаунту</Text>
-        </View>
-
-        <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-2">Email</Text>
-          <View className="border border-gray-300 rounded-lg px-4 py-3 flex-row items-center">
-            <MaterialIcons name="email" size={20} color="#9CA3AF" />
-            <TextInput
-              className="flex-1 ml-2 text-gray-800"
-              placeholder="your@email.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
+    <View className="flex-1 bg-white">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Header with Gradient */}
+        <LinearGradient
+          colors={['#fb923c', '#f59e0b']} // orange-400 to amber-500
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0, y: 0 }}
+          className="rounded-b-[40px] px-6 pt-16 pb-12"
+        >
+          <View className="items-center gap-4 mt-8">
+            <View className="relative">
+              <View className="absolute bg-white/20 w-24 h-24 rounded-full blur-xl" />
+              <View className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-white shadow-lg">
+                <MaterialIcons name="pets" size={40} color="#f97316" />
+              </View>
+            </View>
+            
+            <View className="items-center gap-2">
+              <Text className="text-white text-3xl font-extrabold text-center">
+                Вітаємо знову!
+              </Text>
+              <Text className="text-white text-base text-center opacity-90 px-4">
+                Увійдіть до свого акаунту
+              </Text>
+            </View>
           </View>
-          {errors.email && <Text className="text-red-500 text-sm mt-1">{errors.email}</Text>}
-        </View>
+        </LinearGradient>
 
-        <View className="mb-6">
-          <Text className="text-sm font-semibold text-gray-700 mb-2">Пароль</Text>
-          <View className="border border-gray-300 rounded-lg px-4 py-3 flex-row items-center">
-            <MaterialIcons name="lock" size={20} color="#9CA3AF" />
-            <TextInput
-              className="flex-1 ml-2 text-gray-800"
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              autoComplete="password"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <MaterialIcons
-                name={showPassword ? 'visibility-off' : 'visibility'}
-                size={20}
-                color="#9CA3AF"
-              />
+        {/* Form Section */}
+        <View className="px-6 pt-8 pb-8">
+          <View className="gap-6">
+            {/* Email Input */}
+            <View>
+              <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Email</Text>
+              <View className={`bg-gray-50 border rounded-2xl px-4 py-4 flex-row items-center ${
+                errors.email ? 'border-red-300' : 'border-gray-200'
+              }`}>
+                <View className="bg-orange-100 p-2 rounded-xl mr-3">
+                  <MaterialIcons name="email" size={20} color="#f97316" />
+                </View>
+                <TextInput
+                  className="flex-1 text-gray-800 text-base"
+                  placeholder="your@email.com"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
+              </View>
+              {errors.email && (
+                <Text className="text-red-500 text-sm mt-2 ml-1">{errors.email}</Text>
+              )}
+            </View>
+
+            {/* Password Input */}
+            <View>
+              <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Пароль</Text>
+              <View className={`bg-gray-50 border rounded-2xl px-4 py-4 flex-row items-center ${
+                errors.password ? 'border-red-300' : 'border-gray-200'
+              }`}>
+                <View className="bg-orange-100 p-2 rounded-xl mr-3">
+                  <MaterialIcons name="lock" size={20} color="#f97316" />
+                </View>
+                <TextInput
+                  className="flex-1 text-gray-800 text-base"
+                  placeholder="••••••••"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  className="ml-2 p-1">
+                  <MaterialIcons
+                    name={showPassword ? 'visibility-off' : 'visibility'}
+                    size={22}
+                    color="#9CA3AF"
+                  />
+                </TouchableOpacity>
+              </View>
+              {errors.password && (
+                <Text className="text-red-500 text-sm mt-2 ml-1">{errors.password}</Text>
+              )}
+            </View>
+
+            {/* Forgot Password */}
+            <TouchableOpacity
+              className="self-end"
+              onPress={() => router.push('/(auth)/forgot-password')}>
+              <Text className="text-orange-500 font-semibold text-sm">Забули пароль?</Text>
             </TouchableOpacity>
+
+            {/* Login Button */}
+            <TouchableOpacity
+              className="bg-orange-500 py-4 rounded-2xl items-center shadow-lg shadow-orange-200 active:scale-[0.98] mt-2"
+              onPress={handleLogin}
+              disabled={isLoading}>
+              <Text className="text-white font-bold text-lg">
+                {isLoading ? 'Вхід...' : 'Увійти'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View className="flex-row items-center gap-4 my-4">
+              <View className="flex-1 h-[1px] bg-gray-200" />
+              <Text className="text-gray-400 text-sm">або</Text>
+              <View className="flex-1 h-[1px] bg-gray-200" />
+            </View>
+
+            {/* Register Link */}
+            <View className="flex-row justify-center items-center gap-2">
+              <Text className="text-gray-600">Немає акаунту? </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+                <Text className="text-orange-500 font-bold">Зареєструватися</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          {errors.password && (
-            <Text className="text-red-500 text-sm mt-1">{errors.password}</Text>
-          )}
         </View>
-
-        <TouchableOpacity
-          className="bg-yellow-400 px-6 py-4 rounded-lg mb-4"
-          onPress={handleLogin}
-          disabled={isLoading}>
-          <Text className="text-white font-semibold text-center text-lg">
-            {isLoading ? 'Вхід...' : 'Увійти'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="mb-6"
-          onPress={() => router.push('/(auth)/forgot-password')}>
-          <Text className="text-yellow-600 text-center font-semibold">Забули пароль?</Text>
-        </TouchableOpacity>
-
-        <View className="flex-row justify-center items-center">
-          <Text className="text-gray-600">Немає акаунту? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text className="text-yellow-600 font-semibold">Зареєструватися</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
