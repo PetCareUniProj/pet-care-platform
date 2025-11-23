@@ -19,6 +19,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        orange: {
+          400: '#fb923c',
+          500: '#f97316',
+        },
+        amber: {
+          500: '#f59e0b',
+        },
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
