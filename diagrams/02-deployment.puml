@@ -1,0 +1,138 @@
+@startuml Deployment Diagram - Pet Connect
+' Global settings
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam defaultFontName Arial
+
+' Vertical orientation for all diagrams
+top to bottom direction
+
+' Common styling for notes
+skinparam note {
+    BackgroundColor #FFFACD
+    BorderColor #FFD700
+    BorderThickness 1
+}
+
+' DEPLOYMENT_THEME styling
+skinparam node {
+    BackgroundColor #E6FFE6
+    BorderColor #00CC00
+}
+skinparam database {
+    BackgroundColor #CCFFCC
+    BorderColor #009900
+}
+skinparam artifact {
+    BackgroundColor #B3FFB3
+    BorderColor #007700
+}
+
+' Client nodes
+node "Mobile Device\n(iOS/Android)" as Mobile {
+    artifact "Pet Connect App\n(React Native)" as MobileApp
+}
+
+node "Web Browser\n(Chrome/Firefox/Edge)" as Browser {
+    artifact "Store Web App\n(React/NestJS)" as WebApp
+}
+
+' Server infrastructure
+node "Kubernetes Cluster" as K8s {
+    ' API Gateway / Load Balancer
+    node "Nginx Ingress\n(Load Balancer)" as Nginx
+
+    ' Microservices
+    node "Microservices" as Services {
+        artifact "Catalog API\n(.NET 9)" as CatalogAPI
+        artifact "Basket API\n(.NET 9)" as BasketAPI
+        artifact "Ordering API\n(.NET 9)" as OrderingAPI
+        artifact "Subscription API\n(NestJS)" as SubscriptionAPI
+    }
+
+    ' Web Applications
+    node "Web Applications" as WebApps {
+        artifact "Store Web\n(NestJS)" as StoreWeb
+    }
+
+    ' Authentication
+    node "Identity Server" as Identity {
+        artifact "Keycloak\n(Authentication)" as Keycloak
+    }
+
+    ' Message Queue
+    node "Message Bus" as Messaging {
+        artifact "RabbitMQ\n(Event Bus)" as RabbitMQ
+    }
+
+    ' Cache
+    node "Cache Layer" as Cache {
+        artifact "Redis\n(Session/Cart Cache)" as Redis
+    }
+
+    ' Databases
+    node "Databases" as Databases {
+        artifact "PostgreSQL\n(Main Database)" as Postgres
+
+        artifact "Catalog DB" as CatalogDB
+        artifact "Ordering DB" as OrderingDB
+        artifact "Subscription DB" as SubscriptionDB
+    }
+}
+
+' External services
+node "Payment Gateway" as Payment {
+    artifact "LiqPay/Portmone\n(Payment Processing)" as PaymentGW
+}
+
+' Connections
+MobileApp --> Nginx : HTTPS\n(REST API/gRPC)
+WebApp --> Nginx : HTTPS\n(REST API)
+
+Nginx --> CatalogAPI : Internal\nCommunication
+Nginx --> BasketAPI : Internal\nCommunication
+Nginx --> OrderingAPI : Internal\nCommunication
+Nginx --> SubscriptionAPI : Internal\nCommunication
+Nginx --> StoreWeb : Internal\nCommunication
+
+CatalogAPI --> Keycloak : Authentication\nVerification
+BasketAPI --> Keycloak : Authentication\nVerification
+OrderingAPI --> Keycloak : Authentication\nVerification
+SubscriptionAPI --> Keycloak : Authentication\nVerification
+StoreWeb --> Keycloak : Authentication\nVerification
+
+CatalogAPI --> RabbitMQ : Event\nPublishing
+BasketAPI --> RabbitMQ : Event\nPublishing
+OrderingAPI --> RabbitMQ : Event\nPublishing
+SubscriptionAPI --> RabbitMQ : Event\nPublishing
+
+BasketAPI --> Redis : Cache\nOperations
+
+CatalogAPI --> CatalogDB : Database\nOperations
+OrderingAPI --> OrderingDB : Database\nOperations
+SubscriptionAPI --> SubscriptionDB : Database\nOperations
+
+OrderingAPI --> PaymentGW : Payment\nProcessing
+
+' Notes
+note right of K8s
+    **Розгортання:**
+    - Всі сервіси в Docker контейнерах
+    - Оркестрація через Kubernetes
+    - Автомасштабування за навантаженням
+end note
+
+note right of Databases
+    **Бази даних:**
+    - PostgreSQL як основна СУБД
+    - Окремі схеми для кожного сервісу
+    - Автоматичне резервне копіювання
+end note
+
+note right of Redis
+    **Кеш:**
+    - Redis для кошиків та сесій
+    - In-memory сховище для швидкого доступу
+end note
+
+@enduml
