@@ -1,0 +1,80 @@
+@startuml Collaboration Diagram - Pet Profile Creation
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 10
+skinparam defaultFontName Arial
+
+' Enhanced styling
+skinparam component {
+    BackgroundColor #E8F4F8
+    BorderColor #2E86AB
+    BorderThickness 2
+}
+
+skinparam arrow {
+    Color #1E3A5F
+    Thickness 1
+}
+
+' Actor
+rectangle "Власник тварини" as Owner #FFE5B4
+
+' Frontend Layer
+component "MobileApp" as MobileApp
+
+' Business Services
+component "PetService" as PetSvc
+component "UserService" as UserSvc
+component "ValidationService" as ValidationSvc
+component "NotificationService" as NotificationSvc
+
+' Storage Services
+component "ImageStorage" as ImageStore
+component "PushService" as PushSvc
+
+' Data Access
+component "PetRepository" as PetRepo
+component "UserRepository" as UserRepo
+
+' Infrastructure
+component "PostgreSQL" as DB
+component "Redis Cache" as Cache
+
+' Profile Creation Flow (1-21)
+Owner --> MobileApp : 1: createProfile()
+MobileApp --> PetSvc : 2: createPet()
+
+' User Validation (3-8)
+PetSvc --> UserSvc : 3: validateUser()
+UserSvc --> UserRepo : 4: getUserById()
+UserRepo --> Cache : 5: get()
+Cache --> UserRepo : 6: return
+UserRepo --> UserSvc : 7: return
+UserSvc --> PetSvc : 8: validated
+
+' Data Validation (9-10)
+PetSvc --> ValidationSvc : 9: validateData()
+ValidationSvc --> PetSvc : 10: passed
+
+' Image Processing (11-12)
+PetSvc --> ImageStore : 11: uploadPhoto()
+ImageStore --> PetSvc : 12: imageUrl
+
+' Database Persistence (13-16)
+PetSvc --> PetRepo : 13: save()
+PetRepo --> DB : 14: INSERT
+DB --> PetRepo : 15: petId
+PetRepo --> PetSvc : 16: saved
+
+' Cache Update (17)
+PetSvc --> Cache : 17: set()
+
+' Notification (18-20)
+PetSvc --> NotificationSvc : 18: notify()
+NotificationSvc --> PushSvc : 19: sendPush()
+PushSvc --> Owner : 20: push
+
+' Final Response (21)
+MobileApp --> Owner : 21: success
+
+@enduml

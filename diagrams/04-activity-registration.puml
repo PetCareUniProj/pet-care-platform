@@ -1,0 +1,76 @@
+@startuml Activity Diagram - User Registration Process
+' Global settings
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam defaultFontName Arial
+
+' Activity diagrams are vertical by default
+
+' Common styling for notes
+skinparam note {
+    BackgroundColor #FFFACD
+    BorderColor #FFD700
+    BorderThickness 1
+}
+
+' ACTIVITY_THEME styling
+skinparam activity {
+    BackgroundColor #F2E6FF
+    BorderColor #9900CC
+}
+skinparam activityDiamond {
+    BackgroundColor #E6CCFF
+    BorderColor #770099
+}
+
+start
+
+:Відкрити додаток/сайт;
+:Натиснути "Зареєструватися";
+
+:Ввести ім'я;
+:Ввести email;
+:Ввести пароль;
+:Підтвердити пароль;
+
+if (Паролі співпадають?) then (ні)
+    :Показати помилку;
+    stop
+endif
+
+:Погодитися з умовами;
+:Натиснути "Створити акаунт";
+
+:Перевірити email формат;
+:Перевірити унікальність email;
+
+if (Email вже існує?) then (так)
+    :Надіслати помилку;
+    stop
+endif
+
+:Валідувати пароль (довжина, складність);
+
+if (Пароль слабкий?) then (так)
+    :Надіслати рекомендації;
+    stop
+endif
+
+:Згенерувати userId;
+:Хешувати пароль;
+:Створити запис користувача в БД;
+:Згенерувати токен підтвердження;
+
+:Надіслати email з посиланням підтвердження;
+
+:Перейти за посиланням в email;
+:Підтвердити email адресу;
+:Активувати акаунт;
+
+:Показати вітальне повідомлення;
+:Запропонувати створити профіль тварини;
+:Перенаправити до особистого кабінету;
+
+stop
+
+@enduml

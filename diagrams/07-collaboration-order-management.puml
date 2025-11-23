@@ -1,0 +1,83 @@
+@startuml Collaboration Diagram - Order Management Process
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 10
+skinparam defaultFontName Arial
+
+' Enhanced styling
+skinparam component {
+    BackgroundColor #E8F4F8
+    BorderColor #2E86AB
+    BorderThickness 2
+}
+
+skinparam arrow {
+    Color #1E3A5F
+    Thickness 1
+}
+
+' Actor
+rectangle "Менеджер" as Manager #FFE5B4
+
+' Frontend Layer
+component "AdminPanel" as AdminPanel
+
+' Business Services Layer
+component "OrderService" as OrderSvc
+component "InventoryService" as InventorySvc
+component "NotificationService" as NotificationSvc
+
+' Notification Services
+component "EmailService" as EmailSvc
+component "PushService" as PushSvc
+
+' Data Access Layer
+component "OrderRepository" as OrderRepo
+component "CustomerRepository" as CustomerRepo
+
+' Infrastructure
+component "PostgreSQL" as DB
+
+' Main flow: View Orders (1-8)
+Manager --> AdminPanel : 1: viewOrders()
+AdminPanel --> OrderSvc : 2: getAllOrders()
+OrderSvc --> OrderRepo : 3: findOrders()
+OrderRepo --> DB : 4: SELECT
+DB --> OrderRepo : 5: return
+OrderRepo --> OrderSvc : 6: return
+OrderSvc --> AdminPanel : 7: return
+AdminPanel --> Manager : 8: display
+
+' Order Details (9-20)
+Manager --> AdminPanel : 9: viewDetails()
+AdminPanel --> OrderSvc : 10: getOrderById()
+OrderSvc --> OrderRepo : 11: getById()
+OrderRepo --> DB : 12: SELECT
+DB --> OrderRepo : 13: return
+OrderRepo --> OrderSvc : 14: return
+OrderSvc --> CustomerRepo : 15: getCustomer()
+CustomerRepo --> DB : 16: SELECT
+DB --> CustomerRepo : 17: return
+CustomerRepo --> OrderSvc : 18: return
+OrderSvc --> AdminPanel : 19: return
+AdminPanel --> Manager : 20: display
+
+' Status Change (21-36)
+Manager --> AdminPanel : 21: changeStatus()
+AdminPanel --> OrderSvc : 22: updateStatus()
+OrderSvc --> OrderRepo : 23: update()
+OrderRepo --> DB : 24: UPDATE
+DB --> OrderRepo : 25: ok
+OrderRepo --> OrderSvc : 26: success
+
+OrderSvc --> InventorySvc : 27: updateInventory()
+InventorySvc --> DB : 28: UPDATE
+
+OrderSvc --> NotificationSvc : 30: notify()
+NotificationSvc --> EmailSvc : 31: sendEmail()
+NotificationSvc --> PushSvc : 33: sendPush()
+
+OrderSvc --> AdminPanel : 35: done
+AdminPanel --> Manager : 36: success
+
+@enduml
