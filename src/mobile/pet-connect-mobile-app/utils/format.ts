@@ -36,6 +36,21 @@ export const formatDate = (date: string | Date, format: 'short' | 'long' | 'time
   return dateObj.toLocaleDateString('uk-UA');
 };
 
+export const formatTime = (time: string): string => {
+  // If time is in format HH:mm, return as is
+  if (/^\d{2}:\d{2}$/.test(time)) {
+    return time;
+  }
+  
+  // If it's a full date-time string, extract time
+  const date = new Date(time);
+  if (!isNaN(date.getTime())) {
+    return formatDate(date, 'time');
+  }
+  
+  return time;
+};
+
 export const formatDateTime = (date: string | Date): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('uk-UA', {
@@ -98,5 +113,3 @@ export const truncateText = (text: string, maxLength: number): string => {
   }
   return `${text.slice(0, maxLength)}...`;
 };
-
-
