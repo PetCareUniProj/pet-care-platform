@@ -1,41 +1,114 @@
-// Store configuration
-// This file will be used for Redux Toolkit or Zustand setup
-
-// TODO: Implement state management
-// Options:
-// 1. Redux Toolkit - for complex state management
-// 2. Zustand - for simpler, lightweight state management
-
-// Example structure for Zustand:
-/*
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { Pet, CreatePetDto, UpdatePetDto } from '@/types/pet.types';
+import { petsService } from '@/services/api/pets.service';
 
-interface AppState {
-  // Auth state
-  isAuthenticated: boolean;
-  user: User | null;
-  
-  // Actions
-  setUser: (user: User | null) => void;
-  logout: () => void;
+interface PetsState {
+  pets: Pet[];
+  selectedPet: Pet | null;
+  isLoading: boolean;
+  error: string | null;
+
+  fetchPets: () => Promise<void>;
+  fetchPetById: (id: string) => Promise<void>;
+  createPet: (data: CreatePetDto) => Promise<void>;
+  updatePet: (id: string, data: UpdatePetDto) => Promise<void>;
+  deletePet: (id: string) => Promise<void>;
+  uploadPetPhoto: (id: string, photoUri: string) => Promise<void>;
+  addPetNote: (id: string, note: string) => Promise<void>;
+  selectPet: (pet: Pet | null) => void;
 }
 
-export const useAppStore = create<AppState>()(
-  persist(
-    (set) => ({
-      isAuthenticated: false,
-      user: null,
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      logout: () => set({ user: null, isAuthenticated: false }),
-    }),
-    {
-      name: 'app-storage',
+export const usePetsStore = create<PetsState>((set, get) => ({
+  pets: [],
+  selectedPet: null,
+  isLoading: false,
+  error: null,
+
+  fetchPets: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await petsService.getAll();
+      set({ pets: response.items, isLoading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
     }
-  )
-);
-*/
+  },
 
-export {};
+  fetchPetById: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const pet = await petsService.getById(id);
+      set({ selectedPet: pet, isLoading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
 
+  createPet: async (data: CreatePetDto) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newPet = await petsService.create(data);
+      set((state) => ({ pets: [...state.pets, newPet], isLoading: false }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
 
+  updatePet: async (id: string, data: UpdatePetDto) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedPet = await petsService.update(id, data);
+      set((state) => ({
+        pets: state.pets.map((p) => (p.id === id ? updatedPet : p)),
+        selectedPet: state.selectedPet?.id === id ? updatedPet : state.selectedPet,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  deletePet: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await petsService.delete(id);
+      set((state) => ({
+        pets: state.pets.filter((p) => p.id !== id),
+        selectedPet: state.selectedPet?.id === id ? null : state.selectedPet,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  uploadPetPhoto: async (id: string, photoUri: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedPet = await petsService.uploadPhoto(id, photoUri);
+      set((state) => ({
+        pets: state.pets.map((p) => (p.id === id ? updatedPet : p)),
+        selectedPet: state.selectedPet?.id === id ? updatedPet : state.selectedPet,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  addPetNote: async (id: string, note: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const updatedPet = await petsService.addNote(id, note);
+      set((state) => ({
+        pets: state.pets.map((p) => (p.id === id ? updatedPet : p)),
+        selectedPet: state.selectedPet?.id === id ? updatedPet : state.selectedPet,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  selectPet: (pet) => set({ selectedPet: pet }),
+}));

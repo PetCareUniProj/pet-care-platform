@@ -1,48 +1,52 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Image } from 'expo-image';
-import { ScrollView, Text, View, TouchableOpacity } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-
-// Mock pet data
-const mockPetData = {
-  id: '1',
-  name: 'Мурзик',
-  type: 'Кіт',
-  breed: 'Британська короткошерста',
-  age: '2 роки 3 місяці',
-  gender: 'Хлопчик',
-  weight: '4.8 кг',
-  color: 'Сірий з білим',
-  birthDate: '15.08.2023',
-  microchip: 'UA123456789',
-  owner: 'Олексій Петренко',
-  vet: 'Ветеринарна клініка "Добрий лікар"',
-  vetPhone: '+380 50 123 45 67',
-  image: require('@/assets/images/pet-cat-mock-profile-image.png'),
-  profileCompleteness: 85,
-  vaccinationStatus: [
-    { name: 'Комплексна вакцинація', date: '15.10.2025', status: 'completed' },
-    { name: 'Рабієс', date: '15.10.2025', status: 'completed' },
-    { name: 'Лейкемія кішок', date: '15.10.2024', status: 'completed' },
-    { name: 'Наступна вакцинація', date: '15.11.2025', status: 'upcoming' }
-  ],
-  medications: [
-    { name: 'Протипаразитарний препарат', dosage: '1 таблетка', frequency: 'Щомісяця', nextDate: '01.12.2025' }
-  ],
-  upcomingAppointments: [
-    { type: 'Вакцинація', date: '15.11.2025', time: '10:00', vet: 'Др. Сидоренко' },
-    { type: 'Огляд', date: '20.11.2025', time: '14:30', vet: 'Др. Сидоренко' }
-  ],
-  notes: [
-    'Мурзик любить гратися з іграшками на мотузці.',
-    'Має алергію на рибу.',
-    'Любить спати на підвіконні.',
-    'Боїться пилососа.'
-  ]
-};
+import { useRouter } from 'expo-router';
+import { usePetsStore } from '@/store';
 
 export default function PetProfileScreen() {
+  const router = useRouter();
+  const { pets, fetchPets, isLoading } = usePetsStore();
+  
+  useEffect(() => {
+      fetchPets();
+  }, []);
+
+  const primaryPet = pets.length > 0 ? pets[0] : null;
+
+  if (isLoading) {
+      return (
+          <View className="flex-1 justify-center items-center bg-white">
+              <ActivityIndicator size="large" color="#f97316" />
+          </View>
+      );
+  }
+
+  if (!primaryPet) {
+      return (
+          <View className="flex-1 justify-center items-center bg-white p-6 gap-4">
+              <Text className="text-xl font-bold text-gray-800 text-center">У вас ще немає улюбленців</Text>
+              <Text className="text-gray-500 text-center">Додайте свого першого улюбленця, щоб побачити його профіль тут</Text>
+              <TouchableOpacity 
+                  onPress={() => router.push('/pets/create')}
+                  className="bg-orange-500 px-6 py-3 rounded-xl"
+              >
+                  <Text className="text-white font-bold">Додати улюбленця</Text>
+              </TouchableOpacity>
+          </View>
+      );
+  }
+
+  // Redirect to the detailed view of the first pet or render it here. 
+  // Since we have a dedicated dynamic page, we can reuse the component or just redirect.
+  // But Tabs usually expect content. I'll duplicate the render logic for now (or extract a component, but duplication is faster for this turn)
+  // Actually, better to just render a summary and a button "View Full Profile" or render the full profile using the data.
+  // I'll render the full profile using `primaryPet`.
+
+  const pet = primaryPet;
+
   return (
     <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
       {/* Header with Pet Image */}
@@ -58,7 +62,10 @@ export default function PetProfileScreen() {
         <MaterialIcons name="pets" size={60} color="rgba(255,255,255,0.05)" style={{ position: 'absolute', top: 100, right: 40, transform: [{ rotate: '30deg' }] }} />
 
         <View className="flex-row justify-between items-center p-6 pt-12 relative z-10">
-          <TouchableOpacity className="bg-white/20 p-2 rounded-full flex-row items-center border border-white/30 active:bg-white/30">
+          <TouchableOpacity 
+            onPress={() => router.push({ pathname: '/pets/[id]', params: { id: pet.id } })}
+            className="bg-white/20 p-2 rounded-full flex-row items-center border border-white/30 active:bg-white/30"
+          >
             <MaterialIcons name="edit" size={20} color="white" />
             <Text className="text-white ml-2 font-semibold">Редагувати</Text>
           </TouchableOpacity>
@@ -70,7 +77,7 @@ export default function PetProfileScreen() {
         <View className="items-center px-6 gap-4 pb-4 mb-4 relative z-10">
           <View className="rounded-full border-4 border-white shadow-lg">
             <Image
-              source={mockPetData.image}
+              source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
               className="w-32 h-32 rounded-full bg-gray-200"
               style={{ width: 128, height: 128 }}
             />
@@ -78,10 +85,10 @@ export default function PetProfileScreen() {
 
           <View className="items-center gap-1">
             <Text className="text-white text-3xl font-bold text-center">
-              {mockPetData.name}
+              {pet.name}
             </Text>
             <Text className="text-white opacity-90 text-center text-lg">
-              {mockPetData.type} • {mockPetData.breed}
+              {pet.type === 'cat' ? 'Кіт' : pet.type === 'dog' ? 'Собака' : pet.type} • {pet.breed || 'Без породи'}
             </Text>
 
             {/* Profile Completeness */}
@@ -93,10 +100,10 @@ export default function PetProfileScreen() {
               <View className="bg-black/20 rounded-full p-1 w-48 h-4 overflow-hidden">
                 <View 
                   className="bg-white h-full rounded-full" 
-                  style={{ width: `${mockPetData.profileCompleteness}%` }}
+                  style={{ width: `${pet.profileCompleteness || 50}%` }}
                 />
               </View>
-              <Text className="text-white font-bold">{mockPetData.profileCompleteness}%</Text>
+              <Text className="text-white font-bold">{pet.profileCompleteness || 50}%</Text>
             </View>
           </View>
         </View>
@@ -114,11 +121,11 @@ export default function PetProfileScreen() {
                 <MaterialIcons name="cake" size={24} color="#f97316" />
                 <View>
                   <Text className="font-bold text-gray-800">Дата народження</Text>
-                  <Text className="text-gray-500">{mockPetData.birthDate}</Text>
+                  <Text className="text-gray-500">{pet.birthDate || 'Не вказано'}</Text>
                 </View>
               </View>
               <View className="bg-orange-100 px-3 py-1 rounded-full">
-                <Text className="text-orange-700 text-xs font-bold">{mockPetData.age}</Text>
+                <Text className="text-orange-700 text-xs font-bold">{pet.age || 'Вік невідомий'}</Text>
               </View>
             </View>
 
@@ -126,7 +133,7 @@ export default function PetProfileScreen() {
               <MaterialIcons name="fitness-center" size={24} color="#f97316" />
               <View>
                 <Text className="font-bold text-gray-800">Вага</Text>
-                <Text className="text-gray-500">{mockPetData.weight}</Text>
+                <Text className="text-gray-500">{pet.weight} {pet.weightUnit}</Text>
               </View>
             </View>
 
@@ -134,7 +141,7 @@ export default function PetProfileScreen() {
               <MaterialIcons name="palette" size={24} color="#f97316" />
               <View>
                 <Text className="font-bold text-gray-800">Колір шерсті</Text>
-                <Text className="text-gray-500">{mockPetData.color}</Text>
+                <Text className="text-gray-500">{pet.color || 'Не вказано'}</Text>
               </View>
             </View>
 
@@ -142,7 +149,7 @@ export default function PetProfileScreen() {
               <MaterialIcons name="transgender" size={24} color="#f97316" />
               <View>
                 <Text className="font-bold text-gray-800">Стать</Text>
-                <Text className="text-gray-500">{mockPetData.gender}</Text>
+                <Text className="text-gray-500">{pet.gender === 'male' ? 'Хлопчик' : pet.gender === 'female' ? 'Дівчинка' : 'Невідомо'}</Text>
               </View>
             </View>
           </View>
@@ -161,7 +168,7 @@ export default function PetProfileScreen() {
             {/* Vaccination Status */}
             <View className="gap-3">
               <Text className="font-semibold text-gray-600 ml-1 uppercase text-xs">Вакцинації</Text>
-              {mockPetData.vaccinationStatus.map((vaccination, index) => (
+              {pet.vaccinationStatus?.map((vaccination, index) => (
                 <View key={index} className="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex-row items-center justify-between">
                   <View className="flex-1">
                     <Text className="font-bold text-gray-800">{vaccination.name}</Text>
@@ -174,81 +181,9 @@ export default function PetProfileScreen() {
                   </View>
                 </View>
               ))}
-            </View>
-
-            {/* Medications */}
-            <View className="gap-3 mt-2">
-              <Text className="font-semibold text-gray-600 ml-1 uppercase text-xs">Ліки</Text>
-              {mockPetData.medications.map((medication, index) => (
-                <View key={index} className="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex-row items-center gap-4">
-                  <View className="bg-orange-100 p-2 rounded-full">
-                    <MaterialIcons name="medication" size={24} color="#f97316" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="font-bold text-gray-800">{medication.name}</Text>
-                    <Text className="text-gray-600 text-sm">
-                      {medication.dosage} • {medication.frequency}
-                    </Text>
-                    <Text className="text-orange-600 text-xs font-semibold mt-1">
-                      Наступний прийом: {medication.nextDate}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        </LinearGradient>
-
-        {/* Upcoming Appointments - Default Background */}
-        <View className="p-6 gap-6">
-          <View className="gap-4">
-            <Text className="text-xl font-bold text-gray-800 ml-1">Найближчі візити</Text>
-
-            <View className="gap-3">
-              {mockPetData.upcomingAppointments.map((appointment, index) => (
-                <View key={index} className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex-row items-start gap-4">
-                  <View className="bg-blue-100 p-2 rounded-full">
-                    <MaterialIcons name="calendar-today" size={24} color="#3b82f6" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="font-bold text-gray-800">{appointment.type}</Text>
-                    <Text className="text-gray-600 text-sm mt-1">
-                      {appointment.date} • {appointment.time}
-                    </Text>
-                    <Text className="text-blue-600 text-xs font-semibold mt-1">{appointment.vet}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* Veterinary Information - Gradient Background */}
-        <LinearGradient
-          colors={['rgba(251, 146, 60, 0.05)', 'rgba(245, 158, 11, 0.05)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          className=""
-        >
-          <View className="gap-4 py-6 px-6">
-            <Text className="text-xl font-bold text-gray-800 ml-1">Ветеринар</Text>
-
-            <View className="bg-white border border-green-100 p-4 rounded-2xl gap-3 shadow-sm">
-              <View className="flex-row items-center gap-3">
-                <View className="bg-green-100 p-2 rounded-full">
-                  <MaterialIcons name="location-on" size={24} color="#10b981" />
-                </View>
-                <Text className="font-bold text-gray-800 flex-1">
-                  {mockPetData.vet}
-                </Text>
-              </View>
-              <View className="h-[1px] bg-green-50" />
-              <View className="flex-row items-center gap-3">
-                <View className="bg-green-100 p-2 rounded-full">
-                  <MaterialIcons name="phone" size={24} color="#10b981" />
-                </View>
-                <Text className="text-gray-700 font-semibold">{mockPetData.vetPhone}</Text>
-              </View>
+               {(!pet.vaccinationStatus || pet.vaccinationStatus.length === 0) && (
+                  <Text className="text-gray-400 text-center italic">Немає записів про вакцинацію</Text>
+              )}
             </View>
           </View>
         </LinearGradient>
@@ -258,7 +193,7 @@ export default function PetProfileScreen() {
           <Text className="text-xl font-bold text-gray-800 ml-1">Нотатки</Text>
 
           <View className="flex-row flex-wrap gap-3">
-            {mockPetData.notes.map((note, index) => (
+            {pet.notes?.map((note, index) => (
               <View key={index} className="bg-yellow-50 border border-yellow-100 p-3 rounded-xl w-[48%] mb-1">
                 <Text className="text-gray-700 italic text-sm">
                   {note}

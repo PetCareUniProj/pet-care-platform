@@ -1,34 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Image } from 'expo-image';
-import { ScrollView, Text, View, TouchableOpacity } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-
-// Mock data for pets
-const mockPets = [
-  {
-    id: '1',
-    name: 'Мурзик',
-    type: 'Кіт',
-    age: '2 роки',
-    breed: 'Британська короткошерста',
-    image: require('@/assets/images/pet-cat-mock-profile-image.png'),
-    nextVaccination: '15.11.2025',
-    nextVetVisit: '20.11.2025',
-    status: 'healthy'
-  },
-  {
-    id: '2',
-    name: 'Барон',
-    type: 'Собака',
-    age: '4 роки',
-    breed: 'Лабрадор',
-    image: require('@/assets/images/pet-cat-mock-profile-image.png'),
-    nextVaccination: '10.12.2025',
-    nextVetVisit: '05.12.2025',
-    status: 'needs_attention'
-  }
-];
+import { useRouter } from 'expo-router';
+import { usePetsStore } from '@/store';
 
 // Quick Actions Menu
 const quickActions = [
@@ -43,6 +19,21 @@ const quickActions = [
 ];
 
 export default function LoggedHomeScreen() {
+  const router = useRouter();
+  const { pets, fetchPets, isLoading } = usePetsStore();
+
+  useEffect(() => {
+    fetchPets();
+  }, []);
+
+  const handlePetPress = (id: string) => {
+    router.push({ pathname: '/pets/[id]', params: { id } });
+  };
+
+  const handleAddPet = () => {
+    router.push('/pets/create');
+  };
+
   return (
     <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
       {/* Header */}
@@ -106,43 +97,61 @@ export default function LoggedHomeScreen() {
         <View className="gap-3">
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-gray-800 ml-1">Твої улюбленці</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleAddPet}>
               <Text className="text-orange-500 font-semibold text-xs">Додати</Text>
             </TouchableOpacity>
           </View>
 
+          {isLoading && pets.length === 0 ? (
+             <ActivityIndicator color="#f97316" />
+          ) : (
           <View className="gap-4">
-            {mockPets.map((pet) => (
-              <View key={pet.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex-row items-center gap-4">
+            {pets.map((pet) => (
+              <TouchableOpacity 
+                key={pet.id} 
+                onPress={() => handlePetPress(pet.id)}
+                className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex-row items-center gap-4 active:bg-gray-50"
+              >
                 <Image
-                  source={pet.image}
+                  source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
                   className="w-16 h-16 rounded-full bg-gray-100"
                 />
 
                 <View className="flex-1 gap-1">
                   <View className="flex-row items-center justify-between">
                     <Text className="text-lg font-bold text-gray-800">{pet.name}</Text>
-                    <View className={`px-2 py-1 rounded-full ${pet.status === 'healthy' ? 'bg-green-100' : 'bg-orange-100'}`}>
-                      <Text className={`text-xs font-bold ${pet.status === 'healthy' ? 'text-green-700' : 'text-orange-700'}`}>
-                        {pet.status === 'healthy' ? 'Здоровий' : 'Потрібна увага'}
+                    <View className={`px-2 py-1 rounded-full ${pet.profileCompleteness && pet.profileCompleteness > 80 ? 'bg-green-100' : 'bg-orange-100'}`}>
+                      <Text className={`text-xs font-bold ${pet.profileCompleteness && pet.profileCompleteness > 80 ? 'text-green-700' : 'text-orange-700'}`}>
+                        {pet.profileCompleteness && pet.profileCompleteness > 80 ? 'Здоровий' : 'Потрібна увага'}
                       </Text>
                     </View>
                   </View>
 
                   <Text className="text-gray-500 text-sm">
-                    {pet.type} • {pet.age} • {pet.breed}
+                    {pet.type === 'cat' ? 'Кіт' : pet.type === 'dog' ? 'Собака' : pet.type} • {pet.age || 'Вік невідомий'} • {pet.breed || 'Без породи'}
                   </Text>
 
-                  <View className="flex-row items-center gap-1 mt-1">
-                    <MaterialIcons name="local-hospital" size={16} color="#f97316" />
-                    <Text className="text-xs text-gray-500">
-                      Вакцинація: {pet.nextVaccination}
-                    </Text>
-                  </View>
+                  {pet.vaccinationStatus && pet.vaccinationStatus.length > 0 && (
+                      <View className="flex-row items-center gap-1 mt-1">
+                        <MaterialIcons name="local-hospital" size={16} color="#f97316" />
+                        <Text className="text-xs text-gray-500">
+                          Вакцинація: {pet.vaccinationStatus.find(v => v.status === 'upcoming')?.date || 'Всі виконані'}
+                        </Text>
+                      </View>
+                  )}
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
+            {pets.length === 0 && !isLoading && (
+                <View className="p-8 items-center">
+                    <Text className="text-gray-500">У вас ще немає доданих улюбленців</Text>
+                    <TouchableOpacity onPress={handleAddPet} className="mt-4">
+                        <Text className="text-orange-500 font-bold">Додати зараз</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
           </View>
+          )}
         </View>
 
         {/* Upcoming Events */}

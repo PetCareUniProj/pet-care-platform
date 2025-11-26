@@ -16,14 +16,17 @@ export interface Pet {
   color?: string;
   microchip?: string;
   photoUrl?: string;
-  healthScore?: number;
+  profileCompleteness?: number; // Changed from healthScore to match UI
   ownerId: string;
   vetId?: string;
   vetName?: string;
   vetPhone?: string;
-  notes?: string;
+  notes?: string[]; // Changed to array
   createdAt: string;
   updatedAt: string;
+  vaccinationStatus?: { name: string; date: string; status: 'completed' | 'upcoming' | 'missed' }[];
+  medications?: { name: string; dosage: string; frequency: string; nextDate: string }[];
+  upcomingAppointments?: { type: string; date: string; time: string; vet: string }[];
 }
 
 export interface CreatePetDto {
@@ -39,11 +42,12 @@ export interface CreatePetDto {
   vetId?: string;
   vetName?: string;
   vetPhone?: string;
-  notes?: string;
+  notes?: string[];
 }
 
 export interface UpdatePetDto extends Partial<CreatePetDto> {
   photoUrl?: string;
+  profileCompleteness?: number;
 }
 
 export interface PetHealthRecord {
@@ -56,5 +60,3 @@ export interface PetHealthRecord {
   vetName?: string;
   attachments?: string[];
 }
-
-
