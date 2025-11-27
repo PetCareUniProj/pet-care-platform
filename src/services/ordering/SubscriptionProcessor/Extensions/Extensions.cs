@@ -18,9 +18,9 @@ public static class Extensions
         builder.Services.AddOptions<BackgroundTaskOptions>()
             .BindConfiguration(nameof(BackgroundTaskOptions));
 
-        builder.Services.AddHostedService<RecurringOrderScannerService>();
+        builder.Services.AddHostedService<RecurringOrderActivationService>();
     }
 }
 
-[JsonSerializable(typeof(GracePeriodConfirmedIntegrationEvent))]
+    [JsonSerializable(typeof(RecurringOrderReadyEvent))]
 internal sealed partial class IntegrationEventContext : JsonSerializerContext;

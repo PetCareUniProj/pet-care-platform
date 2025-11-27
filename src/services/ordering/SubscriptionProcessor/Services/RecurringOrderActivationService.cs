@@ -5,10 +5,10 @@ using SubscriptionProcessor.Events;
 
 namespace SubscriptionProcessor.Services;
 
-public sealed class RecurringOrderScannerService(
+public sealed class RecurringOrderActivationService(
     IOptions<BackgroundTaskOptions> options,
     IEventBus eventBus,
-    ILogger<RecurringOrderScannerService> logger,
+    ILogger<RecurringOrderActivationService> logger,
     IDbConnectionFactory connectionFactory) : BackgroundService
 {
     private readonly BackgroundTaskOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
@@ -19,15 +19,15 @@ public sealed class RecurringOrderScannerService(
 
         if (logger.IsEnabled(LogLevel.Debug))
         {
-            logger.LogDebug("RecurringOrderScannerService is starting.");
-            stoppingToken.Register(() => logger.LogDebug("RecurringOrderScannerService background task is stopping."));
+            logger.LogDebug("RecurringOrderActivationService is starting.");
+            stoppingToken.Register(() => logger.LogDebug("RecurringOrderActivationService background task is stopping."));
         }
 
         while (!stoppingToken.IsCancellationRequested)
         {
             if (logger.IsEnabled(LogLevel.Debug))
             {
-                logger.LogDebug("RecurringOrderScannerService background task is doing background work.");
+                logger.LogDebug("RecurringOrderActivationService background task is doing background work.");
             }
 
             await PublishRecurringOrdersAsync();
@@ -37,7 +37,7 @@ public sealed class RecurringOrderScannerService(
 
         if (logger.IsEnabled(LogLevel.Debug))
         {
-            logger.LogDebug("RecurringOrderScannerService background task is stopping.");
+            logger.LogDebug("RecurringOrderActivationService background task is stopping.");
         }
     }
 
@@ -45,25 +45,25 @@ public sealed class RecurringOrderScannerService(
     {
         if (logger.IsEnabled(LogLevel.Debug))
         {
-            logger.LogDebug("Checking submitted recurring orders");
+            logger.LogDebug("Checking shipped recurring orders ready for reactivation");
         }
 
-        var orderIds = await GetSubmittedRecurringOrdersAsync();
+        var orderIds = await GetReadyRecurringOrdersAsync();
 
         foreach (var orderId in orderIds)
         {
-            var confirmEvent = new GracePeriodConfirmedIntegrationEvent(orderId);
+            var readyEvent = new RecurringOrderReadyEvent(orderId);
 
             logger.LogInformation(
                 "Publishing integration event: {IntegrationEventId} - ({@IntegrationEvent})",
-                confirmEvent.Id,
-                confirmEvent);
+                readyEvent.Id,
+                readyEvent);
 
-            await eventBus.PublishAsync(confirmEvent);
+            await eventBus.PublishAsync(readyEvent);
         }
     }
 
-    private async Task<List<int>> GetSubmittedRecurringOrdersAsync()
+    private async Task<List<int>> GetReadyRecurringOrdersAsync()
     {
         try
         {
@@ -84,7 +84,7 @@ public sealed class RecurringOrderScannerService(
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "An error occurred while retrieving submitted recurring orders.");
+            logger.LogError(exception, "An error occurred while retrieving ready recurring orders.");
         }
 
         return new List<int>();
