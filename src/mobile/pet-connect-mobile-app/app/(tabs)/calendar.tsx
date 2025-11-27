@@ -1,20 +1,24 @@
 // Calendar screen with events
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { CalendarEvent, ReminderType } from '@/types/reminder.types';
-import { EventCard } from '@/components/calendar/EventCard';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { CalendarEvent, CreateReminderDto } from '@/types/reminder.types';
+import { EventCard, CreateEventModal } from '@/components/calendar';
 import { formatDate } from '@/utils/format';
-import { remindersService } from '@/services/api';
-import { petsService } from '@/services/api';
+import { remindersService, petsService } from '@/services/api';
 import { Pet } from '@/types/pet.types';
 import { LoadingSpinner, ErrorState, EmptyState } from '@/components/ui';
 import { exportEventToCalendar, exportEventsToCalendar } from '@/utils/calendar';
+import { requestNotificationPermissions } from '@/utils/notifications';
 
 export default function CalendarScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ petId?: string }>();
+  
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -24,6 +28,21 @@ export default function CalendarScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Create event modal
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+
+  // Apply pet filter from navigation params
+  useEffect(() => {
+    if (params.petId) {
+      setSelectedPetIds([params.petId]);
+    }
+  }, [params.petId]);
+
+  // Request notification permissions on mount
+  useEffect(() => {
+    requestNotificationPermissions();
+  }, []);
 
   // Filter events by selected pets
   const filteredEvents = useMemo(() => {
@@ -75,13 +94,14 @@ export default function CalendarScreen() {
   }, [filteredEvents, selectedDate]);
 
   // Load events from API
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Load events for period December 1, 2025 - February 3, 2026
-      const startDate = '2025-12-01';
-      const endDate = '2026-02-03';
+      // Load events for a wide range (current year)
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+      const endDate = new Date(today.getFullYear() + 1, 11, 31).toISOString().split('T')[0];
       const calendarEvents = await remindersService.getCalendarEvents(startDate, endDate);
       setEvents(calendarEvents);
     } catch (err: any) {
@@ -89,22 +109,22 @@ export default function CalendarScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Load pets from API
-  const loadPets = async () => {
+  const loadPets = useCallback(async () => {
     try {
       const petsData = await petsService.getAll();
       setPets(petsData.items);
     } catch (err) {
       console.error('Error loading pets:', err);
     }
-  };
+  }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadEvents();
     loadPets();
-  }, []);
+  }, [loadEvents, loadPets]);
 
   // Toggle pet filter
   const togglePetFilter = (petId: string) => {
@@ -135,9 +155,15 @@ export default function CalendarScreen() {
     );
   };
 
-  // Get event count for a date
-  const getEventCount = (date: string): number => {
-    return filteredEvents.filter((event) => event.date === date).length;
+  // Create new event
+  const handleCreateEvent = async (data: CreateReminderDto) => {
+    try {
+      await remindersService.create(data);
+      Alert.alert('Успіх', 'Подію створено та нагадування встановлено');
+      loadEvents(); // Reload events
+    } catch (error) {
+      throw error; // Let modal handle the error
+    }
   };
 
   if (error) {
@@ -183,6 +209,14 @@ export default function CalendarScreen() {
         </LinearGradient>
 
         <View className="px-6 pt-6 pb-8 gap-6">
+          {/* Add Event Button */}
+          <TouchableOpacity
+            className="bg-orange-500 py-4 rounded-2xl flex-row items-center justify-center gap-2 shadow-sm"
+            onPress={() => setIsCreateModalVisible(true)}>
+            <MaterialIcons name="add" size={24} color="white" />
+            <Text className="text-white font-bold text-lg">Додати подію</Text>
+          </TouchableOpacity>
+
           {/* View Mode Toggle */}
           <View className="flex-row gap-2 bg-gray-100 p-1 rounded-2xl">
             <TouchableOpacity
@@ -219,7 +253,7 @@ export default function CalendarScreen() {
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
                 <TouchableOpacity
-                  className={`px-4 py-2 rounded-full border ${
+                  className={`px-4 py-2 rounded-full border mr-2 ${
                     selectedPetIds.length === 0
                       ? 'bg-orange-500 border-orange-500'
                       : 'bg-white border-gray-300'
@@ -235,7 +269,7 @@ export default function CalendarScreen() {
                 {pets.map((pet) => (
                   <TouchableOpacity
                     key={pet.id}
-                    className={`px-4 py-2 rounded-full border ${
+                    className={`px-4 py-2 rounded-full border mr-2 ${
                       selectedPetIds.includes(pet.id)
                         ? 'bg-orange-500 border-orange-500'
                         : 'bg-white border-gray-300'
@@ -323,14 +357,24 @@ export default function CalendarScreen() {
                     {dayEvents.length} {dayEvents.length === 1 ? 'подія' : 'подій'}
                   </Text>
                 </View>
-                {dayEvents.length > 0 && (
+                <View className="flex-row gap-2">
                   <TouchableOpacity
-                    className="bg-orange-500 px-4 py-2 rounded-xl flex-row items-center gap-2"
-                    onPress={handleExportDayEvents}>
-                    <MaterialIcons name="file-download" size={20} color="white" />
-                    <Text className="text-white font-semibold text-sm">Експорт</Text>
+                    className="bg-orange-100 px-3 py-2 rounded-xl flex-row items-center gap-1"
+                    onPress={() => {
+                      setIsCreateModalVisible(true);
+                    }}>
+                    <MaterialIcons name="add" size={18} color="#f97316" />
+                    <Text className="text-orange-600 font-semibold text-sm">Додати</Text>
                   </TouchableOpacity>
-                )}
+                  {dayEvents.length > 0 && (
+                    <TouchableOpacity
+                      className="bg-orange-500 px-3 py-2 rounded-xl flex-row items-center gap-1"
+                      onPress={handleExportDayEvents}>
+                      <MaterialIcons name="file-download" size={18} color="white" />
+                      <Text className="text-white font-semibold text-sm">Експорт</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
               {isLoading ? (
@@ -406,7 +450,16 @@ export default function CalendarScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Create Event Modal */}
+      <CreateEventModal
+        visible={isCreateModalVisible}
+        onClose={() => setIsCreateModalVisible(false)}
+        onSubmit={handleCreateEvent}
+        pets={pets}
+        selectedDate={selectedDate}
+        selectedPetId={selectedPetIds.length === 1 ? selectedPetIds[0] : undefined}
+      />
     </View>
   );
 }
-

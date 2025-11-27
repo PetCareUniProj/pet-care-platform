@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { usePetsStore } from '@/store';
 import { Pet } from '@/types/pet.types';
+import { UpcomingEventsSection } from '@/components/pets';
 
 export default function PetDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -297,6 +298,15 @@ export default function PetDetailsScreen() {
           </View>
         </View>
 
+        {/* Upcoming Events Section */}
+        <LinearGradient
+          colors={['rgba(251, 146, 60, 0.08)', 'rgba(245, 158, 11, 0.08)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <UpcomingEventsSection petId={pet.id} petName={pet.name} maxEvents={3} />
+        </LinearGradient>
+
         {/* Health Information - Gradient Background */}
         <LinearGradient
           colors={['rgba(251, 146, 60, 0.05)', 'rgba(245, 158, 11, 0.05)']}
@@ -392,4 +402,3 @@ export default function PetDetailsScreen() {
     </>
   );
 }
-

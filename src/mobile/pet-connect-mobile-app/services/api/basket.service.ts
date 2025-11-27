@@ -3,7 +3,7 @@
 // and then create a draft when user proceeds to checkout
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { v4 as uuidv4 } from 'uuid';
+import * as Crypto from 'expo-crypto';
 import {
   LocalBasket,
   LocalBasketItem,
@@ -59,7 +59,7 @@ class BasketService {
     } else {
       // Add new item
       const newItem: LocalBasketItem = {
-        id: uuidv4(),
+        id: Crypto.randomUUID(),
         productId: request.productId,
         productName: request.productName,
         unitPrice: request.unitPrice,

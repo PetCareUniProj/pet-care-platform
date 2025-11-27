@@ -37,6 +37,7 @@ export interface CreateReminderDto {
   dueDate: string;
   dueTime?: string;
   frequency: ReminderFrequency;
+  reminderMinutesBefore?: number; // Minutes before event to send notification (default: 30)
 }
 
 export interface UpdateReminderDto extends Partial<CreateReminderDto> {
