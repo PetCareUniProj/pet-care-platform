@@ -1,7 +1,21 @@
 // Pet types
 
-export type PetType = 'dog' | 'cat' | 'bird' | 'rabbit' | 'other';
+export type PetType = 'dog' | 'cat' | 'bird' | 'rabbit' | 'hamster' | 'fish' | 'other';
 export type PetGender = 'male' | 'female' | 'unknown';
+
+// Weight history entry
+export interface WeightEntry {
+  weight: number;
+  date: string; // ISO date string
+}
+
+// Photo gallery entry
+export interface PetPhoto {
+  id: string;
+  uri: string;
+  caption?: string;
+  date: string; // ISO date string
+}
 
 export interface Pet {
   id: string;
@@ -13,15 +27,21 @@ export interface Pet {
   gender: PetGender;
   weight?: number;
   weightUnit?: 'kg' | 'lbs';
+  weightHistory?: WeightEntry[]; // History of weight measurements
   color?: string;
   microchip?: string;
   photoUrl?: string;
-  profileCompleteness?: number; // Changed from healthScore to match UI
+  photoGallery?: PetPhoto[]; // Gallery of pet photos
+  profileCompleteness?: number;
   ownerId: string;
   vetId?: string;
   vetName?: string;
   vetPhone?: string;
-  notes?: string[]; // Changed to array
+  vetAddress?: string;
+  notes?: string[];
+  allergies?: string[];
+  specialNeeds?: string;
+  isNeutered?: boolean;
   createdAt: string;
   updatedAt: string;
   vaccinationStatus?: { name: string; date: string; status: 'completed' | 'upcoming' | 'missed' }[];
@@ -42,12 +62,18 @@ export interface CreatePetDto {
   vetId?: string;
   vetName?: string;
   vetPhone?: string;
+  vetAddress?: string;
   notes?: string[];
+  allergies?: string[];
+  specialNeeds?: string;
+  isNeutered?: boolean;
 }
 
 export interface UpdatePetDto extends Partial<CreatePetDto> {
   photoUrl?: string;
   profileCompleteness?: number;
+  weightHistory?: WeightEntry[];
+  photoGallery?: PetPhoto[];
 }
 
 export interface PetHealthRecord {

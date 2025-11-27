@@ -2,7 +2,8 @@
 
 import { apiClient } from './client';
 import { API_ENDPOINTS } from '@/constants/api';
-import { Pet, CreatePetDto, UpdatePetDto, PaginatedResponse, PaginationParams } from '@/types/pet.types';
+import { Pet, CreatePetDto, UpdatePetDto, PaginatedResponse, PaginationParams, WeightEntry, PetPhoto } from '@/types/pet.types';
+import * as Crypto from 'expo-crypto';
 
 // Mock data
 let mockPets: Pet[] = [
@@ -16,13 +17,22 @@ let mockPets: Pet[] = [
     gender: 'male',
     weight: 4.8,
     weightUnit: 'kg',
+    weightHistory: [
+      { weight: 4.2, date: '2024-08-15' },
+      { weight: 4.5, date: '2024-09-15' },
+      { weight: 4.8, date: '2024-10-15' },
+    ],
     color: 'Сірий з білим',
     microchip: 'UA123456789',
     ownerId: 'user1',
     vetName: 'Ветеринарна клініка "Добрий лікар"',
     vetPhone: '+380 50 123 45 67',
+    vetAddress: 'вул. Хрещатик, 10, Київ',
     photoUrl: undefined,
+    photoGallery: [],
     profileCompleteness: 85,
+    isNeutered: true,
+    allergies: ['Риба'],
     notes: [
       'Мурзик любить гратися з іграшками на мотузці.',
       'Має алергію на рибу.',
@@ -54,6 +64,11 @@ let mockPets: Pet[] = [
     gender: 'male',
     weight: 32,
     weightUnit: 'kg',
+    weightHistory: [
+      { weight: 30, date: '2024-06-01' },
+      { weight: 31, date: '2024-08-01' },
+      { weight: 32, date: '2024-10-01' },
+    ],
     color: 'Золотистий',
     ownerId: 'user1',
     vetName: 'Др. Сидоренко',
@@ -61,6 +76,7 @@ let mockPets: Pet[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     profileCompleteness: 60,
+    photoGallery: [],
   }
 ];
 
@@ -118,9 +134,20 @@ class PetsService {
     const index = mockPets.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Pet not found');
 
-    // In a real app, we would upload the file and get a URL back.
-    // Here we just update the photoUrl with the local URI.
-    const updatedPet = { ...mockPets[index], photoUrl: photoUri, updatedAt: new Date().toISOString() };
+    // Add photo to gallery when changing profile photo
+    const newPhoto: PetPhoto = {
+      id: Crypto.randomUUID(),
+      uri: photoUri,
+      date: new Date().toISOString(),
+    };
+    const currentGallery = mockPets[index].photoGallery || [];
+
+    const updatedPet = { 
+      ...mockPets[index], 
+      photoUrl: photoUri, 
+      photoGallery: [...currentGallery, newPhoto],
+      updatedAt: new Date().toISOString() 
+    };
     mockPets[index] = updatedPet;
     return updatedPet;
   }
@@ -134,6 +161,104 @@ class PetsService {
       const updatedPet = { ...mockPets[index], notes: currentNotes, updatedAt: new Date().toISOString() };
       mockPets[index] = updatedPet;
       return updatedPet;
+  }
+
+  async addWeight(id: string, weight: number): Promise<Pet> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = mockPets.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Pet not found');
+
+    const newEntry: WeightEntry = {
+      weight,
+      date: new Date().toISOString().split('T')[0],
+    };
+    const currentHistory = mockPets[index].weightHistory || [];
+
+    const updatedPet = { 
+      ...mockPets[index], 
+      weight, 
+      weightHistory: [...currentHistory, newEntry],
+      updatedAt: new Date().toISOString() 
+    };
+    mockPets[index] = updatedPet;
+    return updatedPet;
+  }
+
+  async addPhotoToGallery(id: string, photoUri: string, caption?: string): Promise<Pet> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const index = mockPets.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Pet not found');
+
+    const newPhoto: PetPhoto = {
+      id: Crypto.randomUUID(),
+      uri: photoUri,
+      caption,
+      date: new Date().toISOString(),
+    };
+    const currentGallery = mockPets[index].photoGallery || [];
+
+    const updatedPet = { 
+      ...mockPets[index], 
+      photoGallery: [...currentGallery, newPhoto],
+      updatedAt: new Date().toISOString() 
+    };
+    mockPets[index] = updatedPet;
+    return updatedPet;
+  }
+
+  async updateGalleryPhoto(id: string, photoId: string, updates: { caption?: string; date?: string }): Promise<Pet> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = mockPets.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Pet not found');
+
+    const currentGallery = mockPets[index].photoGallery || [];
+    const updatedGallery = currentGallery.map(photo => 
+      photo.id === photoId ? { ...photo, ...updates } : photo
+    );
+
+    const updatedPet = { 
+      ...mockPets[index], 
+      photoGallery: updatedGallery,
+      updatedAt: new Date().toISOString() 
+    };
+    mockPets[index] = updatedPet;
+    return updatedPet;
+  }
+
+  async deleteGalleryPhoto(id: string, photoId: string): Promise<Pet> {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = mockPets.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Pet not found');
+
+    const currentGallery = mockPets[index].photoGallery || [];
+    const updatedGallery = currentGallery.filter(photo => photo.id !== photoId);
+
+    const updatedPet = { 
+      ...mockPets[index], 
+      photoGallery: updatedGallery,
+      updatedAt: new Date().toISOString() 
+    };
+    mockPets[index] = updatedPet;
+    return updatedPet;
+  }
+
+  // Helper to calculate profile completeness
+  calculateCompleteness(pet: Partial<Pet>): number {
+    const fields = [
+      pet.name,
+      pet.type,
+      pet.breed,
+      pet.birthDate,
+      pet.gender,
+      pet.weight,
+      pet.color,
+      pet.microchip,
+      pet.photoUrl,
+      pet.vetName,
+      pet.vetPhone,
+    ];
+    const filledFields = fields.filter(f => f !== undefined && f !== null && f !== '').length;
+    return Math.round((filledFields / fields.length) * 100);
   }
 }
 
