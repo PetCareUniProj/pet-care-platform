@@ -8,7 +8,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\aspire\ServiceDefaults\ServiceDefaults.csproj" />
 		<ProjectReference Include="..\..\..\shared\EventBusRabbitMQ\EventBusRabbitMQ.csproj" />
-		<ProjectReference Include="..\Ordering.Infrastructure\Ordering.Infrastructure\Ordering.Infrastructure.csproj" />
+		<ProjectReference Include="..\Ordering.Infrastructure\Ordering.Infrastructure.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Include="..\..\..\shared\ActivityExtensions.cs" Link="Extensions\ActivityExtensions.cs" />
