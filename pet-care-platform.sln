@@ -47,6 +47,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Subscription.Infrastructure
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subscription.Infrastructure", "src\services\subscription\Subscription.Infrastructure\Subscription.Infrastructure\Subscription.Infrastructure.csproj", "{06FD4233-34CF-44CB-B31C-7D1BEE32A31E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubscriptionProcessor", "src\services\subscription\SubscriptionProcessor\SubscriptionProcessor.csproj", "{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Subscription.Api.Tests.Integrational", "tests\Subscription.Api.Tests.Integrational\Subscription.Api.Tests.Integrational.csproj", "{5EE56BDF-B3F6-424B-BD21-2DB807DF75DA}"
 EndProject
 Global
@@ -215,6 +217,18 @@ Global
 		{08B65EF3-3FBB-48BB-A2C7-5D339559B785}.Release|x64.Build.0 = Release|Any CPU
 		{08B65EF3-3FBB-48BB-A2C7-5D339559B785}.Release|x86.ActiveCfg = Release|Any CPU
 		{08B65EF3-3FBB-48BB-A2C7-5D339559B785}.Release|x86.Build.0 = Release|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Debug|x64.Build.0 = Debug|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Debug|x86.Build.0 = Debug|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Release|x64.ActiveCfg = Release|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Release|x64.Build.0 = Release|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Release|x86.ActiveCfg = Release|Any CPU
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB}.Release|x86.Build.0 = Release|Any CPU
 		{06FD4233-34CF-44CB-B31C-7D1BEE32A31E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{06FD4233-34CF-44CB-B31C-7D1BEE32A31E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06FD4233-34CF-44CB-B31C-7D1BEE32A31E}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -264,6 +278,7 @@ Global
 		{08B65EF3-3FBB-48BB-A2C7-5D339559B785} = {6594E698-28EE-F19B-8CC8-4750FE3B23A4}
 		{16125B9C-DE1E-375A-9CA0-AA6B5E09B4AC} = {6594E698-28EE-F19B-8CC8-4750FE3B23A4}
 		{06FD4233-34CF-44CB-B31C-7D1BEE32A31E} = {16125B9C-DE1E-375A-9CA0-AA6B5E09B4AC}
+		{8AAE7C05-0514-4A4D-B42D-4A8DB732C7FB} = {6594E698-28EE-F19B-8CC8-4750FE3B23A4}
 		{5EE56BDF-B3F6-424B-BD21-2DB807DF75DA} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

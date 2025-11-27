@@ -34,6 +34,7 @@
     <Project Path="src/services/subscription/Subscription.Application/Subscription.Application.csproj" />
     <Project Path="src/services/subscription/Subscription.Domain/Subscription.Domain.csproj" />
     <Project Path="src/services/subscription/Subscription.Infrastructure/Subscription.Infrastructure/Subscription.Infrastructure.csproj" />
+    <Project Path="src/services/subscription/SubscriptionProcessor/SubscriptionProcessor.csproj" />
   </Folder>
   <Folder Name="/src/shared/">
     <Project Path="src/shared/EventBus/EventBus.csproj" Id="b3dd9b64-95bc-4bb1-8e96-2b3ba649edd5" />

@@ -45,6 +45,10 @@ var subscriptionApi = builder.AddProject<Subscription_Api>("subscription-api")
     .WithReference(subscriptionDb).WaitFor(subscriptionDb)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
+builder.AddProject<SubscriptionProcessor>("subscriptionprocessor")
+    .WithReference(subscriptionDb).WaitFor(subscriptionDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq);
+
 var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WithReference(catalogDb).WaitFor(catalogDb)
