@@ -396,16 +396,17 @@ export default function CreatePetScreen() {
               colors={['#fb923c', '#f59e0b']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              className="p-4 items-center flex-row justify-center gap-2"
             >
+              <View className="p-4 items-center flex-row justify-center gap-2">
               {isLoading ? (
                 <ActivityIndicator color="white" />
               ) : (
                 <>
                   <MaterialIcons name="check-circle" size={24} color="white" />
-                  <Text className="text-white font-bold text-lg">Створити профіль</Text>
-                </>
-              )}
+                    <Text className="text-white font-bold text-lg">Створити профіль</Text>
+                  </>
+                )}
+              </View>
             </LinearGradient>
           </TouchableOpacity>
         </View>

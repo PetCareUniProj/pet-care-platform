@@ -8,3 +8,4 @@ export * from './product.types';
 export * from './order.types';
 export * from './basket.types';
 export * from './subscription.types';
+export * from './document.types';

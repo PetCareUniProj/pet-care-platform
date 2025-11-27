@@ -1,71 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ScrollView,
   Text,
   View,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
-
-interface Document {
-  id: string;
-  name: string;
-  type: 'vaccination' | 'passport' | 'insurance' | 'medical' | 'other';
-  petName: string;
-  date: string;
-  fileSize?: string;
-}
-
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    name: 'Паспорт Мурзика',
-    type: 'passport',
-    petName: 'Мурзик',
-    date: '2024-01-15',
-    fileSize: '2.3 МБ',
-  },
-  {
-    id: '2',
-    name: 'Сертифікат вакцинації',
-    type: 'vaccination',
-    petName: 'Мурзик',
-    date: '2024-10-15',
-    fileSize: '1.1 МБ',
-  },
-  {
-    id: '3',
-    name: 'Страховий поліс',
-    type: 'insurance',
-    petName: 'Барон',
-    date: '2024-06-01',
-    fileSize: '540 КБ',
-  },
-  {
-    id: '4',
-    name: 'Виписка з клініки',
-    type: 'medical',
-    petName: 'Мурзик',
-    date: '2024-11-20',
-    fileSize: '890 КБ',
-  },
-];
-
-const DOCUMENT_TYPES = {
-  vaccination: { icon: 'vaccines', color: '#22c55e', bg: 'bg-green-100', label: 'Вакцинація' },
-  passport: { icon: 'badge', color: '#3b82f6', bg: 'bg-blue-100', label: 'Паспорт' },
-  insurance: { icon: 'security', color: '#8b5cf6', bg: 'bg-violet-100', label: 'Страховка' },
-  medical: { icon: 'medical-services', color: '#ef4444', bg: 'bg-red-100', label: 'Медичний' },
-  other: { icon: 'description', color: '#6b7280', bg: 'bg-gray-100', label: 'Інше' },
-};
+import * as ImagePicker from 'expo-image-picker';
+import { documentsService } from '@/services/api/documents.service';
+import { PetDocument, DocumentType, DOCUMENT_TYPE_INFO } from '@/types/document.types';
+import { usePetsStore } from '@/store';
 
 export default function DocumentsScreen() {
   const router = useRouter();
-  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const { pets, fetchPets } = usePetsStore();
+  const [documents, setDocuments] = useState<PetDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<DocumentType | null>(null);
+
+  // Add document modal
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [newDocName, setNewDocName] = useState('');
+  const [newDocType, setNewDocType] = useState<DocumentType>('other');
+  const [newDocPetId, setNewDocPetId] = useState<string>('');
+  const [newDocDescription, setNewDocDescription] = useState('');
+
+  const loadDocuments = async () => {
+    try {
+      setIsLoading(true);
+      const data = await documentsService.getAll();
+      setDocuments(data);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPets();
+    loadDocuments();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadDocuments();
+    setRefreshing(false);
+  }, []);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -73,29 +62,97 @@ export default function DocumentsScreen() {
   };
 
   const handleAddDocument = () => {
+    if (pets.length === 0) {
+      Alert.alert('Увага', 'Спочатку додайте улюбленця');
+      return;
+    }
+    setNewDocPetId(pets[0].id);
+    setIsAddModalVisible(true);
+  };
+
+  const handlePickDocument = async () => {
     Alert.alert(
       'Додати документ',
       'Оберіть джерело',
       [
-        { text: 'Камера', onPress: () => {} },
-        { text: 'Галерея', onPress: () => {} },
-        { text: 'Файли', onPress: () => {} },
+        {
+          text: 'Камера',
+          onPress: async () => {
+            const result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              quality: 0.8,
+            });
+            if (!result.canceled) {
+              handleCreateDocument(result.assets[0].uri, result.assets[0].fileSize);
+            }
+          },
+        },
+        {
+          text: 'Галерея',
+          onPress: async () => {
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              quality: 0.8,
+            });
+            if (!result.canceled) {
+              handleCreateDocument(result.assets[0].uri, result.assets[0].fileSize);
+            }
+          },
+        },
         { text: 'Скасувати', style: 'cancel' },
       ]
     );
   };
 
-  const handleDeleteDocument = (id: string) => {
+  const handleCreateDocument = async (fileUri?: string, fileSize?: number) => {
+    if (!newDocName.trim()) {
+      Alert.alert('Помилка', 'Введіть назву документа');
+      return;
+    }
+    if (!newDocPetId) {
+      Alert.alert('Помилка', 'Оберіть улюбленця');
+      return;
+    }
+
+    try {
+      const petName = pets.find(p => p.id === newDocPetId)?.name || '';
+      await documentsService.create({
+        petId: newDocPetId,
+        name: newDocName.trim(),
+        type: newDocType,
+        description: newDocDescription.trim() || undefined,
+        fileUri,
+        fileSize: fileSize ? `${(fileSize / 1024).toFixed(0)} КБ` : undefined,
+        date: new Date().toISOString().split('T')[0],
+      }, petName);
+
+      setNewDocName('');
+      setNewDocType('other');
+      setNewDocDescription('');
+      setIsAddModalVisible(false);
+      await loadDocuments();
+      Alert.alert('Успішно', 'Документ додано');
+    } catch (error) {
+      Alert.alert('Помилка', 'Не вдалося додати документ');
+    }
+  };
+
+  const handleDeleteDocument = (doc: PetDocument) => {
     Alert.alert(
       'Видалити документ',
-      'Ви впевнені, що хочете видалити цей документ?',
+      `Ви впевнені, що хочете видалити "${doc.name}"?`,
       [
         { text: 'Скасувати', style: 'cancel' },
         {
           text: 'Видалити',
           style: 'destructive',
-          onPress: () => {
-            setDocuments((prev) => prev.filter((d) => d.id !== id));
+          onPress: async () => {
+            try {
+              await documentsService.delete(doc.id);
+              await loadDocuments();
+            } catch (error) {
+              Alert.alert('Помилка', 'Не вдалося видалити документ');
+            }
           },
         },
       ]
@@ -111,20 +168,33 @@ export default function DocumentsScreen() {
     if (!acc[doc.petName]) acc[doc.petName] = [];
     acc[doc.petName].push(doc);
     return acc;
-  }, {} as Record<string, Document[]>);
+  }, {} as Record<string, PetDocument[]>);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color="#6b7280" />
+      </View>
+    );
+  }
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 bg-gray-50" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#6b7280']} />
+        }
+      >
         {/* Header */}
         <LinearGradient
           colors={['#6b7280', '#4b5563']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          className="pt-14 pb-8 px-6"
         >
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center justify-between pt-14 pb-6 px-6">
             <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
               <MaterialIcons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
@@ -135,7 +205,7 @@ export default function DocumentsScreen() {
           </View>
 
           {/* Stats */}
-          <View className="flex-row gap-4 mt-2">
+          <View className="flex-row gap-4 mt-2 p-4">
             <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
               <Text className="text-white/80 text-sm">Всього документів</Text>
               <Text className="text-white text-3xl font-bold">{documents.length}</Text>
@@ -161,10 +231,10 @@ export default function DocumentsScreen() {
                   Всі
                 </Text>
               </TouchableOpacity>
-              {Object.entries(DOCUMENT_TYPES).map(([key, value]) => (
+              {Object.entries(DOCUMENT_TYPE_INFO).map(([key, value]) => (
                 <TouchableOpacity
                   key={key}
-                  onPress={() => setSelectedFilter(key)}
+                  onPress={() => setSelectedFilter(key as DocumentType)}
                   className={`px-4 py-2 rounded-full flex-row items-center gap-2 ${
                     selectedFilter === key ? 'bg-gray-800' : 'bg-white border border-gray-200'
                   }`}
@@ -188,7 +258,7 @@ export default function DocumentsScreen() {
               <Text className="text-lg font-bold text-gray-800 ml-1">📋 {petName}</Text>
 
               {petDocs.map((doc) => {
-                const typeInfo = DOCUMENT_TYPES[doc.type];
+                const typeInfo = DOCUMENT_TYPE_INFO[doc.type];
                 return (
                   <TouchableOpacity
                     key={doc.id}
@@ -207,15 +277,22 @@ export default function DocumentsScreen() {
                             {typeInfo.label}
                           </Text>
                         </View>
-                        <Text className="text-gray-400 text-xs">{doc.fileSize}</Text>
+                        {doc.fileSize && (
+                          <Text className="text-gray-400 text-xs">{doc.fileSize}</Text>
+                        )}
                       </View>
                       <Text className="text-gray-400 text-xs mt-1">{formatDate(doc.date)}</Text>
+                      {doc.expiryDate && (
+                        <Text className="text-amber-600 text-xs">
+                          Дійсний до: {formatDate(doc.expiryDate)}
+                        </Text>
+                      )}
                     </View>
                     <View className="flex-row gap-2">
                       <TouchableOpacity className="p-2">
                         <MaterialIcons name="visibility" size={22} color="#6b7280" />
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDeleteDocument(doc.id)} className="p-2">
+                      <TouchableOpacity onPress={() => handleDeleteDocument(doc)} className="p-2">
                         <MaterialIcons name="delete-outline" size={22} color="#ef4444" />
                       </TouchableOpacity>
                     </View>
@@ -252,7 +329,118 @@ export default function DocumentsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Add Document Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isAddModalVisible}
+        onRequestClose={() => setIsAddModalVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl p-6 gap-4">
+            <View className="items-center mb-2">
+              <View className="w-12 h-1 bg-gray-300 rounded-full mb-4" />
+              <Text className="text-xl font-bold text-gray-800">Новий документ</Text>
+            </View>
+
+            {/* Pet selector */}
+            <View className="gap-2">
+              <Text className="text-gray-600 font-semibold">Улюбленець</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View className="flex-row gap-2">
+                  {pets.map((pet) => (
+                    <TouchableOpacity
+                      key={pet.id}
+                      onPress={() => setNewDocPetId(pet.id)}
+                      className={`px-4 py-2 rounded-full ${
+                        newDocPetId === pet.id ? 'bg-gray-800' : 'bg-gray-100'
+                      }`}
+                    >
+                      <Text className={newDocPetId === pet.id ? 'text-white font-semibold' : 'text-gray-600'}>
+                        {pet.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* Document name */}
+            <View className="gap-2">
+              <Text className="text-gray-600 font-semibold">Назва</Text>
+              <TextInput
+                className="border border-gray-200 rounded-xl p-4 text-gray-800"
+                placeholder="Наприклад: Паспорт вакцинації"
+                value={newDocName}
+                onChangeText={setNewDocName}
+              />
+            </View>
+
+            {/* Document type */}
+            <View className="gap-2">
+              <Text className="text-gray-600 font-semibold">Тип документа</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View className="flex-row gap-2">
+                  {Object.entries(DOCUMENT_TYPE_INFO).map(([key, value]) => (
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => setNewDocType(key as DocumentType)}
+                      className={`px-4 py-2 rounded-full flex-row items-center gap-2 ${
+                        newDocType === key ? 'bg-gray-800' : 'bg-gray-100'
+                      }`}
+                    >
+                      <MaterialIcons
+                        name={value.icon as any}
+                        size={16}
+                        color={newDocType === key ? 'white' : value.color}
+                      />
+                      <Text className={newDocType === key ? 'text-white font-semibold' : 'text-gray-600'}>
+                        {value.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* Description */}
+            <View className="gap-2">
+              <Text className="text-gray-600 font-semibold">Опис (необов'язково)</Text>
+              <TextInput
+                className="border border-gray-200 rounded-xl p-4 text-gray-800"
+                placeholder="Короткий опис документа"
+                value={newDocDescription}
+                onChangeText={setNewDocDescription}
+              />
+            </View>
+
+            {/* Buttons */}
+            <View className="flex-row gap-4 mt-2">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 p-4 rounded-xl items-center"
+                onPress={() => setIsAddModalVisible(false)}
+              >
+                <Text className="font-bold text-gray-700">Скасувати</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-gray-800 p-4 rounded-xl items-center flex-row justify-center gap-2"
+                onPress={handlePickDocument}
+              >
+                <MaterialIcons name="attach-file" size={20} color="white" />
+                <Text className="font-bold text-white">Додати файл</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              className="bg-green-500 p-4 rounded-xl items-center"
+              onPress={() => handleCreateDocument()}
+            >
+              <Text className="font-bold text-white">Зберегти без файлу</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
-

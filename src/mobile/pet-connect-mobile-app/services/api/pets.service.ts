@@ -89,8 +89,8 @@ class PetsService {
       items: mockPets,
       total: mockPets.length,
       page: 1,
-      limit: 10,
-      totalPages: 1
+      pageSize: 10,
+      hasNextPage: false
     };
   }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   ScrollView,
   Text,
@@ -6,58 +6,40 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
-
-// Mock subscription data
-interface Subscription {
-  id: string;
-  productName: string;
-  productImage?: string;
-  frequency: 'weekly' | 'biweekly' | 'monthly';
-  nextDelivery: string;
-  price: number;
-  status: 'active' | 'paused' | 'cancelled';
-}
-
-const mockSubscriptions: Subscription[] = [
-  {
-    id: '1',
-    productName: 'Royal Canin Indoor Cat 4kg',
-    frequency: 'monthly',
-    nextDelivery: '2025-12-15',
-    price: 890,
-    status: 'active',
-  },
-  {
-    id: '2',
-    productName: 'Наповнювач Catsan 10л',
-    frequency: 'biweekly',
-    nextDelivery: '2025-12-05',
-    price: 320,
-    status: 'active',
-  },
-];
-
-const FREQUENCY_LABELS = {
-  weekly: 'Щотижня',
-  biweekly: 'Кожні 2 тижні',
-  monthly: 'Щомісяця',
-};
+import { subscriptionsService, LocalSubscription } from '@/services/api/subscriptions.service';
+import { RECURRENCE_LABELS } from '@/types/order.types';
 
 export default function SubscriptionsScreen() {
   const router = useRouter();
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [subscriptions, setSubscriptions] = useState<LocalSubscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadSubscriptions = async () => {
+    try {
+      setIsLoading(true);
+      const data = await subscriptionsService.getAll();
+      setSubscriptions(data);
+    } catch (error) {
+      console.error('Error loading subscriptions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setSubscriptions(mockSubscriptions);
-      setIsLoading(false);
-    }, 500);
+    loadSubscriptions();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadSubscriptions();
+    setRefreshing(false);
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -66,45 +48,52 @@ export default function SubscriptionsScreen() {
     return `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
   };
 
-  const handlePauseSubscription = (id: string) => {
+  const handlePauseSubscription = (sub: LocalSubscription) => {
     Alert.alert(
       'Призупинити підписку',
-      'Ви впевнені, що хочете призупинити цю підписку?',
+      `Ви впевнені, що хочете призупинити підписку на "${sub.productName}"?`,
       [
         { text: 'Скасувати', style: 'cancel' },
         {
           text: 'Призупинити',
-          onPress: () => {
-            setSubscriptions((prev) =>
-              prev.map((sub) =>
-                sub.id === id ? { ...sub, status: 'paused' as const } : sub
-              )
-            );
+          onPress: async () => {
+            try {
+              await subscriptionsService.pause(sub.id);
+              await loadSubscriptions();
+            } catch (error) {
+              Alert.alert('Помилка', 'Не вдалося призупинити підписку');
+            }
           },
         },
       ]
     );
   };
 
-  const handleResumeSubscription = (id: string) => {
-    setSubscriptions((prev) =>
-      prev.map((sub) =>
-        sub.id === id ? { ...sub, status: 'active' as const } : sub
-      )
-    );
+  const handleResumeSubscription = async (sub: LocalSubscription) => {
+    try {
+      await subscriptionsService.resume(sub.id);
+      await loadSubscriptions();
+    } catch (error) {
+      Alert.alert('Помилка', 'Не вдалося відновити підписку');
+    }
   };
 
-  const handleCancelSubscription = (id: string) => {
+  const handleCancelSubscription = (sub: LocalSubscription) => {
     Alert.alert(
       'Скасувати підписку',
-      'Ви впевнені, що хочете скасувати цю підписку? Цю дію неможливо скасувати.',
+      `Ви впевнені, що хочете скасувати підписку на "${sub.productName}"? Цю дію неможливо скасувати.`,
       [
         { text: 'Ні', style: 'cancel' },
         {
           text: 'Так, скасувати',
           style: 'destructive',
-          onPress: () => {
-            setSubscriptions((prev) => prev.filter((sub) => sub.id !== id));
+          onPress: async () => {
+            try {
+              await subscriptionsService.cancel(sub.id);
+              await loadSubscriptions();
+            } catch (error) {
+              Alert.alert('Помилка', 'Не вдалося скасувати підписку');
+            }
           },
         },
       ]
@@ -113,15 +102,12 @@ export default function SubscriptionsScreen() {
 
   const activeSubscriptions = subscriptions.filter((s) => s.status === 'active');
   const pausedSubscriptions = subscriptions.filter((s) => s.status === 'paused');
-  const totalMonthly = activeSubscriptions.reduce((sum, sub) => {
-    const multiplier = sub.frequency === 'weekly' ? 4 : sub.frequency === 'biweekly' ? 2 : 1;
-    return sum + sub.price * multiplier;
-  }, 0);
+  const totalMonthly = subscriptionsService.calculateMonthlyTotal(subscriptions);
 
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" color="#f97316" />
+        <ActivityIndicator size="large" color="#8b5cf6" />
       </View>
     );
   }
@@ -129,15 +115,20 @@ export default function SubscriptionsScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 bg-gray-50" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#8b5cf6']} />
+        }
+      >
         {/* Header */}
         <LinearGradient
           colors={['#8b5cf6', '#7c3aed']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          className="pt-14 pb-8 px-6"
         >
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center justify-between pt-14 px-6 mb-4">
             <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
               <MaterialIcons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
@@ -146,7 +137,7 @@ export default function SubscriptionsScreen() {
           </View>
 
           {/* Stats */}
-          <View className="flex-row gap-4 mt-2">
+          <View className="flex-row gap-4 mt-2 pb-4 px-6">
             <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
               <Text className="text-white/80 text-sm">Активних</Text>
               <Text className="text-white text-3xl font-bold">{activeSubscriptions.length}</Text>
@@ -179,10 +170,12 @@ export default function SubscriptionsScreen() {
                       <View className="flex-row items-center gap-2 mt-1">
                         <View className="bg-violet-100 px-2 py-0.5 rounded">
                           <Text className="text-violet-700 text-xs font-semibold">
-                            {FREQUENCY_LABELS[sub.frequency]}
+                            {RECURRENCE_LABELS[sub.frequency] || sub.frequency}
                           </Text>
                         </View>
-                        <Text className="text-gray-500 text-sm">₴{sub.price}</Text>
+                        <Text className="text-gray-500 text-sm">
+                          ₴{sub.price} × {sub.quantity}
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -197,14 +190,14 @@ export default function SubscriptionsScreen() {
 
                   <View className="flex-row gap-3 mt-4">
                     <TouchableOpacity
-                      onPress={() => handlePauseSubscription(sub.id)}
+                      onPress={() => handlePauseSubscription(sub)}
                       className="flex-1 bg-gray-100 py-3 rounded-xl flex-row items-center justify-center gap-2"
                     >
                       <MaterialIcons name="pause" size={18} color="#6b7280" />
                       <Text className="text-gray-600 font-semibold">Призупинити</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => handleCancelSubscription(sub.id)}
+                      onPress={() => handleCancelSubscription(sub)}
                       className="flex-1 bg-red-50 py-3 rounded-xl flex-row items-center justify-center gap-2"
                     >
                       <MaterialIcons name="close" size={18} color="#ef4444" />
@@ -234,11 +227,11 @@ export default function SubscriptionsScreen() {
                         {sub.productName}
                       </Text>
                       <Text className="text-gray-400 text-sm">
-                        {FREQUENCY_LABELS[sub.frequency]} • ₴{sub.price}
+                        {RECURRENCE_LABELS[sub.frequency] || sub.frequency} • ₴{sub.price}
                       </Text>
                     </View>
                     <TouchableOpacity
-                      onPress={() => handleResumeSubscription(sub.id)}
+                      onPress={() => handleResumeSubscription(sub)}
                       className="bg-violet-500 px-4 py-2 rounded-xl"
                     >
                       <Text className="text-white font-semibold">Відновити</Text>
@@ -284,4 +277,3 @@ export default function SubscriptionsScreen() {
     </>
   );
 }
-

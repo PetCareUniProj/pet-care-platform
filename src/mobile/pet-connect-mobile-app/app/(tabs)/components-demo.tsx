@@ -28,9 +28,8 @@ export default function ComponentsDemoScreen() {
         colors={['#fb923c', '#f59e0b']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 0 }}
-        className="rounded-b-[40px] px-6 pt-16 pb-12"
       >
-        <View className="items-center gap-4 mt-8">
+        <View className="items-center gap-4 mt-8 rounded-b-[40px] px-6 pt-16 pb-12">
           <View className="relative">
             <View className="absolute bg-white/20 w-24 h-24 rounded-full blur-xl" />
             <View className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-white shadow-lg">

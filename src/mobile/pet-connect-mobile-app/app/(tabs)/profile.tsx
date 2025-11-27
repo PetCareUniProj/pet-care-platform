@@ -1,212 +1,469 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { usePetsStore } from '@/store';
+import { Pet } from '@/types/pet.types';
+
+const PET_TYPE_EMOJI: Record<string, string> = {
+  cat: '🐱',
+  dog: '🐕',
+  bird: '🐦',
+  rabbit: '🐰',
+  hamster: '🐹',
+  fish: '🐠',
+  other: '🐾',
+};
+
+// Quick actions for each pet
+const petQuickActions = [
+  { id: 'weight', icon: 'monitor-weight', label: 'Зважити', color: '#22c55e', bg: 'bg-green-100' },
+  { id: 'event', icon: 'event', label: 'Подія', color: '#3b82f6', bg: 'bg-blue-100' },
+  { id: 'note', icon: 'note-add', label: 'Нотатка', color: '#f59e0b', bg: 'bg-amber-100' },
+  { id: 'photo', icon: 'add-a-photo', label: 'Фото', color: '#8b5cf6', bg: 'bg-violet-100' },
+];
 
 export default function PetProfileScreen() {
   const router = useRouter();
-  const { pets, fetchPets, isLoading } = usePetsStore();
-  
+  const { pets, fetchPets, isLoading, addPetWeight, addPetNote, uploadPetPhoto } = usePetsStore();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Weight modal
+  const [isWeightModalVisible, setIsWeightModalVisible] = useState(false);
+  const [selectedPetForWeight, setSelectedPetForWeight] = useState<Pet | null>(null);
+  const [newWeight, setNewWeight] = useState('');
+
+  // Note modal
+  const [isNoteModalVisible, setIsNoteModalVisible] = useState(false);
+  const [selectedPetForNote, setSelectedPetForNote] = useState<Pet | null>(null);
+  const [newNote, setNewNote] = useState('');
+
   useEffect(() => {
-      fetchPets();
+    fetchPets();
   }, []);
 
-  const primaryPet = pets.length > 0 ? pets[0] : null;
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchPets();
+    setRefreshing(false);
+  };
 
-  if (isLoading) {
-      return (
-          <View className="flex-1 justify-center items-center bg-white">
-              <ActivityIndicator size="large" color="#f97316" />
-          </View>
-      );
+  const handlePetPress = (pet: Pet) => {
+    router.push({ pathname: '/pets/[id]', params: { id: pet.id } });
+  };
+
+  const handleAddPet = () => {
+    router.push('/pets/create');
+  };
+
+  const handleQuickAction = async (actionId: string, pet: Pet) => {
+    switch (actionId) {
+      case 'weight':
+        setSelectedPetForWeight(pet);
+        setIsWeightModalVisible(true);
+        break;
+      case 'event':
+        router.push({
+          pathname: '/(tabs)/calendar',
+          params: { selectedPetId: pet.id }
+        });
+        break;
+      case 'note':
+        setSelectedPetForNote(pet);
+        setIsNoteModalVisible(true);
+        break;
+      case 'photo':
+        handlePickPhoto(pet);
+        break;
+    }
+  };
+
+  const handlePickPhoto = async (pet: Pet) => {
+    const ImagePicker = await import('expo-image-picker');
+    
+    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status: mediaLibraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (cameraStatus !== 'granted' || mediaLibraryStatus !== 'granted') {
+      Alert.alert('Потрібні дозволи', 'Для зміни фото потрібні дозволи на доступ до камери та галереї.');
+      return;
+    }
+
+    Alert.alert('Виберіть джерело', 'Звідки ви хочете вибрати фото?', [
+      {
+        text: 'Камера',
+        onPress: async () => {
+          const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+          });
+          if (!result.canceled) {
+            await uploadPetPhoto(pet.id, result.assets[0].uri);
+            Alert.alert('Успішно', 'Фото додано до галереї');
+          }
+        },
+      },
+      {
+        text: 'Галерея',
+        onPress: async () => {
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+          });
+          if (!result.canceled) {
+            await uploadPetPhoto(pet.id, result.assets[0].uri);
+            Alert.alert('Успішно', 'Фото додано до галереї');
+          }
+        },
+      },
+      { text: 'Скасувати', style: 'cancel' },
+    ]);
+  };
+
+  const handleAddWeight = async () => {
+    const weightValue = parseFloat(newWeight);
+    if (isNaN(weightValue) || weightValue <= 0) {
+      Alert.alert('Помилка', 'Введіть коректну вагу');
+      return;
+    }
+    if (selectedPetForWeight) {
+      await addPetWeight(selectedPetForWeight.id, weightValue);
+      setNewWeight('');
+      setIsWeightModalVisible(false);
+      Alert.alert('Успішно', `Вагу ${selectedPetForWeight.name} оновлено`);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) {
+      Alert.alert('Помилка', 'Введіть текст нотатки');
+      return;
+    }
+    if (selectedPetForNote) {
+      await addPetNote(selectedPetForNote.id, newNote.trim());
+      setNewNote('');
+      setIsNoteModalVisible(false);
+      Alert.alert('Успішно', 'Нотатку додано');
+    }
+  };
+
+  if (isLoading && pets.length === 0) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#f97316" />
+      </View>
+    );
   }
-
-  if (!primaryPet) {
-      return (
-          <View className="flex-1 justify-center items-center bg-white p-6 gap-4">
-              <Text className="text-xl font-bold text-gray-800 text-center">У вас ще немає улюбленців</Text>
-              <Text className="text-gray-500 text-center">Додайте свого першого улюбленця, щоб побачити його профіль тут</Text>
-              <TouchableOpacity 
-                  onPress={() => router.push('/pets/create')}
-                  className="bg-orange-500 px-6 py-3 rounded-xl"
-              >
-                  <Text className="text-white font-bold">Додати улюбленця</Text>
-              </TouchableOpacity>
-          </View>
-      );
-  }
-
-  // Redirect to the detailed view of the first pet or render it here. 
-  // Since we have a dedicated dynamic page, we can reuse the component or just redirect.
-  // But Tabs usually expect content. I'll duplicate the render logic for now (or extract a component, but duplication is faster for this turn)
-  // Actually, better to just render a summary and a button "View Full Profile" or render the full profile using the data.
-  // I'll render the full profile using `primaryPet`.
-
-  const pet = primaryPet;
 
   return (
-    <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
-      {/* Header with Pet Image */}
+    <ScrollView 
+      className="flex-1 bg-gray-50" 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />
+      }
+    >
+      {/* Header */}
       <LinearGradient
-        colors={['#fb923c', '#f59e0b']} // orange-400 to amber-500
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 0 }}
-        className="rounded-b-3xl pb-8 overflow-hidden relative"
+        colors={['#fb923c', '#f59e0b']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
       >
-        {/* Background Paw Icons */}
-        <MaterialIcons name="pets" size={120} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', top: 40, left: -20, transform: [{ rotate: '-20deg' }] }} />
-        <MaterialIcons name="pets" size={80} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', bottom: 20, right: -10, transform: [{ rotate: '15deg' }] }} />
-        <MaterialIcons name="pets" size={60} color="rgba(255,255,255,0.05)" style={{ position: 'absolute', top: 100, right: 40, transform: [{ rotate: '30deg' }] }} />
-
-        <View className="flex-row justify-between items-center p-6 pt-12 relative z-10">
+        <View className="flex-row items-center justify-between rounded-b-[40px] px-6 pt-16">
+          <Text className="text-white text-2xl font-bold">Мої улюбленці</Text>
           <TouchableOpacity 
-            onPress={() => router.push({ pathname: '/pets/[id]', params: { id: pet.id } })}
-            className="bg-white/20 p-2 rounded-full flex-row items-center border border-white/30 active:bg-white/30"
+            onPress={handleAddPet}
+            className="bg-white/20 px-4 py-2 rounded-full flex-row items-center gap-2 border border-white/30"
           >
-            <MaterialIcons name="edit" size={20} color="white" />
-            <Text className="text-white ml-2 font-semibold">Редагувати</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="bg-white/20 p-2 rounded-full border border-white/30 active:bg-white/30">
-            <MaterialIcons name="camera-alt" size={20} color="white" />
+            <MaterialIcons name="add" size={20} color="white" />
+            <Text className="text-white font-semibold">Додати</Text>
           </TouchableOpacity>
         </View>
 
-        <View className="items-center px-6 gap-4 pb-4 mb-4 relative z-10">
-          <View className="rounded-full border-4 border-white shadow-lg">
-            <Image
-              source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
-              className="w-32 h-32 rounded-full bg-gray-200"
-              style={{ width: 128, height: 128 }}
-            />
-          </View>
-
-          <View className="items-center gap-1">
-            <Text className="text-white text-3xl font-bold text-center">
-              {pet.name}
-            </Text>
-            <Text className="text-white opacity-90 text-center text-lg">
-              {pet.type === 'cat' ? 'Кіт' : pet.type === 'dog' ? 'Собака' : pet.type} • {pet.breed || 'Без породи'}
-            </Text>
-
-            {/* Profile Completeness */}
-            <View className="items-center mt-4 w-full gap-2">
-              <View className="flex-row items-center gap-2">
-                <MaterialIcons name="check-circle" size={20} color="white" />
-                <Text className="text-white font-semibold">Заповненість профілю</Text>
-              </View>
-              <View className="bg-black/20 rounded-full p-1 w-48 h-4 overflow-hidden">
-                <View 
-                  className="bg-white h-full rounded-full" 
-                  style={{ width: `${pet.profileCompleteness || 50}%` }}
-                />
-              </View>
-              <Text className="text-white font-bold">{pet.profileCompleteness || 50}%</Text>
+        {/* Stats */}
+        {pets.length > 0 && (
+          <View className="flex-row gap-4 p-4">
+            <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
+              <Text className="text-white/80 text-sm">Всього</Text>
+              <Text className="text-white text-3xl font-bold">{pets.length}</Text>
+            </View>
+            <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
+              <Text className="text-white/80 text-sm">Середній профіль</Text>
+              <Text className="text-white text-3xl font-bold">
+                {Math.round(pets.reduce((sum, p) => sum + (p.profileCompleteness || 0), 0) / pets.length)}%
+              </Text>
             </View>
           </View>
-        </View>
+        )}
       </LinearGradient>
 
-      {/* Pet Information */}
-      <View className="pb-8">
-        {/* Basic Information Cards - Default Background */}
-        <View className="p-6 -mt-4 gap-6">
-          <Text className="text-xl font-bold text-gray-800 ml-1">Основна інформація</Text>
+      <View className="px-6 py-6 gap-6 -mt-4">
+        {pets.length === 0 ? (
+          <TouchableOpacity
+            onPress={handleAddPet}
+            className="bg-white border-2 border-dashed border-orange-200 rounded-2xl p-12 items-center"
+          >
+            <View className="bg-orange-100 w-24 h-24 rounded-full items-center justify-center mb-4">
+              <MaterialIcons name="pets" size={48} color="#f97316" />
+            </View>
+            <Text className="text-gray-800 font-bold text-xl">Додайте улюбленця</Text>
+            <Text className="text-gray-500 text-center mt-2">
+              Створіть профіль для вашого першого улюбленця та почніть відстежувати його здоров'я
+            </Text>
+            <View className="bg-orange-500 px-6 py-3 rounded-xl mt-6">
+              <Text className="text-white font-bold">Додати зараз</Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          pets.map((pet) => (
+            <View key={pet.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              {/* Pet Header */}
+              <TouchableOpacity 
+                onPress={() => handlePetPress(pet)}
+                className="p-4 flex-row items-center gap-4"
+              >
+                <View className="relative">
+                  <Image
+                    source={
+                      pet.photoUrl
+                        ? { uri: pet.photoUrl }
+                        : require('@/assets/images/pet-cat-mock-profile-image.png')
+                    }
+                    className="w-20 h-20 rounded-2xl bg-gray-100"
+                    style={{ width: 80, height: 80 }}
+                  />
+                  <View
+                    className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full items-center justify-center border-2 border-white ${
+                      (pet.profileCompleteness || 0) >= 80 ? 'bg-green-500' : 'bg-orange-500'
+                    }`}
+                  >
+                    <MaterialIcons
+                      name={(pet.profileCompleteness || 0) >= 80 ? 'check' : 'priority-high'}
+                      size={16}
+                      color="white"
+                    />
+                  </View>
+                </View>
 
-          <View className="gap-3">
-            <View className="bg-gray-50 p-4 rounded-2xl flex-row items-center justify-between border border-gray-100">
-              <View className="flex-row items-center gap-4">
-                <MaterialIcons name="cake" size={24} color="#f97316" />
-                <View>
-                  <Text className="font-bold text-gray-800">Дата народження</Text>
-                  <Text className="text-gray-500">{pet.birthDate || 'Не вказано'}</Text>
+                <View className="flex-1">
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-xl">{PET_TYPE_EMOJI[pet.type] || '🐾'}</Text>
+                    <Text className="text-gray-800 font-bold text-lg">{pet.name}</Text>
+                  </View>
+                  <Text className="text-gray-500 text-sm">
+                    {pet.breed || 'Порода не вказана'}
+                  </Text>
+                  <View className="flex-row items-center gap-4 mt-2">
+                    {pet.age && (
+                      <View className="flex-row items-center gap-1">
+                        <MaterialIcons name="cake" size={14} color="#9ca3af" />
+                        <Text className="text-gray-400 text-xs">{pet.age}</Text>
+                      </View>
+                    )}
+                    {pet.weight && (
+                      <View className="flex-row items-center gap-1">
+                        <MaterialIcons name="fitness-center" size={14} color="#9ca3af" />
+                        <Text className="text-gray-400 text-xs">{pet.weight} {pet.weightUnit || 'кг'}</Text>
+                      </View>
+                    )}
+                    {pet.gender && (
+                      <View className="flex-row items-center gap-1">
+                        <MaterialIcons 
+                          name={pet.gender === 'male' ? 'male' : 'female'} 
+                          size={14} 
+                          color="#9ca3af" 
+                        />
+                        <Text className="text-gray-400 text-xs">
+                          {pet.gender === 'male' ? 'Хлопчик' : 'Дівчинка'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <MaterialIcons name="chevron-right" size={24} color="#d1d5db" />
+              </TouchableOpacity>
+
+              {/* Profile Progress */}
+              {(pet.profileCompleteness || 0) < 100 && (
+                <View className="px-4 pb-3">
+                  <View className="flex-row items-center justify-between mb-1">
+                    <Text className="text-gray-500 text-xs">Заповненість профілю</Text>
+                    <Text className="text-gray-600 text-xs font-semibold">{pet.profileCompleteness || 0}%</Text>
+                  </View>
+                  <View className="bg-gray-200 h-2 rounded-full overflow-hidden">
+                    <View
+                      className={`h-full rounded-full ${
+                        (pet.profileCompleteness || 0) >= 80 ? 'bg-green-500' : 'bg-orange-500'
+                      }`}
+                      style={{ width: `${pet.profileCompleteness || 0}%` }}
+                    />
+                  </View>
+                </View>
+              )}
+
+              {/* Quick Actions */}
+              <View className="border-t border-gray-100 px-2 py-3">
+                <View className="flex-row justify-around">
+                  {petQuickActions.map((action) => (
+                    <TouchableOpacity
+                      key={action.id}
+                      onPress={() => handleQuickAction(action.id, pet)}
+                      className="items-center py-2 px-3"
+                    >
+                      <View className={`w-12 h-12 rounded-xl items-center justify-center ${action.bg} mb-1`}>
+                        <MaterialIcons name={action.icon as any} size={24} color={action.color} />
+                      </View>
+                      <Text className="text-gray-600 text-xs font-medium">{action.label}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
-              <View className="bg-orange-100 px-3 py-1 rounded-full">
-                <Text className="text-orange-700 text-xs font-bold">{pet.age || 'Вік невідомий'}</Text>
-              </View>
-            </View>
 
-            <View className="bg-gray-50 p-4 rounded-2xl flex-row items-center gap-4 border border-gray-100">
-              <MaterialIcons name="fitness-center" size={24} color="#f97316" />
-              <View>
-                <Text className="font-bold text-gray-800">Вага</Text>
-                <Text className="text-gray-500">{pet.weight} {pet.weightUnit}</Text>
-              </View>
-            </View>
-
-            <View className="bg-gray-50 p-4 rounded-2xl flex-row items-center gap-4 border border-gray-100">
-              <MaterialIcons name="palette" size={24} color="#f97316" />
-              <View>
-                <Text className="font-bold text-gray-800">Колір шерсті</Text>
-                <Text className="text-gray-500">{pet.color || 'Не вказано'}</Text>
-              </View>
-            </View>
-
-            <View className="bg-gray-50 p-4 rounded-2xl flex-row items-center gap-4 border border-gray-100">
-              <MaterialIcons name="transgender" size={24} color="#f97316" />
-              <View>
-                <Text className="font-bold text-gray-800">Стать</Text>
-                <Text className="text-gray-500">{pet.gender === 'male' ? 'Хлопчик' : pet.gender === 'female' ? 'Дівчинка' : 'Невідомо'}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Health Information - Gradient Background */}
-        <LinearGradient
-          colors={['rgba(251, 146, 60, 0.05)', 'rgba(245, 158, 11, 0.05)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          className=""
-        >
-          <View className="gap-4 py-6 px-6">
-            <Text className="text-xl font-bold text-gray-800 ml-1">Здоров'я та ліки</Text>
-
-            {/* Vaccination Status */}
-            <View className="gap-3">
-              <Text className="font-semibold text-gray-600 ml-1 uppercase text-xs">Вакцинації</Text>
-              {pet.vaccinationStatus?.map((vaccination, index) => (
-                <View key={index} className="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex-row items-center justify-between">
-                  <View className="flex-1">
-                    <Text className="font-bold text-gray-800">{vaccination.name}</Text>
-                    <Text className="text-gray-500 text-sm">{vaccination.date}</Text>
-                  </View>
-                  <View className={`px-2 py-1 rounded-full ${vaccination.status === 'completed' ? 'bg-green-100' : 'bg-orange-100'}`}>
-                    <Text className={`text-xs font-bold ${vaccination.status === 'completed' ? 'text-green-700' : 'text-orange-700'}`}>
-                      {vaccination.status === 'completed' ? 'Виконано' : 'Заплановано'}
+              {/* Last Activity */}
+              {pet.weightHistory && pet.weightHistory.length > 0 && (
+                <View className="border-t border-gray-100 px-4 py-3 bg-gray-50">
+                  <View className="flex-row items-center gap-2">
+                    <MaterialIcons name="history" size={16} color="#9ca3af" />
+                    <Text className="text-gray-500 text-xs">
+                      Останнє зважування: {pet.weight} {pet.weightUnit || 'кг'} • {
+                        new Date(pet.weightHistory[pet.weightHistory.length - 1].date).toLocaleDateString('uk', {
+                          day: 'numeric',
+                          month: 'short'
+                        })
+                      }
                     </Text>
                   </View>
                 </View>
-              ))}
-               {(!pet.vaccinationStatus || pet.vaccinationStatus.length === 0) && (
-                  <Text className="text-gray-400 text-center italic">Немає записів про вакцинацію</Text>
               )}
             </View>
-          </View>
-        </LinearGradient>
+          ))
+        )}
 
-        {/* Notes - Default Background */}
-        <View className="p-6 gap-4">
-          <Text className="text-xl font-bold text-gray-800 ml-1">Нотатки</Text>
+        {/* Add Pet Card */}
+        {pets.length > 0 && (
+          <TouchableOpacity
+            onPress={handleAddPet}
+            className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl p-6 flex-row items-center justify-center gap-4"
+          >
+            <View className="bg-orange-100 w-14 h-14 rounded-full items-center justify-center">
+              <MaterialIcons name="add" size={28} color="#f97316" />
+            </View>
+            <View>
+              <Text className="text-orange-700 font-bold text-lg">Додати улюбленця</Text>
+              <Text className="text-orange-500 text-sm">Створити новий профіль</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
 
-          <View className="flex-row flex-wrap gap-3">
-            {pet.notes?.map((note, index) => (
-              <View key={index} className="bg-yellow-50 border border-yellow-100 p-3 rounded-xl w-[48%] mb-1">
-                <Text className="text-gray-700 italic text-sm">
-                  {note}
-                </Text>
+      {/* Weight Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isWeightModalVisible}
+        onRequestClose={() => setIsWeightModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white p-6 rounded-2xl w-[90%] gap-4">
+            <View className="items-center mb-2">
+              <View className="bg-green-100 w-16 h-16 rounded-full items-center justify-center mb-2">
+                <MaterialIcons name="monitor-weight" size={32} color="#22c55e" />
               </View>
-            ))}
-            <TouchableOpacity className="bg-gray-50 border border-gray-200 border-dashed p-3 rounded-xl w-[48%] items-center justify-center h-20 active:bg-gray-100">
-              <MaterialIcons name="add" size={24} color="#9ca3af" />
-              <Text className="text-gray-400 text-xs font-bold mt-1">Додати нотатку</Text>
-            </TouchableOpacity>
+              <Text className="text-xl font-bold text-gray-800">Зважування</Text>
+              <Text className="text-gray-500">{selectedPetForWeight?.name}</Text>
+            </View>
+
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                className="flex-1 border border-gray-200 rounded-xl p-4 text-gray-800 text-2xl text-center font-bold"
+                keyboardType="numeric"
+                placeholder="0.0"
+                value={newWeight}
+                onChangeText={setNewWeight}
+              />
+              <Text className="text-xl font-bold text-gray-500">{selectedPetForWeight?.weightUnit || 'кг'}</Text>
+            </View>
+
+            {selectedPetForWeight?.weight && (
+              <Text className="text-gray-400 text-center text-sm">
+                Попередня вага: {selectedPetForWeight.weight} {selectedPetForWeight.weightUnit || 'кг'}
+              </Text>
+            )}
+
+            <View className="flex-row gap-4">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 p-3 rounded-xl items-center"
+                onPress={() => {
+                  setNewWeight('');
+                  setIsWeightModalVisible(false);
+                }}
+              >
+                <Text className="font-bold text-gray-700">Скасувати</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-green-500 p-3 rounded-xl items-center"
+                onPress={handleAddWeight}
+              >
+                <Text className="font-bold text-white">Зберегти</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </Modal>
+
+      {/* Note Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isNoteModalVisible}
+        onRequestClose={() => setIsNoteModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white p-6 rounded-2xl w-[90%] gap-4">
+            <View className="items-center mb-2">
+              <View className="bg-amber-100 w-16 h-16 rounded-full items-center justify-center mb-2">
+                <MaterialIcons name="note-add" size={32} color="#f59e0b" />
+              </View>
+              <Text className="text-xl font-bold text-gray-800">Нова нотатка</Text>
+              <Text className="text-gray-500">{selectedPetForNote?.name}</Text>
+            </View>
+
+            <TextInput
+              className="border border-gray-200 rounded-xl p-4 h-32 text-gray-800"
+              multiline
+              placeholder="Напишіть щось про вашого улюбленця..."
+              textAlignVertical="top"
+              value={newNote}
+              onChangeText={setNewNote}
+            />
+
+            <View className="flex-row gap-4">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 p-3 rounded-xl items-center"
+                onPress={() => {
+                  setNewNote('');
+                  setIsNoteModalVisible(false);
+                }}
+              >
+                <Text className="font-bold text-gray-700">Скасувати</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-amber-500 p-3 rounded-xl items-center"
+                onPress={handleAddNote}
+              >
+                <Text className="font-bold text-white">Зберегти</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }

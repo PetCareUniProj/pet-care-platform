@@ -24,9 +24,8 @@ export default function UnloggedHomeScreen() {
           colors={['#fb923c', '#f59e0b']} // orange-400 to amber-500
           start={{ x: 1, y: 0 }} // to-l (right to left)
           end={{ x: 0, y: 0 }}
-          className="rounded-b-[40px] px-6 pt-16 pb-12 mb-6"
         > 
-          <View className="items-center gap-6 mt-20 mb-10">
+          <View className="items-center gap-6 mt-20 mb-10 rounded-b-[40px] px-6 pt-16 pb-12">
             <View className="relative">
               <View className="absolute bg-white/20 w-32 h-32 rounded-full blur-xl" />
               <Image

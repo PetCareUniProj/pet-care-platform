@@ -64,9 +64,8 @@ export default function ForgotPasswordScreen() {
             colors={['#10b981', '#059669']} // green-500 to green-600
             start={{ x: 1, y: 0 }}
             end={{ x: 0, y: 0 }}
-            className="rounded-b-[40px] px-6 pt-16 pb-12"
           >
-            <View className="items-center gap-4 mt-8">
+            <View className="items-center gap-4 mt-8 rounded-b-[40px] px-6 pt-16 pb-12">
               <Animated.View
                 style={{
                   opacity: fadeAnim,
@@ -111,9 +110,8 @@ export default function ForgotPasswordScreen() {
           colors={['#fb923c', '#f59e0b']} // orange-400 to amber-500
           start={{ x: 1, y: 0 }}
           end={{ x: 0, y: 0 }}
-          className="rounded-b-[40px] px-6 pt-16 pb-12"
         >
-          <View className="items-center gap-4 mt-8">
+          <View className="items-center gap-4 mt-8 rounded-b-[40px] px-6 pt-16 pb-12">
             <Animated.View
               style={{
                 opacity: fadeAnim,

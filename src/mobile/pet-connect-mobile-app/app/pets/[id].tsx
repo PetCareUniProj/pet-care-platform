@@ -293,7 +293,6 @@ export default function PetDetailsScreen() {
           colors={['#fb923c', '#f59e0b']}
           start={{ x: 1, y: 0 }}
           end={{ x: 0, y: 0 }}
-          className="rounded-b-3xl pb-8 overflow-hidden relative"
         >
           {/* Background Paw Icons */}
           <MaterialIcons
@@ -309,7 +308,7 @@ export default function PetDetailsScreen() {
             style={{ position: 'absolute', bottom: 20, right: -10, transform: [{ rotate: '15deg' }] }}
           />
 
-          <View className="flex-row justify-between items-center p-6 pt-12 relative z-10">
+          <View className="flex-row justify-between items-center p-6 pt-16 rounded-b-[40px] relative z-10">
             <TouchableOpacity
               onPress={() => router.back()}
               className="bg-white/20 p-2 rounded-full border border-white/30 active:bg-white/30"
@@ -432,7 +431,7 @@ export default function PetDetailsScreen() {
         {/* Pet Information */}
         <View className="pb-8">
           {/* Basic Information Cards */}
-          <View className="p-6 -mt-4 gap-6">
+          <View className="p-6 -mt-6 gap-6">
             <Text className="text-xl font-bold text-gray-800 ml-1">Основна інформація</Text>
 
             <View className="gap-3">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Image } from 'expo-image';
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -10,7 +10,7 @@ import { CalendarEvent } from '@/types/reminder.types';
 
 // Quick Actions - Real functions
 const quickActions = [
-  { id: '1', title: 'Подія', icon: 'event', color: '#3b82f6', bg: 'bg-blue-100', route: '/calendar' },
+  { id: '1', title: 'Подія', icon: 'event', color: '#3b82f6', bg: 'bg-blue-100', route: '/(tabs)/calendar' },
   { id: '2', title: 'Зважити', icon: 'monitor-weight', color: '#10b981', bg: 'bg-green-100', action: 'weight' },
   { id: '3', title: 'Магазин', icon: 'shopping-cart', color: '#f97316', bg: 'bg-orange-100', route: '/shop' },
   { id: '4', title: 'Підписки', icon: 'autorenew', color: '#8b5cf6', bg: 'bg-violet-100', route: '/subscriptions' },
@@ -25,10 +25,15 @@ const secondaryActions = [
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { pets, fetchPets, isLoading } = usePetsStore();
+  const { pets, fetchPets, isLoading, addPetWeight } = usePetsStore();
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Weight modal
+  const [isWeightModalVisible, setIsWeightModalVisible] = useState(false);
+  const [selectedPetForWeight, setSelectedPetForWeight] = useState<string | null>(null);
+  const [newWeight, setNewWeight] = useState('');
 
   const loadEvents = async () => {
     try {
@@ -37,8 +42,14 @@ export default function DashboardScreen() {
       
       // Filter only upcoming events and sort by date
       const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      
       const upcoming = events
-        .filter(e => new Date(e.date) >= now)
+        .filter(e => {
+          const eventDate = new Date(e.date);
+          eventDate.setHours(0, 0, 0, 0);
+          return eventDate >= now;
+        })
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 3); // Only 3 nearest events
       
@@ -72,9 +83,27 @@ export default function DashboardScreen() {
   const handleQuickAction = (action: typeof quickActions[0]) => {
     if (action.route) {
       router.push(action.route as any);
-    } else if (action.action === 'weight' && pets.length > 0) {
-      // Navigate to first pet for weighing
-      router.push({ pathname: '/pets/[id]', params: { id: pets[0].id } });
+    } else if (action.action === 'weight') {
+      if (pets.length > 0) {
+        setSelectedPetForWeight(pets[0].id);
+        setIsWeightModalVisible(true);
+      } else {
+        Alert.alert('Увага', 'Спочатку додайте улюбленця');
+      }
+    }
+  };
+
+  const handleAddWeight = async () => {
+    const weightValue = parseFloat(newWeight);
+    if (isNaN(weightValue) || weightValue <= 0) {
+      Alert.alert('Помилка', 'Введіть коректну вагу');
+      return;
+    }
+    if (selectedPetForWeight) {
+      await addPetWeight(selectedPetForWeight, weightValue);
+      setNewWeight('');
+      setIsWeightModalVisible(false);
+      Alert.alert('Успішно', 'Вагу збережено');
     }
   };
 
@@ -101,7 +130,6 @@ export default function DashboardScreen() {
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const dayNames = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
     const monthNames = ['січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд'];
 
     let dateText = `${date.getDate()} ${monthNames[date.getMonth()]}`;
@@ -128,8 +156,7 @@ export default function DashboardScreen() {
     return `Через ${diff} дн.`;
   };
 
-  const totalPets = pets.length;
-  const healthyPets = pets.filter(p => (p.profileCompleteness || 0) > 80).length;
+  const selectedPet = pets.find(p => p.id === selectedPetForWeight);
 
   return (
     <ScrollView 
@@ -144,9 +171,8 @@ export default function DashboardScreen() {
         colors={['#fb923c', '#f59e0b']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 0 }}
-        className="rounded-b-3xl"
       >
-        <View className="px-6 pt-14 pb-6">
+        <View className="px-6 pt-14 pb-6 rounded-b-[40px]">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
               <Text className="text-white/80 text-sm">Вітаємо в</Text>
@@ -161,7 +187,7 @@ export default function DashboardScreen() {
           </View>
 
           {/* Stats Cards */}
-          {totalPets > 0 && (
+          {pets.length > 0 && (
             <View className="flex-row gap-3 mt-6">
               <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
                 <View className="flex-row items-center gap-2">
@@ -170,7 +196,7 @@ export default function DashboardScreen() {
                   </View>
                   <Text className="text-white/80 text-sm">Улюбленців</Text>
                 </View>
-                <Text className="text-white text-3xl font-bold mt-2">{totalPets}</Text>
+                <Text className="text-white text-3xl font-bold mt-2">{pets.length}</Text>
               </View>
               <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
                 <View className="flex-row items-center gap-2">
@@ -308,7 +334,7 @@ export default function DashboardScreen() {
         <View className="gap-3">
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-gray-800 ml-1">Найближчі події</Text>
-            <TouchableOpacity onPress={() => router.push('/calendar')}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/calendar')}>
               <Text className="text-orange-500 font-semibold text-sm">Всі події →</Text>
             </TouchableOpacity>
           </View>
@@ -317,7 +343,7 @@ export default function DashboardScreen() {
             <ActivityIndicator color="#f97316" />
           ) : upcomingEvents.length === 0 ? (
             <TouchableOpacity 
-              onPress={() => router.push('/calendar')}
+              onPress={() => router.push('/(tabs)/calendar')}
               className="bg-white border border-gray-100 rounded-2xl p-6 items-center shadow-sm"
             >
               <View className="bg-gray-100 w-14 h-14 rounded-full items-center justify-center mb-3">
@@ -333,7 +359,7 @@ export default function DashboardScreen() {
                 return (
                   <TouchableOpacity 
                     key={event.id}
-                    onPress={() => router.push('/calendar')}
+                    onPress={() => router.push('/(tabs)/calendar')}
                     className={`${colors.bg} border ${colors.border} rounded-2xl p-4 flex-row items-center gap-4 shadow-sm`}
                   >
                     <View className={`${colors.badge} p-3 rounded-xl`}>
@@ -365,9 +391,8 @@ export default function DashboardScreen() {
             colors={['#fef3c7', '#fde68a']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            className="rounded-2xl p-5 border border-amber-200"
           >
-            <View className="flex-row items-start gap-4">
+            <View className="flex-row items-start gap-4 rounded-2xl p-5 border border-amber-200">
               <View className="bg-amber-400 p-3 rounded-xl">
                 <MaterialIcons name="lightbulb" size={24} color="white" />
               </View>
@@ -381,6 +406,76 @@ export default function DashboardScreen() {
           </LinearGradient>
         </View>
       </View>
+
+      {/* Weight Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isWeightModalVisible}
+        onRequestClose={() => setIsWeightModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white p-6 rounded-2xl w-[90%] gap-4">
+            <View className="items-center mb-2">
+              <View className="bg-green-100 w-16 h-16 rounded-full items-center justify-center mb-2">
+                <MaterialIcons name="monitor-weight" size={32} color="#22c55e" />
+              </View>
+              <Text className="text-xl font-bold text-gray-800">Зважування</Text>
+              <Text className="text-gray-500">Введіть поточну вагу улюбленця</Text>
+            </View>
+
+            {/* Pet selector */}
+            {pets.length > 1 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+                <View className="flex-row gap-2">
+                  {pets.map((pet) => (
+                    <TouchableOpacity
+                      key={pet.id}
+                      onPress={() => setSelectedPetForWeight(pet.id)}
+                      className={`px-4 py-2 rounded-full flex-row items-center gap-2 ${
+                        selectedPetForWeight === pet.id ? 'bg-green-500' : 'bg-gray-100'
+                      }`}
+                    >
+                      <Text className={selectedPetForWeight === pet.id ? 'text-white font-semibold' : 'text-gray-600'}>
+                        {pet.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            )}
+
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                className="flex-1 border border-gray-200 rounded-xl p-4 text-gray-800 text-2xl text-center font-bold"
+                keyboardType="numeric"
+                placeholder="0.0"
+                value={newWeight}
+                onChangeText={setNewWeight}
+              />
+              <Text className="text-xl font-bold text-gray-500">{selectedPet?.weightUnit || 'кг'}</Text>
+            </View>
+
+            <View className="flex-row gap-4">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 p-3 rounded-xl items-center"
+                onPress={() => {
+                  setNewWeight('');
+                  setIsWeightModalVisible(false);
+                }}
+              >
+                <Text className="font-bold text-gray-700">Скасувати</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 bg-green-500 p-3 rounded-xl items-center"
+                onPress={handleAddWeight}
+              >
+                <Text className="font-bold text-white">Зберегти</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }

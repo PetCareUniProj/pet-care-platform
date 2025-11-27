@@ -186,10 +186,9 @@ export default function CalendarScreen() {
         <LinearGradient
           colors={['#fb923c', '#f59e0b']}
           start={{ x: 1, y: 0 }}
-          end={{ x: 0, y: 0 }}
-          className="rounded-b-[40px] px-6 pt-16 pb-8"
+          end={{ x: 0, y: 0 }}  
         >
-          <View className="items-center gap-4 mt-4">
+          <View className="items-center gap-4 mt-4 rounded-b-[40px] px-6 pt-16 pb-12">
             <View className="relative">
               <View className="absolute bg-white/20 w-24 h-24 rounded-full blur-xl" />
               <View className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-white shadow-lg">

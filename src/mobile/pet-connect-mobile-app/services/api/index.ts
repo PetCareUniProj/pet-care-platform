@@ -9,5 +9,4 @@ export { basketService } from './basket.service';
 export { ordersService } from './orders.service';
 export { subscriptionsService } from './subscriptions.service';
 export { checkoutService } from './checkout.service';
-
-
+export { documentsService } from './documents.service';

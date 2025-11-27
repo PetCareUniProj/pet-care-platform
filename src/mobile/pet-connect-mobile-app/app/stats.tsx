@@ -1,41 +1,61 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   ScrollView,
   Text,
   View,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import { usePetsStore } from '@/store';
 import { remindersService } from '@/services/api/reminders.service';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { subscriptionsService } from '@/services/api/subscriptions.service';
+import { documentsService } from '@/services/api/documents.service';
+import { CalendarEvent } from '@/types/reminder.types';
 
 export default function StatsScreen() {
   const router = useRouter();
-  const { pets, fetchPets, isLoading } = usePetsStore();
-  const [eventsCount, setEventsCount] = useState(0);
-  const [completedEvents, setCompletedEvents] = useState(0);
+  const { pets, fetchPets, isLoading: petsLoading } = usePetsStore();
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [subscriptionsCount, setSubscriptionsCount] = useState(0);
+  const [documentsCount, setDocumentsCount] = useState(0);
+  const [monthlySpend, setMonthlySpend] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const [eventsData, subsData, docsData] = await Promise.all([
+        remindersService.getCalendarEvents(),
+        subscriptionsService.getAll(),
+        documentsService.getAll(),
+      ]);
+      
+      setEvents(eventsData);
+      setSubscriptionsCount(subsData.filter(s => s.status === 'active').length);
+      setDocumentsCount(docsData.length);
+      setMonthlySpend(subscriptionsService.calculateMonthlyTotal(subsData));
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchPets();
-    loadEvents();
+    loadData();
   }, []);
 
-  const loadEvents = async () => {
-    try {
-      const events = await remindersService.getCalendarEvents();
-      setEventsCount(events.length);
-      // Mock completed events
-      setCompletedEvents(Math.floor(events.length * 0.7));
-    } catch (error) {
-      console.error('Error loading events:', error);
-    }
-  };
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchPets(), loadData()]);
+    setRefreshing(false);
+  }, []);
 
   // Calculate statistics
   const totalPets = pets.length;
@@ -45,7 +65,13 @@ export default function StatsScreen() {
   const totalWeight = pets.reduce((sum, pet) => sum + (pet.weight || 0), 0);
   const petsWithVaccinations = pets.filter(p => p.vaccinationStatus && p.vaccinationStatus.length > 0).length;
 
-  // Weight history chart data (mock for visualization)
+  // Upcoming and completed events
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const upcomingEvents = events.filter(e => new Date(e.date) >= now).length;
+  const completedEvents = events.length - upcomingEvents;
+
+  // Weight history chart data
   const getWeightTrend = () => {
     if (pets.length === 0) return [];
     const firstPet = pets[0];
@@ -56,10 +82,10 @@ export default function StatsScreen() {
   const weightTrend = getWeightTrend();
   const maxWeight = Math.max(...weightTrend.map(w => w.weight), 1);
 
-  if (isLoading && pets.length === 0) {
+  if (isLoading || petsLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" color="#f97316" />
+        <ActivityIndicator size="large" color="#06b6d4" />
       </View>
     );
   }
@@ -67,15 +93,20 @@ export default function StatsScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 bg-gray-50" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#06b6d4']} />
+        }
+      >
         {/* Header */}
         <LinearGradient
           colors={['#06b6d4', '#0891b2']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          className="pt-14 pb-8 px-6"
         >
-          <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center justify-between pt-14 px-6">
             <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
               <MaterialIcons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
@@ -83,7 +114,7 @@ export default function StatsScreen() {
             <View className="w-10" />
           </View>
 
-          <Text className="text-white/80 text-center">
+          <Text className="text-white/80 text-center m-4">
             Аналітика догляду за улюбленцями
           </Text>
         </LinearGradient>
@@ -112,7 +143,7 @@ export default function StatsScreen() {
                 <MaterialIcons name="event" size={24} color="#f59e0b" />
               </View>
               <Text className="text-gray-500 text-sm">Подій</Text>
-              <Text className="text-gray-800 text-3xl font-bold">{eventsCount}</Text>
+              <Text className="text-gray-800 text-3xl font-bold">{events.length}</Text>
             </View>
 
             <View className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm" style={{ width: '47%' }}>
@@ -121,6 +152,29 @@ export default function StatsScreen() {
               </View>
               <Text className="text-gray-500 text-sm">Вакциновано</Text>
               <Text className="text-gray-800 text-3xl font-bold">{petsWithVaccinations}</Text>
+            </View>
+          </View>
+
+          {/* Financial Stats */}
+          <View className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <Text className="text-lg font-bold text-gray-800 mb-4">Фінанси</Text>
+            <View className="flex-row gap-4">
+              <View className="flex-1 bg-violet-50 rounded-xl p-4">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <MaterialIcons name="autorenew" size={20} color="#8b5cf6" />
+                  <Text className="text-violet-700 font-semibold">Підписки</Text>
+                </View>
+                <Text className="text-gray-800 text-2xl font-bold">{subscriptionsCount}</Text>
+                <Text className="text-gray-500 text-sm">активних</Text>
+              </View>
+              <View className="flex-1 bg-green-50 rounded-xl p-4">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <MaterialIcons name="payments" size={20} color="#22c55e" />
+                  <Text className="text-green-700 font-semibold">На місяць</Text>
+                </View>
+                <Text className="text-gray-800 text-2xl font-bold">₴{monthlySpend}</Text>
+                <Text className="text-gray-500 text-sm">витрати</Text>
+              </View>
             </View>
           </View>
 
@@ -174,7 +228,7 @@ export default function StatsScreen() {
                   </View>
                   <Text className="text-gray-600">Заплановані</Text>
                 </View>
-                <Text className="text-gray-800 font-bold">{eventsCount - completedEvents}</Text>
+                <Text className="text-gray-800 font-bold">{upcomingEvents}</Text>
               </View>
 
               <View className="flex-row items-center justify-between">
@@ -186,48 +240,55 @@ export default function StatsScreen() {
                 </View>
                 <Text className="text-gray-800 font-bold">{totalWeight.toFixed(1)} кг</Text>
               </View>
+
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-gray-100 p-2 rounded-lg">
+                    <MaterialIcons name="description" size={20} color="#6b7280" />
+                  </View>
+                  <Text className="text-gray-600">Документів</Text>
+                </View>
+                <Text className="text-gray-800 font-bold">{documentsCount}</Text>
+              </View>
             </View>
           </View>
 
           {/* Pet Health Overview */}
-          <View className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-            <Text className="text-lg font-bold text-gray-800 mb-4">Стан профілів</Text>
+          {pets.length > 0 && (
+            <View className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <Text className="text-lg font-bold text-gray-800 mb-4">Стан профілів</Text>
 
-            {pets.map((pet) => (
-              <TouchableOpacity
-                key={pet.id}
-                onPress={() => router.push({ pathname: '/pets/[id]', params: { id: pet.id } })}
-                className="flex-row items-center gap-3 py-3 border-b border-gray-100 last:border-b-0"
-              >
-                <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
-                  <Text className="text-lg">{pet.type === 'cat' ? '🐱' : pet.type === 'dog' ? '🐕' : '🐾'}</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-800 font-semibold">{pet.name}</Text>
-                  <View className="bg-gray-200 h-2 rounded-full mt-1 overflow-hidden">
-                    <View
-                      className={`h-full rounded-full ${
-                        (pet.profileCompleteness || 0) >= 80
-                          ? 'bg-green-500'
-                          : (pet.profileCompleteness || 0) >= 50
-                          ? 'bg-amber-500'
-                          : 'bg-red-500'
-                      }`}
-                      style={{ width: `${pet.profileCompleteness || 0}%` }}
-                    />
+              {pets.map((pet) => (
+                <TouchableOpacity
+                  key={pet.id}
+                  onPress={() => router.push({ pathname: '/pets/[id]', params: { id: pet.id } })}
+                  className="flex-row items-center gap-3 py-3 border-b border-gray-100 last:border-b-0"
+                >
+                  <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+                    <Text className="text-lg">{pet.type === 'cat' ? '🐱' : pet.type === 'dog' ? '🐕' : '🐾'}</Text>
                   </View>
-                </View>
-                <Text className="text-gray-500 font-semibold">{pet.profileCompleteness || 0}%</Text>
-              </TouchableOpacity>
-            ))}
-
-            {pets.length === 0 && (
-              <Text className="text-gray-400 text-center py-4">Немає улюбленців</Text>
-            )}
-          </View>
+                  <View className="flex-1">
+                    <Text className="text-gray-800 font-semibold">{pet.name}</Text>
+                    <View className="bg-gray-200 h-2 rounded-full mt-1 overflow-hidden">
+                      <View
+                        className={`h-full rounded-full ${
+                          (pet.profileCompleteness || 0) >= 80
+                            ? 'bg-green-500'
+                            : (pet.profileCompleteness || 0) >= 50
+                            ? 'bg-amber-500'
+                            : 'bg-red-500'
+                        }`}
+                        style={{ width: `${pet.profileCompleteness || 0}%` }}
+                      />
+                    </View>
+                  </View>
+                  <Text className="text-gray-500 font-semibold">{pet.profileCompleteness || 0}%</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
     </>
   );
 }
-
