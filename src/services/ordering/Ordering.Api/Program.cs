@@ -9,8 +9,10 @@ builder.AddApplicationServices();
 
 var app = builder.Build();
 
-app.CreateApiVersionSet();
+// CORS must be before other middleware
 app.MapDefaultEndpoints();
+
+app.CreateApiVersionSet();
 app.MapEndpoints();
 app.MapOpenApi();
 

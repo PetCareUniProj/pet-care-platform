@@ -82,7 +82,7 @@ class CatalogService {
    * Get all categories (unpaginated helper)
    */
   async getAllCategories(): Promise<Category[]> {
-    const response = await this.getCategories({ pageSize: 100 });
+    const response = await this.getCategories({ pageSize: 25 });
     return response.items;
   }
 
@@ -121,7 +121,7 @@ class CatalogService {
    * Get all brands (unpaginated helper)
    */
   async getAllBrands(): Promise<Brand[]> {
-    const response = await this.getBrands({ pageSize: 100 });
+    const response = await this.getBrands({ pageSize: 25 });
     return response.items;
   }
 

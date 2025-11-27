@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Image } from 'expo-image';
 import {
-  ScrollView,
+  FlatList,
   Text,
   View,
   TouchableOpacity,
@@ -10,6 +10,8 @@ import {
   RefreshControl,
   Alert,
   Modal,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -17,19 +19,50 @@ import { useRouter, Stack } from 'expo-router';
 import { catalogService } from '@/services/api/catalog.service';
 import { basketService } from '@/services/api/basket.service';
 import { subscriptionsService, CreateLocalSubscriptionDto } from '@/services/api/subscriptions.service';
-import { CatalogItem, Category } from '@/types/product.types';
+import { CatalogItem, Category, Brand, ProductSortField } from '@/types/product.types';
 import { RecurrenceInterval, RECURRENCE_LABELS } from '@/types/order.types';
 import { getProductImageUrl } from '@/constants/api';
 
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = (width - 48) / 2;
+const PAGE_SIZE = 10;
+
+// Sort options
+const SORT_OPTIONS: { value: ProductSortField; label: string }[] = [
+  { value: 'name', label: 'Назва (А-Я)' },
+  { value: '-name', label: 'Назва (Я-А)' },
+  { value: 'price', label: 'Ціна (зростання)' },
+  { value: '-price', label: 'Ціна (спадання)' },
+];
+
 export default function ShopScreen() {
   const router = useRouter();
+  const flatListRef = useRef<FlatList>(null);
+  
+  // Data
   const [products, setProducts] = useState<CatalogItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  
+  // Filters
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<ProductSortField>('name');
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  // UI State
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [isSortModalVisible, setIsSortModalVisible] = useState(false);
 
   // Product detail modal
   const [selectedProduct, setSelectedProduct] = useState<CatalogItem | null>(null);
@@ -40,49 +73,167 @@ export default function ShopScreen() {
   const [isSubscriptionModalVisible, setIsSubscriptionModalVisible] = useState(false);
   const [subscriptionFrequency, setSubscriptionFrequency] = useState<RecurrenceInterval>('30.00:00:00');
 
-  const loadData = async () => {
+  // Build query params for API
+  const buildQueryParams = useCallback((page: number) => {
+    const params: any = {
+      page,
+      pageSize: PAGE_SIZE,
+      sortBy,
+    };
+    
+    if (selectedCategory) {
+      params.categoryId = selectedCategory;
+    }
+    
+    if (selectedBrands.length === 1) {
+      params.brandId = selectedBrands[0];
+    }
+    
+    if (searchQuery.trim()) {
+      params.name = searchQuery.trim();
+    }
+    
+    return params;
+  }, [selectedCategory, selectedBrands, searchQuery, sortBy]);
+
+  // Load initial data
+  const loadInitialData = async () => {
     try {
       setIsLoading(true);
-      const [productsData, categoriesData] = await Promise.all([
-        catalogService.getItems({ pageSize: 50 }),
-        catalogService.getCategories(),
+      const [categoriesData, brandsData] = await Promise.all([
+        catalogService.getCategories({ pageSize: 25 }),
+        catalogService.getBrands({ pageSize: 25 }),
       ]);
       
-      setProducts(productsData.items);
       setCategories(categoriesData.items);
+      setBrands(brandsData.items);
       
-      // Update cart count
+      // Load cart count
       const basket = await basketService.getBasket();
       setCartCount(basket.items.reduce((sum, item) => sum + item.quantity, 0));
     } catch (error: any) {
-      console.error('Error loading shop data:', error);
-      Alert.alert(
-        'Помилка завантаження',
-        `Не вдалося завантажити дані магазину.\n\n${error?.message || 'Невідома помилка'}\n\nПеревірте підключення до інтернету та налаштування API сервера.`,
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading initial data:', error);
     }
   };
 
+  // Load products with current filters
+  const loadProducts = async (page: number = 1, append: boolean = false) => {
+    try {
+      if (page === 1) {
+        setIsLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      
+      const params = buildQueryParams(page);
+      const response = await catalogService.getItems(params);
+      
+      let filteredItems = response.items;
+      
+      // Client-side filtering for multiple brands (API only supports one brandId)
+      if (selectedBrands.length > 1) {
+        filteredItems = filteredItems.filter(item => 
+          selectedBrands.includes(item.catalogBrandId)
+        );
+      }
+      
+      // Client-side price filtering
+      const min = minPrice ? parseFloat(minPrice) : null;
+      const max = maxPrice ? parseFloat(maxPrice) : null;
+      
+      if (min !== null || max !== null) {
+        filteredItems = filteredItems.filter(item => {
+          if (min !== null && item.price < min) return false;
+          if (max !== null && item.price > max) return false;
+          return true;
+        });
+      }
+      
+      if (append) {
+        setProducts(prev => [...prev, ...filteredItems]);
+      } else {
+        setProducts(filteredItems);
+      }
+      
+      setCurrentPage(page);
+      setHasMore(response.items.length === PAGE_SIZE);
+    } catch (error: any) {
+      console.error('Error loading products:', error);
+      if (page === 1) {
+        Alert.alert(
+          'Помилка завантаження',
+          `Не вдалося завантажити товари.\n\n${error?.message || 'Невідома помилка'}`,
+          [{ text: 'OK' }]
+        );
+      }
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
-    loadData();
+    loadInitialData();
   }, []);
 
+  // Load products when filters change
+  useEffect(() => {
+    loadProducts(1, false);
+  }, [selectedCategory, selectedBrands, sortBy]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadProducts(1, false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Load more products (infinite scroll)
+  const loadMore = useCallback(() => {
+    if (!isLoadingMore && hasMore && !isLoading) {
+      loadProducts(currentPage + 1, true);
+    }
+  }, [currentPage, hasMore, isLoadingMore, isLoading]);
+
+  // Pull to refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
+    await loadProducts(1, false);
     setRefreshing(false);
-  }, []);
+  }, [buildQueryParams]);
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || 
-      product.categoryIds.includes(selectedCategory);
-    return matchesSearch && matchesCategory;
-  });
+  // Apply price filter
+  const applyFilters = () => {
+    setIsFilterModalVisible(false);
+    loadProducts(1, false);
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setSelectedBrands([]);
+    setMinPrice('');
+    setMaxPrice('');
+    setIsFilterModalVisible(false);
+    loadProducts(1, false);
+  };
+
+  // Toggle brand selection
+  const toggleBrand = (brandId: number) => {
+    setSelectedBrands(prev => 
+      prev.includes(brandId) 
+        ? prev.filter(id => id !== brandId)
+        : [...prev, brandId]
+    );
+  };
+
+  // Select category
+  const handleCategorySelect = (categoryId: number | null) => {
+    setSelectedCategory(categoryId);
+    // Scroll to top when category changes
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
 
   const formatPrice = (price: number) => {
     return `₴${price.toFixed(0)}`;
@@ -139,7 +290,161 @@ export default function ShopScreen() {
     setIsProductModalVisible(true);
   };
 
-  if (isLoading) {
+  // Get brand name by id
+  const getBrandName = (brandId: number) => {
+    return brands.find(b => b.id === brandId)?.name || '';
+  };
+
+  // Active filters count
+  const activeFiltersCount = selectedBrands.length + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0);
+
+  // Render product item
+  const renderProduct = ({ item }: { item: CatalogItem }) => (
+    <TouchableOpacity
+      onPress={() => openProductModal(item)}
+      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm mb-4"
+      style={{ width: ITEM_WIDTH }}
+    >
+      <View className="aspect-square bg-gray-100 items-center justify-center">
+        {getProductImageUrl(item.pictureFileName) ? (
+          <Image
+            source={{ uri: getProductImageUrl(item.pictureFileName)! }}
+            className="w-full h-full"
+            contentFit="cover"
+          />
+        ) : (
+          <MaterialIcons name="inventory-2" size={48} color="#d1d5db" />
+        )}
+      </View>
+      <View className="p-3">
+        <Text className="text-gray-500 text-xs mb-1">{getBrandName(item.catalogBrandId)}</Text>
+        <Text className="text-gray-800 font-semibold text-sm" numberOfLines={2}>
+          {item.name}
+        </Text>
+        <View className="flex-row items-center justify-between mt-2">
+          <Text className="text-orange-600 font-bold text-lg">
+            {formatPrice(item.price)}
+          </Text>
+          <TouchableOpacity 
+            onPress={() => handleAddToCart(item)}
+            className="bg-orange-500 p-2 rounded-xl"
+          >
+            <MaterialIcons name="add-shopping-cart" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+        {item.availableStock <= 5 && item.availableStock > 0 && (
+          <Text className="text-amber-600 text-xs mt-1">
+            Залишилось: {item.availableStock}
+          </Text>
+        )}
+        {item.availableStock === 0 && (
+          <Text className="text-red-500 text-xs mt-1 font-semibold">
+            Немає в наявності
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  // Render footer (loading more indicator)
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    return (
+      <View className="py-4 items-center">
+        <ActivityIndicator size="small" color="#f97316" />
+      </View>
+    );
+  };
+
+  // Render empty list
+  const renderEmpty = () => {
+    if (isLoading) return null;
+    return (
+      <View className="items-center py-12">
+        <MaterialIcons name="search-off" size={64} color="#d1d5db" />
+        <Text className="text-gray-500 font-semibold mt-4">Товари не знайдено</Text>
+        <Text className="text-gray-400 text-sm">Спробуйте змінити параметри пошуку</Text>
+      </View>
+    );
+  };
+
+  // Header component
+  const renderHeader = () => (
+    <>
+      {/* Categories */}
+      <View className="py-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4">
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              onPress={() => handleCategorySelect(null)}
+              className={`px-5 py-3 rounded-full ${
+                !selectedCategory ? 'bg-orange-500' : 'bg-white border border-gray-200'
+              }`}
+            >
+              <Text className={`font-semibold ${!selectedCategory ? 'text-white' : 'text-gray-600'}`}>
+                Всі
+              </Text>
+            </TouchableOpacity>
+            {categories.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                onPress={() => handleCategorySelect(category.id)}
+                className={`px-5 py-3 rounded-full ${
+                  selectedCategory === category.id
+                    ? 'bg-orange-500'
+                    : 'bg-white border border-gray-200'
+                }`}
+              >
+                <Text
+                  className={`font-semibold ${
+                    selectedCategory === category.id ? 'text-white' : 'text-gray-600'
+                  }`}
+                >
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Filter & Sort Buttons */}
+      <View className="flex-row gap-3 px-4 mb-4">
+        <TouchableOpacity
+          onPress={() => setIsFilterModalVisible(true)}
+          className={`flex-row items-center px-4 py-3 rounded-xl flex-1 ${
+            activeFiltersCount > 0 ? 'bg-orange-100 border border-orange-300' : 'bg-white border border-gray-200'
+          }`}
+        >
+          <MaterialIcons 
+            name="tune" 
+            size={20} 
+            color={activeFiltersCount > 0 ? '#f97316' : '#6b7280'} 
+          />
+          <Text className={`ml-2 font-semibold ${activeFiltersCount > 0 ? 'text-orange-600' : 'text-gray-600'}`}>
+            Фільтри {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setIsSortModalVisible(true)}
+          className="flex-row items-center px-4 py-3 rounded-xl bg-white border border-gray-200 flex-1"
+        >
+          <MaterialIcons name="sort" size={20} color="#6b7280" />
+          <Text className="ml-2 font-semibold text-gray-600">Сортування</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Results count */}
+      <View className="px-4 mb-2">
+        <Text className="text-gray-500 text-sm">
+          Знайдено товарів: {products.length}{hasMore ? '+' : ''}
+        </Text>
+      </View>
+    </>
+  );
+
+  if (isLoading && products.length === 0) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#f97316" />
@@ -150,7 +455,7 @@ export default function ShopScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="flex-1 bg-gray-50 ">
+      <View className="flex-1 bg-gray-50">
         {/* Header */}
         <LinearGradient
           colors={['#fb923c', '#f59e0b']}
@@ -182,6 +487,7 @@ export default function ShopScreen() {
               value={searchQuery}
               onChangeText={setSearchQuery}
               className="flex-1 ml-3 text-white text-base"
+              returnKeyType="search"
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -191,110 +497,162 @@ export default function ShopScreen() {
           </View>
         </LinearGradient>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
+        {/* Products List with Infinite Scroll */}
+        <FlatList
+          ref={flatListRef}
+          data={products}
+          renderItem={renderProduct}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 16 }}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={renderEmpty}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />
           }
-        >
-          {/* Categories */}
-          <View className="py-4">
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4">
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  onPress={() => setSelectedCategory(null)}
-                  className={`px-5 py-3 rounded-full ${
-                    !selectedCategory ? 'bg-orange-500' : 'bg-white border border-gray-200'
-                  }`}
-                >
-                  <Text className={`font-semibold ${!selectedCategory ? 'text-white' : 'text-gray-600'}`}>
-                    Всі
-                  </Text>
-                </TouchableOpacity>
-                {categories.map((category) => (
-                  <TouchableOpacity
-                    key={category.id}
-                    onPress={() => setSelectedCategory(category.id)}
-                    className={`px-5 py-3 rounded-full ${
-                      selectedCategory === category.id
-                        ? 'bg-orange-500'
-                        : 'bg-white border border-gray-200'
-                    }`}
-                  >
-                    <Text
-                      className={`font-semibold ${
-                        selectedCategory === category.id ? 'text-white' : 'text-gray-600'
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}
+        />
+      </View>
+
+      {/* Filter Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isFilterModalVisible}
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl p-6 max-h-[80%]">
+            <View className="items-center mb-4">
+              <View className="w-12 h-1 bg-gray-300 rounded-full mb-4" />
+              <Text className="text-xl font-bold text-gray-800">Фільтри</Text>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Price Filter */}
+              <View className="mb-6">
+                <Text className="text-gray-700 font-semibold mb-3">Ціна (₴)</Text>
+                <View className="flex-row gap-4">
+                  <View className="flex-1">
+                    <TextInput
+                      placeholder="Від"
+                      value={minPrice}
+                      onChangeText={setMinPrice}
+                      keyboardType="numeric"
+                      className="bg-gray-100 rounded-xl px-4 py-3 text-gray-800"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <TextInput
+                      placeholder="До"
+                      value={maxPrice}
+                      onChangeText={setMaxPrice}
+                      keyboardType="numeric"
+                      className="bg-gray-100 rounded-xl px-4 py-3 text-gray-800"
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Brand Filter */}
+              <View className="mb-6">
+                <Text className="text-gray-700 font-semibold mb-3">Бренд</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {brands.map((brand) => (
+                    <TouchableOpacity
+                      key={brand.id}
+                      onPress={() => toggleBrand(brand.id)}
+                      className={`px-4 py-2 rounded-full ${
+                        selectedBrands.includes(brand.id)
+                          ? 'bg-orange-500'
+                          : 'bg-gray-100'
                       }`}
                     >
-                      {category.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        className={`font-medium ${
+                          selectedBrands.includes(brand.id) ? 'text-white' : 'text-gray-700'
+                        }`}
+                      >
+                        {brand.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             </ScrollView>
-          </View>
 
-          {/* Products Grid */}
-          <View className="px-4 pb-8">
-            {filteredProducts.length === 0 ? (
-              <View className="items-center py-12">
-                <MaterialIcons name="search-off" size={64} color="#d1d5db" />
-                <Text className="text-gray-500 font-semibold mt-4">Товари не знайдено</Text>
-                <Text className="text-gray-400 text-sm">Спробуйте змінити параметри пошуку</Text>
-              </View>
-            ) : (
-              <View className="flex-row flex-wrap gap-4">
-                {filteredProducts.map((product) => (
-                  <TouchableOpacity
-                    key={product.id}
-                    onPress={() => openProductModal(product)}
-                    className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
-                    style={{ width: '47%' }}
-                  >
-                    <View className="aspect-square bg-gray-100 items-center justify-center">
-                      {getProductImageUrl(product.pictureFileName) ? (
-                        <Image
-                          source={{ uri: getProductImageUrl(product.pictureFileName)! }}
-                          className="w-full h-full"
-                          contentFit="cover"
-                        />
-                      ) : (
-                        <MaterialIcons name="inventory-2" size={48} color="#d1d5db" />
-                      )}
-                    </View>
-                    <View className="p-3">
-                      <Text className="text-gray-800 font-semibold text-sm" numberOfLines={2}>
-                        {product.name}
-                      </Text>
-                      <View className="flex-row items-center justify-between mt-2">
-                        <Text className="text-orange-600 font-bold text-lg">
-                          {formatPrice(product.price)}
-                        </Text>
-                        <TouchableOpacity 
-                          onPress={() => handleAddToCart(product)}
-                          className="bg-orange-500 p-2 rounded-xl"
-                        >
-                          <MaterialIcons name="add-shopping-cart" size={18} color="white" />
-                        </TouchableOpacity>
-                      </View>
-                      {product.availableStock <= 5 && product.availableStock > 0 && (
-                        <Text className="text-amber-600 text-xs mt-1">
-                          Залишилось: {product.availableStock}
-                        </Text>
-                      )}
-                      {product.availableStock === 0 && (
-                        <Text className="text-red-500 text-xs mt-1 font-semibold">
-                          Немає в наявності
-                        </Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+            {/* Action Buttons */}
+            <View className="flex-row gap-4 mt-4">
+              <TouchableOpacity
+                onPress={resetFilters}
+                className="flex-1 bg-gray-200 p-4 rounded-xl items-center"
+              >
+                <Text className="font-bold text-gray-700">Скинути</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={applyFilters}
+                className="flex-1 bg-orange-500 p-4 rounded-xl items-center"
+              >
+                <Text className="font-bold text-white">Застосувати</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </ScrollView>
-      </View>
+        </View>
+      </Modal>
+
+      {/* Sort Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isSortModalVisible}
+        onRequestClose={() => setIsSortModalVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl p-6">
+            <View className="items-center mb-4">
+              <View className="w-12 h-1 bg-gray-300 rounded-full mb-4" />
+              <Text className="text-xl font-bold text-gray-800">Сортування</Text>
+            </View>
+
+            <View className="gap-2">
+              {SORT_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  onPress={() => {
+                    setSortBy(option.value);
+                    setIsSortModalVisible(false);
+                  }}
+                  className={`flex-row items-center justify-between p-4 rounded-xl ${
+                    sortBy === option.value ? 'bg-orange-100' : 'bg-gray-50'
+                  }`}
+                >
+                  <Text
+                    className={`font-semibold ${
+                      sortBy === option.value ? 'text-orange-600' : 'text-gray-700'
+                    }`}
+                  >
+                    {option.label}
+                  </Text>
+                  {sortBy === option.value && (
+                    <MaterialIcons name="check" size={24} color="#f97316" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setIsSortModalVisible(false)}
+              className="bg-gray-200 p-4 rounded-xl items-center mt-4"
+            >
+              <Text className="font-bold text-gray-700">Закрити</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Product Detail Modal */}
       <Modal
@@ -325,6 +683,9 @@ export default function ShopScreen() {
                 </View>
 
                 {/* Product Info */}
+                <Text className="text-gray-500 text-sm mb-1">
+                  {getBrandName(selectedProduct.catalogBrandId)}
+                </Text>
                 <Text className="text-gray-800 font-bold text-xl">{selectedProduct.name}</Text>
                 {selectedProduct.description && (
                   <Text className="text-gray-600 mt-2">{selectedProduct.description}</Text>

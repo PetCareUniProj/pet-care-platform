@@ -2,6 +2,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Secure storage keys
 const SECURE_KEYS = {
@@ -17,13 +18,20 @@ const STORAGE_KEYS = {
   ONBOARDING_COMPLETED: 'onboarding_completed',
 } as const;
 
+const isSecureStoreAvailable = Platform.OS !== 'web';
+
 /**
  * Secure storage for sensitive data (tokens, credentials)
+ * Falls back to AsyncStorage on web (not secure, but functional for development)
  */
 export const secureStorage = {
   async setItem(key: string, value: string): Promise<void> {
     try {
-      await SecureStore.setItemAsync(key, value);
+      if (isSecureStoreAvailable) {
+        await SecureStore.setItemAsync(key, value);
+      } else {
+        await AsyncStorage.setItem(`secure_${key}`, value);
+      }
     } catch (error) {
       console.error('Error saving to secure storage:', error);
       throw error;
@@ -32,7 +40,11 @@ export const secureStorage = {
 
   async getItem(key: string): Promise<string | null> {
     try {
-      return await SecureStore.getItemAsync(key);
+      if (isSecureStoreAvailable) {
+        return await SecureStore.getItemAsync(key);
+      } else {
+        return await AsyncStorage.getItem(`secure_${key}`);
+      }
     } catch (error) {
       console.error('Error reading from secure storage:', error);
       return null;
@@ -41,7 +53,11 @@ export const secureStorage = {
 
   async removeItem(key: string): Promise<void> {
     try {
-      await SecureStore.deleteItemAsync(key);
+      if (isSecureStoreAvailable) {
+        await SecureStore.deleteItemAsync(key);
+      } else {
+        await AsyncStorage.removeItem(`secure_${key}`);
+      }
     } catch (error) {
       console.error('Error removing from secure storage:', error);
       throw error;

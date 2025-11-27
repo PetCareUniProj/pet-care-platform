@@ -207,9 +207,9 @@ export default function DashboardScreen() {
                     <MaterialIcons name="event" size={20} color="white" />
                   </View>
                   <Text className="text-white/80 text-sm">Подій</Text>
-                </View>
+          </View>
                 <Text className="text-white text-3xl font-bold mt-2">{upcomingEvents.length}</Text>
-              </View>
+          </View>
             </View>
           )}
         </View>
@@ -225,10 +225,10 @@ export default function DashboardScreen() {
               >
                 <View className={`w-14 h-14 rounded-2xl items-center justify-center ${action.bg} shadow-sm mb-2`}>
                   <MaterialIcons name={action.icon as any} size={26} color={action.color} />
-                </View>
-                <Text className="text-white text-xs font-medium text-center">{action.title}</Text>
-              </TouchableOpacity>
-            ))}
+              </View>
+              <Text className="text-white text-xs font-medium text-center">{action.title}</Text>
+            </TouchableOpacity>
+          ))}
           </View>
         </View>
       </LinearGradient>
@@ -269,7 +269,7 @@ export default function DashboardScreen() {
           </View>
 
           {isLoading && pets.length === 0 ? (
-            <ActivityIndicator color="#f97316" />
+             <ActivityIndicator color="#f97316" />
           ) : pets.length === 0 ? (
             <TouchableOpacity 
               onPress={handleAddPet}
@@ -284,19 +284,19 @@ export default function DashboardScreen() {
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-2">
               <View className="flex-row gap-4 px-2">
-                {pets.map((pet) => (
-                  <TouchableOpacity
-                    key={pet.id}
-                    onPress={() => handlePetPress(pet.id)}
+            {pets.map((pet) => (
+              <TouchableOpacity 
+                key={pet.id} 
+                onPress={() => handlePetPress(pet.id)}
                     className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 w-44"
-                  >
+              >
                     <View className="items-center">
                       <View className="relative mb-3">
-                        <Image
-                          source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
+                <Image
+                  source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
                           className="w-20 h-20 rounded-full bg-gray-100"
                           style={{ width: 80, height: 80 }}
-                        />
+                />
                         <View className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full items-center justify-center ${
                           (pet.profileCompleteness || 0) > 80 ? 'bg-green-500' : 'bg-orange-500'
                         }`}>
@@ -305,20 +305,20 @@ export default function DashboardScreen() {
                             size={14} 
                             color="white" 
                           />
-                        </View>
-                      </View>
+                    </View>
+                  </View>
                       <Text className="text-gray-800 font-bold text-base">{pet.name}</Text>
                       <Text className="text-gray-500 text-xs">
                         {pet.type === 'cat' ? '🐱 Кіт' : pet.type === 'dog' ? '🐕 Собака' : pet.type}
-                      </Text>
+                  </Text>
                       {pet.weight && (
                         <Text className="text-gray-400 text-xs mt-1">
                           {pet.weight} {pet.weightUnit || 'кг'}
                         </Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
                 <TouchableOpacity
                   onPress={handleAddPet}
                   className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-4 w-44 items-center justify-center"
@@ -327,8 +327,8 @@ export default function DashboardScreen() {
                     <MaterialIcons name="add" size={24} color="#9ca3af" />
                   </View>
                   <Text className="text-gray-400 font-semibold text-sm">Додати</Text>
-                </TouchableOpacity>
-              </View>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
           )}
         </View>
@@ -336,7 +336,7 @@ export default function DashboardScreen() {
         {/* Upcoming Events */}
         <View className="gap-3">
           <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-gray-800 ml-1">Найближчі події</Text>
+          <Text className="text-lg font-bold text-gray-800 ml-1">Найближчі події</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/calendar')}>
               <Text className="text-orange-500 font-semibold text-sm">Всі події →</Text>
             </TouchableOpacity>
@@ -356,7 +356,7 @@ export default function DashboardScreen() {
               <Text className="text-gray-400 text-sm mt-1">Натисніть, щоб додати</Text>
             </TouchableOpacity>
           ) : (
-            <View className="gap-3">
+          <View className="gap-3">
               {upcomingEvents.map((event) => {
                 const colors = getEventColor(event.type);
                 return (
@@ -405,10 +405,10 @@ export default function DashboardScreen() {
                   Регулярні прогулянки допомагають підтримувати здорову вагу та настрій вашого улюбленця!
                 </Text>
               </View>
-            </View>
+              </View>
           </LinearGradient>
-        </View>
-      </View>
+              </View>
+            </View>
 
       {/* Weight Modal */}
       <Modal
@@ -425,7 +425,7 @@ export default function DashboardScreen() {
               </View>
               <Text className="text-xl font-bold text-gray-800">Зважування</Text>
               <Text className="text-gray-500">Введіть поточну вагу улюбленця</Text>
-            </View>
+              </View>
 
             {/* Pet selector */}
             {pets.length > 1 && (
@@ -444,7 +444,7 @@ export default function DashboardScreen() {
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+              </View>
               </ScrollView>
             )}
 
@@ -475,9 +475,9 @@ export default function DashboardScreen() {
               >
                 <Text className="font-bold text-white">Зберегти</Text>
               </TouchableOpacity>
-            </View>
           </View>
         </View>
+      </View>
       </Modal>
     </ScrollView>
   );

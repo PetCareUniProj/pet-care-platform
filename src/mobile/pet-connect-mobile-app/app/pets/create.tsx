@@ -65,8 +65,8 @@ export default function CreatePetScreen() {
     if (isSubmitting || isLoading) return; // Prevent double submission
     
     if (!name.trim()) {
-      alert('Будь ласка, введіть ім\'я улюбленця');
-      return;
+        alert('Будь ласка, введіть ім\'я улюбленця');
+        return;
     }
 
     setIsSubmitting(true);
@@ -74,13 +74,13 @@ export default function CreatePetScreen() {
     try {
       const allergiesArray = allergies.split(',').map(a => a.trim()).filter(a => a);
 
-      const newPet: CreatePetDto = {
+    const newPet: CreatePetDto = {
         name: name.trim(),
-        type,
+      type,
         breed: breed.trim() || undefined,
-        gender,
-        weight: weight ? parseFloat(weight) : undefined,
-        weightUnit: 'kg',
+      gender,
+      weight: weight ? parseFloat(weight) : undefined,
+      weightUnit: 'kg',
         birthDate: birthDate ? formatDate(birthDate) : undefined,
         color: color.trim() || undefined,
         microchip: microchip.trim() || undefined,
@@ -90,10 +90,10 @@ export default function CreatePetScreen() {
         vetName: vetName.trim() || undefined,
         vetPhone: vetPhone.trim() || undefined,
         vetAddress: vetAddress.trim() || undefined,
-      };
+    };
 
-      await createPet(newPet);
-      router.back();
+    await createPet(newPet);
+    router.back();
     } catch (error) {
       console.error('Error creating pet:', error);
     } finally {
@@ -105,9 +105,9 @@ export default function CreatePetScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Додати улюбленця',
-          headerShown: true,
-          headerTintColor: '#f97316',
+        title: 'Додати улюбленця',
+        headerShown: true,
+        headerTintColor: '#f97316',
           headerTitleStyle: { color: 'black' },
         }}
       />
@@ -125,7 +125,7 @@ export default function CreatePetScreen() {
             <Text className="text-gray-500 text-center mt-1">
               Заповніть інформацію про вашого улюбленця
             </Text>
-          </View>
+        </View>
 
           {/* Section: Basic Info */}
           <View className="bg-gray-50 rounded-2xl p-4 gap-4">
@@ -133,26 +133,26 @@ export default function CreatePetScreen() {
               <MaterialIcons name="info" size={20} color="#f97316" /> Основна інформація
             </Text>
 
-            {/* Name */}
-            <View className="gap-2">
+        {/* Name */}
+        <View className="gap-2">
               <Text className="font-semibold text-gray-700 ml-1">
                 Ім'я <Text className="text-red-500">*</Text>
               </Text>
-              <TextInput
+          <TextInput
                 className="bg-white border border-gray-200 rounded-xl p-4 text-gray-800"
                 placeholder="Як звати вашого улюбленця?"
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
 
-            {/* Type */}
-            <View className="gap-2">
+        {/* Type */}
+        <View className="gap-2">
               <Text className="font-semibold text-gray-700 ml-1">Тип тварини</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View className="flex-row gap-2">
                   {PET_TYPES.map((item) => (
-                    <TouchableOpacity
+            <TouchableOpacity 
                       key={item.type}
                       onPress={() => setType(item.type)}
                       className={`p-3 rounded-xl border items-center min-w-[80px] ${
@@ -160,7 +160,7 @@ export default function CreatePetScreen() {
                           ? 'bg-orange-50 border-orange-500'
                           : 'bg-white border-gray-200'
                       }`}
-                    >
+            >
                       <MaterialIcons
                         name={item.icon as any}
                         size={24}
@@ -173,22 +173,22 @@ export default function CreatePetScreen() {
                       >
                         {item.label}
                       </Text>
-                    </TouchableOpacity>
+            </TouchableOpacity>
                   ))}
-                </View>
+          </View>
               </ScrollView>
-            </View>
+        </View>
 
-            {/* Gender */}
-            <View className="gap-2">
+        {/* Gender */}
+        <View className="gap-2">
               <Text className="font-semibold text-gray-700 ml-1">Стать</Text>
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  onPress={() => setGender('male')}
+          <View className="flex-row gap-3">
+            <TouchableOpacity 
+                onPress={() => setGender('male')}
                   className={`flex-1 p-4 rounded-xl border flex-row items-center justify-center gap-2 ${
                     gender === 'male' ? 'bg-blue-50 border-blue-500' : 'bg-white border-gray-200'
                   }`}
-                >
+            >
                   <MaterialIcons
                     name="male"
                     size={24}
@@ -197,13 +197,13 @@ export default function CreatePetScreen() {
                   <Text className={`font-bold ${gender === 'male' ? 'text-blue-600' : 'text-gray-500'}`}>
                     Хлопчик
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setGender('female')}
+            </TouchableOpacity>
+            <TouchableOpacity 
+                onPress={() => setGender('female')}
                   className={`flex-1 p-4 rounded-xl border flex-row items-center justify-center gap-2 ${
                     gender === 'female' ? 'bg-pink-50 border-pink-500' : 'bg-white border-gray-200'
                   }`}
-                >
+            >
                   <MaterialIcons
                     name="female"
                     size={24}
@@ -212,20 +212,20 @@ export default function CreatePetScreen() {
                   <Text className={`font-bold ${gender === 'female' ? 'text-pink-600' : 'text-gray-500'}`}>
                     Дівчинка
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-            {/* Breed */}
-            <View className="gap-2">
+        {/* Breed */}
+        <View className="gap-2">
               <Text className="font-semibold text-gray-700 ml-1">Порода</Text>
-              <TextInput
+          <TextInput
                 className="bg-white border border-gray-200 rounded-xl p-4 text-gray-800"
                 placeholder="Наприклад: Мейн-кун, Лабрадор..."
-                value={breed}
-                onChangeText={setBreed}
-              />
-            </View>
+            value={breed}
+            onChangeText={setBreed}
+          />
+        </View>
 
             {/* Color */}
             <View className="gap-2">
@@ -262,15 +262,15 @@ export default function CreatePetScreen() {
               )}
             </View>
 
-            {/* Weight */}
-            <View className="gap-2">
+        {/* Weight */}
+        <View className="gap-2">
               <Text className="font-semibold text-gray-700 ml-1">Вага (кг)</Text>
-              <TextInput
+          <TextInput
                 className="bg-white border border-gray-200 rounded-xl p-4 text-gray-800"
                 placeholder="Наприклад: 4.5"
-                keyboardType="numeric"
-                value={weight}
-                onChangeText={setWeight}
+            keyboardType="numeric"
+            value={weight}
+            onChangeText={setWeight}
               />
             </View>
           </View>
@@ -370,20 +370,20 @@ export default function CreatePetScreen() {
                   placeholder='Наприклад: Клініка "Добрий лікар"'
                   value={vetName}
                   onChangeText={setVetName}
-                />
-              </View>
+          />
+        </View>
 
               {/* Vet Phone */}
-              <View className="gap-2">
+        <View className="gap-2">
                 <Text className="font-semibold text-gray-700 ml-1">Телефон</Text>
-                <TextInput
+          <TextInput
                   className="bg-white border border-gray-200 rounded-xl p-4 text-gray-800"
                   placeholder="+380 50 123 45 67"
                   keyboardType="phone-pad"
                   value={vetPhone}
                   onChangeText={setVetPhone}
-                />
-              </View>
+          />
+        </View>
 
               {/* Vet Address */}
               <View className="gap-2">
@@ -399,30 +399,30 @@ export default function CreatePetScreen() {
           )}
 
           {/* Create Button */}
-          <TouchableOpacity
+        <TouchableOpacity 
             onPress={handleCreate}
             disabled={isLoading || isSubmitting}
             className={`mt-4 rounded-xl overflow-hidden ${isLoading || isSubmitting ? 'opacity-70' : ''}`}
-          >
+        >
             <LinearGradient
               colors={['#fb923c', '#f59e0b']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             >
               <View className="p-4 items-center flex-row justify-center gap-2">
-              {isLoading ? (
+            {isLoading ? (
                 <ActivityIndicator color="white" />
-              ) : (
+            ) : (
                 <>
                   <MaterialIcons name="check-circle" size={24} color="white" />
-                    <Text className="text-white font-bold text-lg">Створити профіль</Text>
+                <Text className="text-white font-bold text-lg">Створити профіль</Text>
                   </>
-                )}
+            )}
               </View>
             </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
     </>
   );
 }
