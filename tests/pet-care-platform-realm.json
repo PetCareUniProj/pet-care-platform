@@ -324,6 +324,17 @@
           "attributes": {}
         }
       ],
+      "subscription-api": [
+        {
+          "id": "b9b9a3f6-2c66-4a77-8e95-4f4e4122a9b4",
+          "name": "Admin",
+          "description": "",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "2d44a1f7-50a8-4e5e-9eab-5a942e580438",
+          "attributes": {}
+        }
+      ],
       "admin-cli": [],
       "account-console": [],
       "basket-api": [],
@@ -508,7 +519,8 @@
       "realmRoles": [ "default-roles-pet-care-platform" ],
       "clientRoles": {
         "catalog-api": [ "Admin" ],
-        "ordering-api": ["Admin"]
+        "ordering-api": ["Admin"],
+        "subscription-api": ["Admin"]
       },
       "notBefore": 0,
       "groups": []
@@ -990,6 +1002,66 @@
         "roles",
         "profile",
         "catalog:all",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "organization",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "2d44a1f7-50a8-4e5e-9eab-5a942e580438",
+      "clientId": "subscription-api",
+      "name": "",
+      "description": "",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "**********",
+      "redirectUris": [
+        "/*"
+      ],
+      "webOrigins": [
+        "/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1761500000",
+        "backchannel.logout.session.required": "true",
+        "standard.token.exchange.enabled": "false",
+        "post.logout.redirect.uris": "*",
+        "frontchannel.logout.session.required": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "display.on.consent.screen": "false",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
         "basic",
         "email"
       ],

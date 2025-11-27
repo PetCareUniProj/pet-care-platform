@@ -29,6 +29,12 @@
     <Project Path="src/services/ordering/OrderProcessor/OrderProcessor.csproj" />
     <Project Path="src/services/ordering/PaymentProcessor/PaymentProcessor.csproj" />
   </Folder>
+  <Folder Name="/src/services/subscription/">
+    <Project Path="src/services/subscription/Subscription.Api/Subscription.Api.csproj" />
+    <Project Path="src/services/subscription/Subscription.Application/Subscription.Application.csproj" />
+    <Project Path="src/services/subscription/Subscription.Domain/Subscription.Domain.csproj" />
+    <Project Path="src/services/subscription/Subscription.Infrastructure/Subscription.Infrastructure/Subscription.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/shared/">
     <Project Path="src/shared/EventBus/EventBus.csproj" Id="b3dd9b64-95bc-4bb1-8e96-2b3ba649edd5" />
     <Project Path="src/shared/EventBusRabbitMQ/EventBusRabbitMQ.csproj" Id="aad291ec-2d32-4651-8603-8811c0f7085f" />
@@ -41,5 +47,6 @@
     <Project Path="tests/Basket.Unit.Tests/Basket.Unit.Tests.csproj" />
     <Project Path="tests/Catalog.Api.Tests.Integrational/Catalog.Api.Tests.Integrational.csproj" Id="8b99bb43-9478-4771-adce-da22ba338efa" />
     <Project Path="tests/Ordering.Api.Tests.Integrational/Ordering.Api.Tests.Integrational.csproj" Id="464f4121-1b90-42ad-9873-3d8c9a86f87c" />
+    <Project Path="tests/Subscription.Api.Tests.Integrational/Subscription.Api.Tests.Integrational.csproj" />
   </Folder>
 </Solution>

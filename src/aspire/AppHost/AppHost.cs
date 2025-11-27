@@ -40,9 +40,7 @@ builder.AddProject<OrderProcessor>("orderprocessor")
 builder.AddProject<PaymentProcessor>("paymentprocessor")
     .WithReference(rabbitMq).WaitFor(rabbitMq);
 
-builder.AddNpmApp("subscription-api", "../../services/subscription", "start:dev")
-    .WithNpmPackageInstallation()
-    .WithHttpEndpoint(env: "PORT")
+var subscriptionApi = builder.AddProject<Subscription_Api>("subscription-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WithReference(subscriptionDb).WaitFor(subscriptionDb)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
@@ -90,6 +88,12 @@ scalar.WithApiReference(orderingApi, options =>
 {
     options
         .AddDocument("v1", "Ordering API v1")
+        .WithOpenApiRoutePattern("/openapi/{documentName}.json");
+});
+scalar.WithApiReference(subscriptionApi, options =>
+{
+    options
+        .AddDocument("v1", "Subscription API v1")
         .WithOpenApiRoutePattern("/openapi/{documentName}.json");
 });
 
