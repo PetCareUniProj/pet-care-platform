@@ -4,12 +4,11 @@ using Ordering.Application.Orders.SetAwaitingValidationStatus;
 
 namespace Ordering.Application.IntegrationalEvents.Handlers;
 
-public sealed class GracePeriodConfirmedIntegrationEventHandler
-    (IMediator mediator,
+internal sealed class RecurringOrderReadyIntegrationEventHandler(IMediator mediator,
     ILogger<GracePeriodConfirmedIntegrationEventHandler> logger)
-    : IIntegrationEventHandler<GracePeriodConfirmedIntegrationEvent>
+    : IIntegrationEventHandler<RecurringOrderReadyIntegrationEvent>
 {
-    public async Task Handle(GracePeriodConfirmedIntegrationEvent @event)
+    public async Task Handle(RecurringOrderReadyIntegrationEvent @event)
     {
         logger.LogInformation("Handling integration event: {IntegrationEventId} - ({@IntegrationEvent})", @event.Id, @event);
         var command = new SetAwaitingValidationOrderStatusCommand

@@ -52,7 +52,7 @@ public sealed class RecurringOrderActivationService(
 
         foreach (var orderId in orderIds)
         {
-            var readyEvent = new RecurringOrderReadyEvent(orderId);
+            var readyEvent = new RecurringOrderReadyIntegrationEvent(orderId);
 
             logger.LogInformation(
                 "Publishing integration event: {IntegrationEventId} - ({@IntegrationEvent})",

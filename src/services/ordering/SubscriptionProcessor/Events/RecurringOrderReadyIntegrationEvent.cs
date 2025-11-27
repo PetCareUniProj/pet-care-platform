@@ -2,9 +2,9 @@ using EventBus.Events;
 
 namespace SubscriptionProcessor.Events;
 
-public sealed record RecurringOrderReadyEvent : IntegrationEvent
+public sealed record RecurringOrderReadyIntegrationEvent : IntegrationEvent
 {
-    public RecurringOrderReadyEvent(int orderId)
+    public RecurringOrderReadyIntegrationEvent(int orderId)
     {
         OrderId = orderId;
     }
