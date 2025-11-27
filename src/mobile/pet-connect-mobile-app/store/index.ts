@@ -32,6 +32,7 @@ export const usePetsStore = create<PetsState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await petsService.getAll();
+      // Replace all pets to avoid duplicates
       set({ pets: response.items, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
@@ -52,7 +53,14 @@ export const usePetsStore = create<PetsState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const newPet = await petsService.create(data);
-      set((state) => ({ pets: [...state.pets, newPet], isLoading: false }));
+      set((state) => {
+        // Check if pet already exists to prevent duplicates
+        const exists = state.pets.some(p => p.id === newPet.id);
+        if (exists) {
+          return { isLoading: false };
+        }
+        return { pets: [...state.pets, newPet], isLoading: false };
+      });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
     }

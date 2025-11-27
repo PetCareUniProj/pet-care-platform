@@ -59,34 +59,46 @@ export default function CreatePetScreen() {
     }
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleCreate = async () => {
+    if (isSubmitting || isLoading) return; // Prevent double submission
+    
     if (!name.trim()) {
       alert('Будь ласка, введіть ім\'я улюбленця');
       return;
     }
 
-    const allergiesArray = allergies.split(',').map(a => a.trim()).filter(a => a);
+    setIsSubmitting(true);
 
-    const newPet: CreatePetDto = {
-      name: name.trim(),
-      type,
-      breed: breed.trim() || undefined,
-      gender,
-      weight: weight ? parseFloat(weight) : undefined,
-      weightUnit: 'kg',
-      birthDate: birthDate ? formatDate(birthDate) : undefined,
-      color: color.trim() || undefined,
-      microchip: microchip.trim() || undefined,
-      isNeutered,
-      allergies: allergiesArray.length > 0 ? allergiesArray : undefined,
-      specialNeeds: specialNeeds.trim() || undefined,
-      vetName: vetName.trim() || undefined,
-      vetPhone: vetPhone.trim() || undefined,
-      vetAddress: vetAddress.trim() || undefined,
-    };
+    try {
+      const allergiesArray = allergies.split(',').map(a => a.trim()).filter(a => a);
 
-    await createPet(newPet);
-    router.back();
+      const newPet: CreatePetDto = {
+        name: name.trim(),
+        type,
+        breed: breed.trim() || undefined,
+        gender,
+        weight: weight ? parseFloat(weight) : undefined,
+        weightUnit: 'kg',
+        birthDate: birthDate ? formatDate(birthDate) : undefined,
+        color: color.trim() || undefined,
+        microchip: microchip.trim() || undefined,
+        isNeutered,
+        allergies: allergiesArray.length > 0 ? allergiesArray : undefined,
+        specialNeeds: specialNeeds.trim() || undefined,
+        vetName: vetName.trim() || undefined,
+        vetPhone: vetPhone.trim() || undefined,
+        vetAddress: vetAddress.trim() || undefined,
+      };
+
+      await createPet(newPet);
+      router.back();
+    } catch (error) {
+      console.error('Error creating pet:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -389,8 +401,8 @@ export default function CreatePetScreen() {
           {/* Create Button */}
           <TouchableOpacity
             onPress={handleCreate}
-            disabled={isLoading}
-            className={`mt-4 rounded-xl overflow-hidden ${isLoading ? 'opacity-70' : ''}`}
+            disabled={isLoading || isSubmitting}
+            className={`mt-4 rounded-xl overflow-hidden ${isLoading || isSubmitting ? 'opacity-70' : ''}`}
           >
             <LinearGradient
               colors={['#fb923c', '#f59e0b']}

@@ -1,7 +1,13 @@
 // API Configuration Constants
 
 // Base URLs for microservices
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_GATEWAY_URL || 'http://localhost:3000';
+export const CATALOG_API_URL = process.env.EXPO_PUBLIC_CATALOG_API_URL || 'http://localhost:5251';
+export const ORDERING_API_URL = process.env.EXPO_PUBLIC_ORDERING_API_URL || 'http://localhost:5276';
+export const BASKET_API_URL = process.env.EXPO_PUBLIC_BASKET_API_URL || 'http://localhost:5273';
+export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL || 'http://localhost:62942';
+
+// Legacy - for backward compatibility
+export const API_BASE_URL = CATALOG_API_URL;
 
 export const API_ENDPOINTS = {
   // ============ Catalog API ============
@@ -10,7 +16,7 @@ export const API_ENDPOINTS = {
     ITEMS: {
       GET_ALL: '/api/items',
       GET_BY_ID: (idOrSlug: string) => `/api/items/${idOrSlug}`,
-      GET_PICTURE: (id: number) => `${API_BASE_URL}/api/items/${id}/pic`,
+      GET_PICTURE: (id: number) => `${CATALOG_API_URL}/api/items/${id}/pic`,
     },
     CATEGORIES: {
       GET_ALL: '/api/category',
@@ -112,7 +118,7 @@ export function getProductImageUrl(pictureFileName: string | null | undefined): 
   // If it's already a full URL, return as is
   if (pictureFileName.startsWith('http')) return pictureFileName;
   // Otherwise, build URL from base
-  return `${API_BASE_URL}/images/${pictureFileName}`;
+  return `${CATALOG_API_URL}/images/${pictureFileName}`;
 }
 
 /**

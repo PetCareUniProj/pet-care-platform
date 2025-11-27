@@ -199,11 +199,11 @@ export default function SettingsScreen() {
                 {section.items.map((item, index) => (
                   <TouchableOpacity
                     key={item.label}
-                    onPress={item.type === 'action' ? item.onPress : undefined}
-                    disabled={item.disabled}
+                    onPress={item.type === 'action' ? (item as any).onPress : undefined}
+                    disabled={item.type === 'switch' ? (item as any).disabled : false}
                     className={`flex-row items-center p-4 ${
                       index < section.items.length - 1 ? 'border-b border-gray-100' : ''
-                    } ${item.disabled ? 'opacity-50' : ''}`}
+                    } ${item.type === 'switch' && (item as any).disabled ? 'opacity-50' : ''}`}
                   >
                     <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
                       <MaterialIcons name={item.icon as any} size={22} color="#f59e0b" />
@@ -214,11 +214,11 @@ export default function SettingsScreen() {
                     </View>
                     {item.type === 'switch' ? (
                       <Switch
-                        value={item.value}
-                        onValueChange={item.onValueChange}
-                        disabled={item.disabled}
+                        value={(item as any).value}
+                        onValueChange={(item as any).onValueChange}
+                        disabled={(item as any).disabled}
                         trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
-                        thumbColor={item.value ? '#f59e0b' : '#f4f4f5'}
+                        thumbColor={(item as any).value ? '#f59e0b' : '#f4f4f5'}
                       />
                     ) : (
                       <MaterialIcons name="chevron-right" size={24} color="#d1d5db" />

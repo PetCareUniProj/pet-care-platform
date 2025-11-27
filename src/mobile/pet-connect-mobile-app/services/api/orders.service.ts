@@ -24,7 +24,8 @@ class OrdersService {
   async createDraft(data: CreateOrderDraftRequest): Promise<OrderDraftResponse> {
     return apiClient.post<OrderDraftResponse>(
       API_ENDPOINTS.ORDERS.CREATE_DRAFT,
-      data
+      data,
+      { service: 'ordering' }
     );
   }
 
@@ -37,7 +38,8 @@ class OrdersService {
   async createOrder(data: CreateOrderRequest): Promise<OrderResponse> {
     return apiClient.post<OrderResponse>(
       API_ENDPOINTS.ORDERS.CREATE,
-      data
+      data,
+      { service: 'ordering' }
     );
   }
 
@@ -47,7 +49,8 @@ class OrdersService {
    */
   async getOrderById(id: number): Promise<OrderResponse> {
     return apiClient.get<OrderResponse>(
-      API_ENDPOINTS.ORDERS.GET_BY_ID(id)
+      API_ENDPOINTS.ORDERS.GET_BY_ID(id),
+      { service: 'ordering' }
     );
   }
 
@@ -57,7 +60,8 @@ class OrdersService {
    */
   async getUserOrders(): Promise<PaginatedResponse<OrderResponse>> {
     return apiClient.get<PaginatedResponse<OrderResponse>>(
-      API_ENDPOINTS.ORDERS.GET_BY_USER
+      API_ENDPOINTS.ORDERS.GET_BY_USER,
+      { service: 'ordering' }
     );
   }
 
@@ -67,7 +71,9 @@ class OrdersService {
    */
   async cancelOrder(id: number): Promise<void> {
     return apiClient.post<void>(
-      API_ENDPOINTS.ORDERS.CANCEL(id)
+      API_ENDPOINTS.ORDERS.CANCEL(id),
+      undefined,
+      { service: 'ordering' }
     );
   }
 
@@ -79,7 +85,8 @@ class OrdersService {
    */
   async getCardTypes(): Promise<CardType[]> {
     return apiClient.get<CardType[]>(
-      API_ENDPOINTS.ORDERS.GET_CARD_TYPES
+      API_ENDPOINTS.ORDERS.GET_CARD_TYPES,
+      { service: 'ordering' }
     );
   }
 }

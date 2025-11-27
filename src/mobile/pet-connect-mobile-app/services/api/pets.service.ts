@@ -105,10 +105,13 @@ class PetsService {
     await new Promise(resolve => setTimeout(resolve, 500));
     const newPet: Pet = {
       ...data,
-      id: Math.random().toString(36).substr(2, 9),
+      id: Crypto.randomUUID(),
       ownerId: 'user1', // Mock owner
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      weightHistory: data.weight ? [{ weight: data.weight, weightUnit: data.weightUnit || 'kg', date: new Date().toISOString() }] : [],
+      photoGallery: [],
+      profileCompleteness: this.calculateCompleteness(data as Pet),
     };
     mockPets.push(newPet);
     return newPet;

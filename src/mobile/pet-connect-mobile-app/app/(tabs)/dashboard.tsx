@@ -38,7 +38,10 @@ export default function DashboardScreen() {
   const loadEvents = async () => {
     try {
       setEventsLoading(true);
-      const events = await remindersService.getCalendarEvents();
+      const today = new Date().toISOString().split('T')[0];
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 3);
+      const events = await remindersService.getCalendarEvents(today, endDate.toISOString().split('T')[0]);
       
       // Filter only upcoming events and sort by date
       const now = new Date();
@@ -430,7 +433,7 @@ export default function DashboardScreen() {
                 <View className="flex-row gap-2">
                   {pets.map((pet) => (
                     <TouchableOpacity
-                      key={pet.id}
+                      key={`weight-selector-${pet.id}`}
                       onPress={() => setSelectedPetForWeight(pet.id)}
                       className={`px-4 py-2 rounded-full flex-row items-center gap-2 ${
                         selectedPetForWeight === pet.id ? 'bg-green-500' : 'bg-gray-100'

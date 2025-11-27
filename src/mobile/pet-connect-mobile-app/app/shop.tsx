@@ -19,12 +19,13 @@ import { basketService } from '@/services/api/basket.service';
 import { subscriptionsService, CreateLocalSubscriptionDto } from '@/services/api/subscriptions.service';
 import { CatalogItem, Category } from '@/types/product.types';
 import { RecurrenceInterval, RECURRENCE_LABELS } from '@/types/order.types';
+import { getProductImageUrl } from '@/constants/api';
 
 export default function ShopScreen() {
   const router = useRouter();
   const [products, setProducts] = useState<CatalogItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,7 +38,7 @@ export default function ShopScreen() {
 
   // Subscription modal
   const [isSubscriptionModalVisible, setIsSubscriptionModalVisible] = useState(false);
-  const [subscriptionFrequency, setSubscriptionFrequency] = useState<RecurrenceInterval>('Monthly');
+  const [subscriptionFrequency, setSubscriptionFrequency] = useState<RecurrenceInterval>('30.00:00:00');
 
   const loadData = async () => {
     try {
@@ -46,14 +47,20 @@ export default function ShopScreen() {
         catalogService.getItems({ pageSize: 50 }),
         catalogService.getCategories(),
       ]);
+      
       setProducts(productsData.items);
       setCategories(categoriesData.items);
       
       // Update cart count
       const basket = await basketService.getBasket();
       setCartCount(basket.items.reduce((sum, item) => sum + item.quantity, 0));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading shop data:', error);
+      Alert.alert(
+        'Помилка завантаження',
+        `Не вдалося завантажити дані магазину.\n\n${error?.message || 'Невідома помилка'}\n\nПеревірте підключення до інтернету та налаштування API сервера.`,
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +80,7 @@ export default function ShopScreen() {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = !selectedCategory || 
-      product.categories?.some(c => c.id === selectedCategory);
+      product.categoryIds.includes(selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
@@ -86,9 +93,9 @@ export default function ShopScreen() {
       await basketService.addItem({
         productId: product.id,
         productName: product.name,
-        price: product.price,
+        unitPrice: product.price,
         quantity: qty,
-        pictureUrl: product.pictureUri,
+        pictureUrl: getProductImageUrl(product.pictureFileName) || '',
       });
       
       const basket = await basketService.getBasket();
@@ -109,7 +116,7 @@ export default function ShopScreen() {
       const dto: CreateLocalSubscriptionDto = {
         productId: String(selectedProduct.id),
         productName: selectedProduct.name,
-        productImage: selectedProduct.pictureUri,
+        productImage: getProductImageUrl(selectedProduct.pictureFileName),
         frequency: subscriptionFrequency,
         price: selectedProduct.price,
         quantity: quantity,
@@ -245,9 +252,9 @@ export default function ShopScreen() {
                     style={{ width: '47%' }}
                   >
                     <View className="aspect-square bg-gray-100 items-center justify-center">
-                      {product.pictureUri ? (
+                      {getProductImageUrl(product.pictureFileName) ? (
                         <Image
-                          source={{ uri: product.pictureUri }}
+                          source={{ uri: getProductImageUrl(product.pictureFileName)! }}
                           className="w-full h-full"
                           contentFit="cover"
                         />
@@ -259,9 +266,6 @@ export default function ShopScreen() {
                       <Text className="text-gray-800 font-semibold text-sm" numberOfLines={2}>
                         {product.name}
                       </Text>
-                      {product.brand && (
-                        <Text className="text-gray-400 text-xs mt-1">{product.brand.name}</Text>
-                      )}
                       <View className="flex-row items-center justify-between mt-2">
                         <Text className="text-orange-600 font-bold text-lg">
                           {formatPrice(product.price)}
@@ -309,9 +313,9 @@ export default function ShopScreen() {
               <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Product Image */}
                 <View className="aspect-square bg-gray-100 rounded-2xl items-center justify-center mb-4 overflow-hidden">
-                  {selectedProduct.pictureUri ? (
+                  {getProductImageUrl(selectedProduct.pictureFileName) ? (
                     <Image
-                      source={{ uri: selectedProduct.pictureUri }}
+                      source={{ uri: getProductImageUrl(selectedProduct.pictureFileName)! }}
                       className="w-full h-full"
                       contentFit="cover"
                     />
@@ -322,9 +326,6 @@ export default function ShopScreen() {
 
                 {/* Product Info */}
                 <Text className="text-gray-800 font-bold text-xl">{selectedProduct.name}</Text>
-                {selectedProduct.brand && (
-                  <Text className="text-gray-500 text-sm mt-1">{selectedProduct.brand.name}</Text>
-                )}
                 {selectedProduct.description && (
                   <Text className="text-gray-600 mt-2">{selectedProduct.description}</Text>
                 )}
@@ -413,7 +414,7 @@ export default function ShopScreen() {
 
             <Text className="text-gray-600 font-semibold">Періодичність доставки</Text>
             <View className="flex-row flex-wrap gap-2">
-              {(['Weekly', 'Biweekly', 'Monthly'] as RecurrenceInterval[]).map((freq) => (
+              {(['7.00:00:00', '14.00:00:00', '30.00:00:00'] as RecurrenceInterval[]).map((freq) => (
                 <TouchableOpacity
                   key={freq}
                   onPress={() => setSubscriptionFrequency(freq)}

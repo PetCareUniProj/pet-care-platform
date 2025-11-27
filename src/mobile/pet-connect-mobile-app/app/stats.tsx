@@ -29,8 +29,11 @@ export default function StatsScreen() {
   const loadData = async () => {
     try {
       setIsLoading(true);
+      const today = new Date().toISOString().split('T')[0];
+      const endDate = new Date();
+      endDate.setFullYear(endDate.getFullYear() + 1);
       const [eventsData, subsData, docsData] = await Promise.all([
-        remindersService.getCalendarEvents(),
+        remindersService.getCalendarEvents(today, endDate.toISOString().split('T')[0]),
         subscriptionsService.getAll(),
         documentsService.getAll(),
       ]);
