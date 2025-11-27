@@ -37,6 +37,10 @@ builder.AddProject<OrderProcessor>("orderprocessor")
         .WithReference(orderDb).WaitFor(orderDb)
         .WithReference(rabbitMq).WaitFor(rabbitMq);
 
+builder.AddProject<SubscriptionProcessor>("subscriptionprocessor")
+    .WithReference(orderDb).WaitFor(orderDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq);
+
 builder.AddProject<PaymentProcessor>("paymentprocessor")
     .WithReference(rabbitMq).WaitFor(rabbitMq);
 
