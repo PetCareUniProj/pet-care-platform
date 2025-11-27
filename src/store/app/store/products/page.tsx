@@ -6,7 +6,9 @@ import TopBar from "@/app/components/TopBar";
 import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
 
-const API_BASE_URL = 'https://localhost:5251/api';
+const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, '');
+const catalogApiOrigin = process.env.NEXT_PUBLIC_CATALOG_API_BASE_URL ?? 'https://localhost:5251';
+const API_BASE_URL = `${normalizeBaseUrl(catalogApiOrigin)}/api`;
 
 // Types
 interface ItemResponse {
@@ -111,7 +113,7 @@ const PetShop: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [pageSize] = useState<number>(12);
     const [totalItems, setTotalItems] = useState<number>(0);
-    const [sortBy, setSortBy] = useState<string>('-id');
+    const [sortBy, setSortBy] = useState<string>('name');
 
     useEffect(() => {
         fetchData();
@@ -170,7 +172,7 @@ const PetShop: React.FC = () => {
 
     const fetchCategories = async (): Promise<CategoriesResponse> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/category?PageSize=100`);
+            const response = await fetch(`${API_BASE_URL}/category?PageSize=25`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch categories');
@@ -189,7 +191,7 @@ const PetShop: React.FC = () => {
 
     const fetchBrands = async (): Promise<BrandsResponse> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/brand?PageSize=100`);
+            const response = await fetch(`${API_BASE_URL}/brand?PageSize=25`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch brands');

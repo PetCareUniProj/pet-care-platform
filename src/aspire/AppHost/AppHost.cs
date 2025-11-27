@@ -52,13 +52,26 @@ var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
     .WithReference(catalogDb).WaitFor(catalogDb)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
-builder.AddNpmApp("store-web", "../../store", "start:dev")
+var orderingApiEndpoint = orderingApi.GetEndpoint("https");
+var basketApiEndpoint = basketApi.GetEndpoint("https");
+var catalogApiEndpoint = catalogApi.GetEndpoint("https");
+
+var storeWeb = builder.AddNpmApp("store-web", "../../store", "start:dev")
     .WithNpmPackageInstallation()
     .WithHttpEndpoint(env: "PORT")
     .WithReference(orderingApi).WaitFor(orderingApi)
     .WithReference(basketApi).WaitFor(basketApi)
     .WithReference(catalogApi).WaitFor(catalogApi)
-    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
+    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint)
+    .WithEnvironment("NEXT_PUBLIC_ORDERING_API_BASE_URL", orderingApiEndpoint)
+    .WithEnvironment("NEXT_PUBLIC_BASKET_API_BASE_URL", basketApiEndpoint)
+    .WithEnvironment("NEXT_PUBLIC_CATALOG_API_BASE_URL", catalogApiEndpoint);
+
+var storeWebEndpoint = storeWeb.GetEndpoint("http");
+
+catalogApi.WithEnvironment("Cors__AllowedOrigins__0", storeWebEndpoint);
+orderingApi.WithEnvironment("Cors__AllowedOrigins__0", storeWebEndpoint);
+basketApi.WithEnvironment("Cors__AllowedOrigins__0", storeWebEndpoint);
 
 // Add Scalar API Reference with debugging enabled
 var scalar = builder.AddScalarApiReference(options =>
