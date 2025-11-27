@@ -26,8 +26,8 @@ public class Ship : IEndpoint
         })
         .WithName(Name)
         .WithTags(Tags.Subscriptions)
-        .WithSummary("Ship an Subscription")
-        .WithDescription("This endpoint allows you to ship an Subscription by its ID.")
+        .WithSummary("Ship a subscription")
+        .WithDescription("Ships a subscription by its identifier. Only administrators can invoke this operation.")
         .Produces(StatusCodes.Status200OK)
         .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
         .RequireAuthorization(AuthConstants.AdminUserPolicyName);

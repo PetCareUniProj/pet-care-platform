@@ -18,6 +18,7 @@ internal sealed class GetCardTypes : IEndpoint
         })
         .WithName(Name)
         .WithTags(Tags.Subscriptions)
+        .WithSummary("List supported card types")
         .WithDescription("Gets all available card types.")
         .Produces<List<CardTypeResponse>>(StatusCodes.Status200OK)
         .AllowAnonymous();

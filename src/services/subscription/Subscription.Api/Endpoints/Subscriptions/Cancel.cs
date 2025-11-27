@@ -10,6 +10,7 @@ namespace Subscription.Api.Endpoints.Subscriptions;
 
 public class Cancel : IEndpoint
 {
+    public const string Name = "CancelSubscription";
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiEndpoints.Subscriptions.Cancel, async ([FromRoute] int id,
@@ -28,8 +29,9 @@ public class Cancel : IEndpoint
                 Results.NoContent,
                 CustomResults.Problem);
         })
-        .WithName("CancelSubscription")
+        .WithName(Name)
         .WithTags(Tags.Subscriptions)
+        .WithSummary("Cancel a subscription")
         .WithDescription("Cancels an existing Subscription.")
         .Produces(StatusCodes.Status204NoContent)
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
