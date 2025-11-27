@@ -44,13 +44,6 @@ builder.AddProject<SubscriptionProcessor>("subscriptionprocessor")
 builder.AddProject<PaymentProcessor>("paymentprocessor")
     .WithReference(rabbitMq).WaitFor(rabbitMq);
 
-builder.AddNpmApp("subscription-api", "../../services/subscription", "start:dev")
-    .WithNpmPackageInstallation()
-    .WithHttpEndpoint(env: "PORT")
-    .WithReference(rabbitMq).WaitFor(rabbitMq)
-    .WithReference(subscriptionDb).WaitFor(subscriptionDb)
-    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
-
 var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WithReference(catalogDb).WaitFor(catalogDb)
