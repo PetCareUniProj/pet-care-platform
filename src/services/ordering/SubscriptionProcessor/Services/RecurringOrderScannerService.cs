@@ -69,17 +69,16 @@ public sealed class RecurringOrderScannerService(
         {
             using var connection = await connectionFactory.CreateConnectionAsync();
 
-            const string query = """
+             const string query = """
                 SELECT "id"
                 FROM public.orders
-                WHERE CURRENT_TIMESTAMP - "order_date" >= @GracePeriodTime
-                  AND "order_status" = 'Submitted'
-                  AND "is_recurring" = true
+                WHERE "is_recurring" = true
+                  AND "next_recurrence_date" IS NOT NULL
+                  AND "next_recurrence_date" <= CURRENT_TIMESTAMP
+                  AND "order_status" = 'Shipped'
                 """;
 
-            var parameters = new { GracePeriodTime = TimeSpan.FromMinutes(_options.GracePeriodTime) };
-
-            var ids = await connection.QueryAsync<int>(query, parameters);
+            var ids = await connection.QueryAsync<int>(query);
 
             return ids.ToList();
         }
