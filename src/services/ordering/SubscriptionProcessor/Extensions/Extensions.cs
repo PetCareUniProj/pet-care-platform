@@ -22,5 +22,5 @@ public static class Extensions
     }
 }
 
-    [JsonSerializable(typeof(RecurringOrderReadyEvent))]
+    [JsonSerializable(typeof(RecurringOrderReadyIntegrationEvent))]
 internal sealed partial class IntegrationEventContext : JsonSerializerContext;
