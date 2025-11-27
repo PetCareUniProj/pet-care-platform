@@ -21,34 +21,41 @@ export default function TabLayout() {
           elevation: 0,
           shadowOpacity: 0,
           backgroundColor: colorScheme === 'dark' ? '#1f2937' : '#ffffff',
+          paddingTop: 8,
+          height: 60,
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Головна',
-          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="home" color={color} />,
+          href: null, // Hide from tabs (redirect screen)
         }}
       />
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Дошка',
-          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="dashboard" color={color} />,
+          title: 'Головна',
+          tabBarIcon: ({ color }) => <MaterialIcons size={26} name="home" color={color} />,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
           title: 'Календар',
-          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="calendar-today" color={color} />,
+          tabBarIcon: ({ color }) => <MaterialIcons size={26} name="event" color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Профіль',
-          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="pets" color={color} />,
+          title: 'Улюбленці',
+          tabBarIcon: ({ color }) => <MaterialIcons size={26} name="pets" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="components-demo"
+        options={{
+          href: null, // Hide demo screen
         }}
       />
     </Tabs>

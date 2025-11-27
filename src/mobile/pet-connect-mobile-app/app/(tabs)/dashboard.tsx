@@ -1,29 +1,64 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Image } from 'expo-image';
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { usePetsStore } from '@/store';
+import { remindersService } from '@/services/api/reminders.service';
+import { CalendarEvent } from '@/types/reminder.types';
 
-// Quick Actions Menu
+// Quick Actions - Real functions
 const quickActions = [
-  { id: '1', title: 'Запис', icon: 'calendar-today', color: '#3b82f6', bg: 'bg-blue-100' },
-  { id: '2', title: 'Ліки', icon: 'medication', color: '#ef4444', bg: 'bg-red-100' },
-  { id: '3', title: 'Щеплення', icon: 'local-hospital', color: '#10b981', bg: 'bg-green-100' },
-  { id: '4', title: 'Догляд', icon: 'content-cut', color: '#f59e0b', bg: 'bg-amber-100' },
-  { id: '5', title: 'Прогулянка', icon: 'directions-walk', color: '#8b5cf6', bg: 'bg-violet-100' },
-  { id: '6', title: 'Вага', icon: 'fitness-center', color: '#06b6d4', bg: 'bg-cyan-100' },
-  { id: '7', title: 'Харчування', icon: 'restaurant', color: '#f97316', bg: 'bg-orange-100' },
-  { id: '8', title: 'Документи', icon: 'description', color: '#6b7280', bg: 'bg-gray-100' },
+  { id: '1', title: 'Подія', icon: 'event', color: '#3b82f6', bg: 'bg-blue-100', route: '/calendar' },
+  { id: '2', title: 'Зважити', icon: 'monitor-weight', color: '#10b981', bg: 'bg-green-100', action: 'weight' },
+  { id: '3', title: 'Магазин', icon: 'shopping-cart', color: '#f97316', bg: 'bg-orange-100', route: '/shop' },
+  { id: '4', title: 'Підписки', icon: 'autorenew', color: '#8b5cf6', bg: 'bg-violet-100', route: '/subscriptions' },
 ];
 
-export default function LoggedHomeScreen() {
+const secondaryActions = [
+  { id: '5', title: 'Мої улюбленці', icon: 'pets', color: '#ef4444', bg: 'bg-red-100', route: '/pets-list' },
+  { id: '6', title: 'Статистика', icon: 'analytics', color: '#06b6d4', bg: 'bg-cyan-100', route: '/stats' },
+  { id: '7', title: 'Документи', icon: 'description', color: '#6b7280', bg: 'bg-gray-100', route: '/documents' },
+  { id: '8', title: 'Налаштування', icon: 'settings', color: '#f59e0b', bg: 'bg-amber-100', route: '/settings' },
+];
+
+export default function DashboardScreen() {
   const router = useRouter();
   const { pets, fetchPets, isLoading } = usePetsStore();
+  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadEvents = async () => {
+    try {
+      setEventsLoading(true);
+      const events = await remindersService.getCalendarEvents();
+      
+      // Filter only upcoming events and sort by date
+      const now = new Date();
+      const upcoming = events
+        .filter(e => new Date(e.date) >= now)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 3); // Only 3 nearest events
+      
+      setUpcomingEvents(upcoming);
+    } catch (error) {
+      console.error('Error loading events:', error);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchPets();
+    loadEvents();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchPets(), loadEvents()]);
+    setRefreshing(false);
   }, []);
 
   const handlePetPress = (id: string) => {
@@ -34,157 +69,316 @@ export default function LoggedHomeScreen() {
     router.push('/pets/create');
   };
 
+  const handleQuickAction = (action: typeof quickActions[0]) => {
+    if (action.route) {
+      router.push(action.route as any);
+    } else if (action.action === 'weight' && pets.length > 0) {
+      // Navigate to first pet for weighing
+      router.push({ pathname: '/pets/[id]', params: { id: pets[0].id } });
+    }
+  };
+
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case 'vaccination':
+        return { bg: 'bg-green-50', border: 'border-green-100', icon: 'vaccines', iconColor: '#22c55e', badge: 'bg-green-100', badgeText: 'text-green-700' };
+      case 'vet_visit':
+        return { bg: 'bg-blue-50', border: 'border-blue-100', icon: 'local-hospital', iconColor: '#3b82f6', badge: 'bg-blue-100', badgeText: 'text-blue-700' };
+      case 'medication':
+        return { bg: 'bg-red-50', border: 'border-red-100', icon: 'medication', iconColor: '#ef4444', badge: 'bg-red-100', badgeText: 'text-red-700' };
+      case 'grooming':
+        return { bg: 'bg-purple-50', border: 'border-purple-100', icon: 'content-cut', iconColor: '#8b5cf6', badge: 'bg-purple-100', badgeText: 'text-purple-700' };
+      case 'parasite_treatment':
+        return { bg: 'bg-amber-50', border: 'border-amber-100', icon: 'bug-report', iconColor: '#f59e0b', badge: 'bg-amber-100', badgeText: 'text-amber-700' };
+      default:
+        return { bg: 'bg-orange-50', border: 'border-orange-100', icon: 'event', iconColor: '#f97316', badge: 'bg-orange-100', badgeText: 'text-orange-700' };
+    }
+  };
+
+  const formatEventDate = (dateStr: string, timeStr?: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const dayNames = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const monthNames = ['січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд'];
+
+    let dateText = `${date.getDate()} ${monthNames[date.getMonth()]}`;
+    
+    if (date.toDateString() === now.toDateString()) {
+      dateText = 'Сьогодні';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      dateText = 'Завтра';
+    }
+
+    return `${dateText}${timeStr ? ` • ${timeStr}` : ''}`;
+  };
+
+  const getDaysUntil = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diff === 0) return 'Сьогодні';
+    if (diff === 1) return 'Завтра';
+    if (diff <= 7) return `Через ${diff} дн.`;
+    return `Через ${diff} дн.`;
+  };
+
+  const totalPets = pets.length;
+  const healthyPets = pets.filter(p => (p.profileCompleteness || 0) > 80).length;
+
   return (
-    <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      className="flex-1 bg-gray-50" 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />
+      }
+    >
       {/* Header */}
       <LinearGradient
-        colors={['#fb923c', '#f59e0b']} // orange-400 to amber-500
+        colors={['#fb923c', '#f59e0b']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 0 }}
         className="rounded-b-3xl"
       >
-        <View className="flex-row justify-between items-center mt-20 pb-6 px-6">
-          <View>
-            <Text className="text-white text-2xl font-bold">
-              Вітаємо, Олексій! 👋
-            </Text>
-            <Text className="text-white opacity-90 mt-1">
-              Як почуваються твої улюбленці сьогодні?
-            </Text>
+        <View className="px-6 pt-14 pb-6">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-white/80 text-sm">Вітаємо в</Text>
+              <Text className="text-white text-3xl font-bold">Pet Connect 🐾</Text>
+            </View>
+            <TouchableOpacity 
+              onPress={() => router.push('/settings' as any)}
+              className="w-12 h-12 bg-white/20 rounded-full items-center justify-center border-2 border-white/30"
+            >
+              <MaterialIcons name="person" size={24} color="white" />
+            </TouchableOpacity>
           </View>
-          <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center border-2 border-white/30">
-            <Text className="text-white font-bold text-lg">ОА</Text>
-          </View>
+
+          {/* Stats Cards */}
+          {totalPets > 0 && (
+            <View className="flex-row gap-3 mt-6">
+              <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
+                <View className="flex-row items-center gap-2">
+                  <View className="bg-white/30 p-2 rounded-full">
+                    <MaterialIcons name="pets" size={20} color="white" />
+                  </View>
+                  <Text className="text-white/80 text-sm">Улюбленців</Text>
+                </View>
+                <Text className="text-white text-3xl font-bold mt-2">{totalPets}</Text>
+              </View>
+              <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
+                <View className="flex-row items-center gap-2">
+                  <View className="bg-white/30 p-2 rounded-full">
+                    <MaterialIcons name="event" size={20} color="white" />
+                  </View>
+                  <Text className="text-white/80 text-sm">Подій</Text>
+                </View>
+                <Text className="text-white text-3xl font-bold mt-2">{upcomingEvents.length}</Text>
+              </View>
+            </View>
+          )}
         </View>
 
-        {/* Quick Actions Grid in Header */}
-        <View className="flex-row flex-wrap justify-between gap-y-4 pb-6">
-          {quickActions.slice(0, 4).map((action) => (
-            <TouchableOpacity key={action.id} className="items-center w-[22%]">
-              <View className={`w-12 h-12 rounded-2xl items-center justify-center ${action.bg} shadow-sm mb-1`}>
-                <MaterialIcons name={action.icon as any} size={24} color={action.color} />
-              </View>
-              <Text className="text-white text-xs font-medium text-center">{action.title}</Text>
-            </TouchableOpacity>
-          ))}
+        {/* Quick Actions */}
+        <View className="px-4 pb-6">
+          <View className="flex-row justify-around">
+            {quickActions.map((action) => (
+              <TouchableOpacity 
+                key={action.id} 
+                onPress={() => handleQuickAction(action)}
+                className="items-center w-[22%]"
+              >
+                <View className={`w-14 h-14 rounded-2xl items-center justify-center ${action.bg} shadow-sm mb-2`}>
+                  <MaterialIcons name={action.icon as any} size={26} color={action.color} />
+                </View>
+                <Text className="text-white text-xs font-medium text-center">{action.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </LinearGradient>
 
       {/* Main Content */}
-      <View className="px-6 pt-6 gap-6 pb-8">
+      <View className="px-6 pt-6 gap-6 pb-8 -mt-2">
         
-        {/* Extended Quick Actions (More Options) */}
+        {/* Secondary Actions */}
         <View className="gap-3">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-gray-800 ml-1">Меню</Text>
-            <TouchableOpacity>
-              <Text className="text-orange-500 font-semibold text-xs">Всі функції</Text>
-            </TouchableOpacity>
-          </View>
+          <Text className="text-lg font-bold text-gray-800 ml-1">Швидкі дії</Text>
           <View className="flex-row flex-wrap gap-3">
-            {quickActions.slice(4).map((action) => (
-              <TouchableOpacity key={action.id} className="flex-row items-center bg-gray-50 p-3 rounded-xl border border-gray-100 w-[48%] active:bg-gray-100">
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${action.bg} mr-3`}>
-                  <MaterialIcons name={action.icon as any} size={16} color={action.color} />
+            {secondaryActions.map((action) => (
+              <TouchableOpacity 
+                key={action.id} 
+                onPress={() => action.route && router.push(action.route as any)}
+                className="flex-row items-center bg-white p-4 rounded-2xl border border-gray-100 w-[48%] active:bg-gray-50 shadow-sm"
+              >
+                <View className={`w-10 h-10 rounded-xl items-center justify-center ${action.bg} mr-3`}>
+                  <MaterialIcons name={action.icon as any} size={20} color={action.color} />
                 </View>
-                <Text className="text-gray-700 font-medium text-sm">{action.title}</Text>
+                <Text className="text-gray-700 font-semibold text-sm flex-1">{action.title}</Text>
+                <MaterialIcons name="chevron-right" size={20} color="#d1d5db" />
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Pets Dashboard */}
+        {/* My Pets */}
         <View className="gap-3">
           <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-gray-800 ml-1">Твої улюбленці</Text>
+            <Text className="text-lg font-bold text-gray-800 ml-1">Мої улюбленці</Text>
             <TouchableOpacity onPress={handleAddPet}>
-              <Text className="text-orange-500 font-semibold text-xs">Додати</Text>
+              <View className="flex-row items-center gap-1">
+                <MaterialIcons name="add" size={18} color="#f97316" />
+                <Text className="text-orange-500 font-semibold text-sm">Додати</Text>
+              </View>
             </TouchableOpacity>
           </View>
 
           {isLoading && pets.length === 0 ? (
-             <ActivityIndicator color="#f97316" />
+            <ActivityIndicator color="#f97316" />
+          ) : pets.length === 0 ? (
+            <TouchableOpacity 
+              onPress={handleAddPet}
+              className="bg-white border-2 border-dashed border-orange-200 rounded-2xl p-8 items-center"
+            >
+              <View className="bg-orange-100 w-16 h-16 rounded-full items-center justify-center mb-3">
+                <MaterialIcons name="pets" size={32} color="#f97316" />
+              </View>
+              <Text className="text-gray-700 font-bold text-lg">Додайте першого улюбленця</Text>
+              <Text className="text-gray-500 text-center mt-1">Натисніть, щоб створити профіль</Text>
+            </TouchableOpacity>
           ) : (
-          <View className="gap-4">
-            {pets.map((pet) => (
-              <TouchableOpacity 
-                key={pet.id} 
-                onPress={() => handlePetPress(pet.id)}
-                className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex-row items-center gap-4 active:bg-gray-50"
-              >
-                <Image
-                  source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
-                  className="w-16 h-16 rounded-full bg-gray-100"
-                />
-
-                <View className="flex-1 gap-1">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-lg font-bold text-gray-800">{pet.name}</Text>
-                    <View className={`px-2 py-1 rounded-full ${pet.profileCompleteness && pet.profileCompleteness > 80 ? 'bg-green-100' : 'bg-orange-100'}`}>
-                      <Text className={`text-xs font-bold ${pet.profileCompleteness && pet.profileCompleteness > 80 ? 'text-green-700' : 'text-orange-700'}`}>
-                        {pet.profileCompleteness && pet.profileCompleteness > 80 ? 'Здоровий' : 'Потрібна увага'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text className="text-gray-500 text-sm">
-                    {pet.type === 'cat' ? 'Кіт' : pet.type === 'dog' ? 'Собака' : pet.type} • {pet.age || 'Вік невідомий'} • {pet.breed || 'Без породи'}
-                  </Text>
-
-                  {pet.vaccinationStatus && pet.vaccinationStatus.length > 0 && (
-                      <View className="flex-row items-center gap-1 mt-1">
-                        <MaterialIcons name="local-hospital" size={16} color="#f97316" />
-                        <Text className="text-xs text-gray-500">
-                          Вакцинація: {pet.vaccinationStatus.find(v => v.status === 'upcoming')?.date || 'Всі виконані'}
-                        </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-2">
+              <View className="flex-row gap-4 px-2">
+                {pets.map((pet) => (
+                  <TouchableOpacity
+                    key={pet.id}
+                    onPress={() => handlePetPress(pet.id)}
+                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 w-44"
+                  >
+                    <View className="items-center">
+                      <View className="relative mb-3">
+                        <Image
+                          source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
+                          className="w-20 h-20 rounded-full bg-gray-100"
+                          style={{ width: 80, height: 80 }}
+                        />
+                        <View className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full items-center justify-center ${
+                          (pet.profileCompleteness || 0) > 80 ? 'bg-green-500' : 'bg-orange-500'
+                        }`}>
+                          <MaterialIcons 
+                            name={(pet.profileCompleteness || 0) > 80 ? 'check' : 'priority-high'} 
+                            size={14} 
+                            color="white" 
+                          />
+                        </View>
                       </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-            {pets.length === 0 && !isLoading && (
-                <View className="p-8 items-center">
-                    <Text className="text-gray-500">У вас ще немає доданих улюбленців</Text>
-                    <TouchableOpacity onPress={handleAddPet} className="mt-4">
-                        <Text className="text-orange-500 font-bold">Додати зараз</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-          </View>
+                      <Text className="text-gray-800 font-bold text-base">{pet.name}</Text>
+                      <Text className="text-gray-500 text-xs">
+                        {pet.type === 'cat' ? '🐱 Кіт' : pet.type === 'dog' ? '🐕 Собака' : pet.type}
+                      </Text>
+                      {pet.weight && (
+                        <Text className="text-gray-400 text-xs mt-1">
+                          {pet.weight} {pet.weightUnit || 'кг'}
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={handleAddPet}
+                  className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-4 w-44 items-center justify-center"
+                >
+                  <View className="bg-gray-200 w-12 h-12 rounded-full items-center justify-center mb-2">
+                    <MaterialIcons name="add" size={24} color="#9ca3af" />
+                  </View>
+                  <Text className="text-gray-400 font-semibold text-sm">Додати</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           )}
         </View>
 
         {/* Upcoming Events */}
         <View className="gap-3">
-          <Text className="text-lg font-bold text-gray-800 ml-1">Найближчі події</Text>
-
-          <View className="gap-3">
-            <View className="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex-row items-center gap-4">
-              <View className="bg-orange-100 p-3 rounded-full">
-                <MaterialIcons name="local-hospital" size={24} color="#f97316" />
-              </View>
-              <View className="flex-1">
-                <Text className="font-bold text-gray-800">Вакцинація Мурзика</Text>
-                <Text className="text-gray-600 text-sm">15 листопада 2025 • 10:00</Text>
-              </View>
-              <View className="bg-orange-200 px-2 py-1 rounded">
-                <Text className="text-orange-800 text-xs font-bold">Через 5 днів</Text>
-              </View>
-            </View>
-
-            <View className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex-row items-center gap-4">
-              <View className="bg-blue-100 p-3 rounded-full">
-                <MaterialIcons name="calendar-today" size={24} color="#3b82f6" />
-              </View>
-              <View className="flex-1">
-                <Text className="font-bold text-gray-800">Візит до ветеринара</Text>
-                <Text className="text-gray-600 text-sm">20 листопада 2025 • 14:30</Text>
-              </View>
-              <View className="bg-blue-200 px-2 py-1 rounded">
-                <Text className="text-blue-800 text-xs font-bold">Через 10 днів</Text>
-              </View>
-            </View>
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-gray-800 ml-1">Найближчі події</Text>
+            <TouchableOpacity onPress={() => router.push('/calendar')}>
+              <Text className="text-orange-500 font-semibold text-sm">Всі події →</Text>
+            </TouchableOpacity>
           </View>
+
+          {eventsLoading ? (
+            <ActivityIndicator color="#f97316" />
+          ) : upcomingEvents.length === 0 ? (
+            <TouchableOpacity 
+              onPress={() => router.push('/calendar')}
+              className="bg-white border border-gray-100 rounded-2xl p-6 items-center shadow-sm"
+            >
+              <View className="bg-gray-100 w-14 h-14 rounded-full items-center justify-center mb-3">
+                <MaterialIcons name="event-available" size={28} color="#9ca3af" />
+              </View>
+              <Text className="text-gray-600 font-semibold">Немає запланованих подій</Text>
+              <Text className="text-gray-400 text-sm mt-1">Натисніть, щоб додати</Text>
+            </TouchableOpacity>
+          ) : (
+            <View className="gap-3">
+              {upcomingEvents.map((event) => {
+                const colors = getEventColor(event.type);
+                return (
+                  <TouchableOpacity 
+                    key={event.id}
+                    onPress={() => router.push('/calendar')}
+                    className={`${colors.bg} border ${colors.border} rounded-2xl p-4 flex-row items-center gap-4 shadow-sm`}
+                  >
+                    <View className={`${colors.badge} p-3 rounded-xl`}>
+                      <MaterialIcons name={colors.icon as any} size={24} color={colors.iconColor} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-bold text-gray-800">{event.title}</Text>
+                      <Text className="text-gray-600 text-sm">{formatEventDate(event.date, event.time)}</Text>
+                      <View className="flex-row items-center gap-1 mt-1">
+                        <MaterialIcons name="pets" size={12} color="#9ca3af" />
+                        <Text className="text-gray-400 text-xs">{event.petName}</Text>
+                      </View>
+                    </View>
+                    <View className={`${colors.badge} px-3 py-1 rounded-lg`}>
+                      <Text className={`${colors.badgeText} text-xs font-bold`}>
+                        {getDaysUntil(event.date)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
+        {/* Health Tips Card */}
+        <View className="mt-2">
+          <LinearGradient
+            colors={['#fef3c7', '#fde68a']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            className="rounded-2xl p-5 border border-amber-200"
+          >
+            <View className="flex-row items-start gap-4">
+              <View className="bg-amber-400 p-3 rounded-xl">
+                <MaterialIcons name="lightbulb" size={24} color="white" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-amber-900 font-bold text-base">Порада дня 💡</Text>
+                <Text className="text-amber-800 text-sm mt-1">
+                  Регулярні прогулянки допомагають підтримувати здорову вагу та настрій вашого улюбленця!
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
       </View>
     </ScrollView>
