@@ -14,6 +14,15 @@ internal sealed class GetOrdersByUserQueryHandler(IApplicationDbContext dbContex
             .Include(o => o.Address);
 
         ordersQuery = ordersQuery.Where(o => o.BuyerId == query.UserId);
+        if (query.Statuses is not null && query.Statuses.Any())
+        {
+            ordersQuery = ordersQuery.Where(o => query.Statuses.Contains(o.OrderStatus));
+        }
+
+        if (query.IsRecurring.HasValue)
+        {
+            ordersQuery = ordersQuery.Where(o => o.IsRecurring == query.IsRecurring.Value);
+        }
 
         var pageSize = query.PageSize > 0 ? query.PageSize : 20;
         var pageOffset = (query.Page > 0 ? query.Page - 1 : 0) * pageSize;
