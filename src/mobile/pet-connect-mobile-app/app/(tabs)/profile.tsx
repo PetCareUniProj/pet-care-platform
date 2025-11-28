@@ -6,6 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { usePetsStore } from '@/store';
 import { Pet } from '@/types/pet.types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 const PET_TYPE_EMOJI: Record<string, string> = {
   cat: '🐱',
@@ -29,6 +30,7 @@ export default function PetProfileScreen() {
   const router = useRouter();
   const { pets, fetchPets, isLoading, addPetWeight, addPetNote, uploadPetPhoto } = usePetsStore();
   const [refreshing, setRefreshing] = useState(false);
+  const theme = useThemedStyles();
 
   // Weight modal
   const [isWeightModalVisible, setIsWeightModalVisible] = useState(false);
@@ -155,7 +157,7 @@ export default function PetProfileScreen() {
 
   if (isLoading && pets.length === 0) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
+      <View className={`flex-1 justify-center items-center ${theme.bgPrimary}`}>
         <ActivityIndicator size="large" color="#f97316" />
       </View>
     );
@@ -163,7 +165,7 @@ export default function PetProfileScreen() {
 
   return (
     <ScrollView 
-      className="flex-1 bg-gray-50" 
+      className={`flex-1 ${theme.bgPrimary}`}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />
@@ -171,7 +173,7 @@ export default function PetProfileScreen() {
     >
       {/* Header */}
       <LinearGradient
-        colors={['#fb923c', '#f59e0b']}
+        colors={theme.gradientColors.orange}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
@@ -207,13 +209,13 @@ export default function PetProfileScreen() {
         {pets.length === 0 ? (
           <TouchableOpacity
             onPress={handleAddPet}
-            className="bg-white border-2 border-dashed border-orange-200 rounded-2xl p-12 items-center"
+            className={`${theme.bgCard} border-2 border-dashed border-orange-200 rounded-2xl p-12 items-center`}
           >
             <View className="bg-orange-100 w-24 h-24 rounded-full items-center justify-center mb-4">
               <MaterialIcons name="pets" size={48} color="#f97316" />
             </View>
-            <Text className="text-gray-800 font-bold text-xl">Додайте улюбленця</Text>
-            <Text className="text-gray-500 text-center mt-2">
+            <Text className={`${theme.textPrimary} font-bold text-xl`}>Додайте улюбленця</Text>
+            <Text className={`${theme.textSecondary} text-center mt-2`}>
               Створіть профіль для вашого першого улюбленця та почніть відстежувати його здоров'я
             </Text>
             <View className="bg-orange-500 px-6 py-3 rounded-xl mt-6">
@@ -222,7 +224,7 @@ export default function PetProfileScreen() {
           </TouchableOpacity>
         ) : (
           pets.map((pet) => (
-            <View key={pet.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <View key={pet.id} className={`${theme.bgCard} rounded-2xl border ${theme.borderColor} shadow-sm overflow-hidden`}>
               {/* Pet Header */}
               <TouchableOpacity 
                 onPress={() => handlePetPress(pet)}
@@ -235,11 +237,11 @@ export default function PetProfileScreen() {
                         ? { uri: pet.photoUrl }
                         : require('@/assets/images/pet-cat-mock-profile-image.png')
                     }
-                    className="w-20 h-20 rounded-2xl bg-gray-100"
+                    className={`w-20 h-20 rounded-2xl ${theme.isDark ? 'bg-gray-700' : 'bg-gray-100'}`}
                     style={{ width: 80, height: 80 }}
                   />
                   <View
-                    className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full items-center justify-center border-2 border-white ${
+                    className={`absolute -bottom-1 -right-1 w-7 h-7 rounded-full items-center justify-center border-2 ${theme.isDark ? 'border-gray-800' : 'border-white'} ${
                       (pet.profileCompleteness || 0) >= 80 ? 'bg-green-500' : 'bg-orange-500'
                     }`}
                   >
@@ -254,22 +256,22 @@ export default function PetProfileScreen() {
                 <View className="flex-1">
                   <View className="flex-row items-center gap-2">
                     <Text className="text-xl">{PET_TYPE_EMOJI[pet.type] || '🐾'}</Text>
-                    <Text className="text-gray-800 font-bold text-lg">{pet.name}</Text>
+                    <Text className={`${theme.textPrimary} font-bold text-lg`}>{pet.name}</Text>
                   </View>
-                  <Text className="text-gray-500 text-sm">
+                  <Text className={`${theme.textSecondary} text-sm`}>
                     {pet.breed || 'Порода не вказана'}
                   </Text>
                   <View className="flex-row items-center gap-4 mt-2">
                     {pet.age && (
                       <View className="flex-row items-center gap-1">
-                        <MaterialIcons name="cake" size={14} color="#9ca3af" />
-                        <Text className="text-gray-400 text-xs">{pet.age}</Text>
+                        <MaterialIcons name="cake" size={14} color={theme.iconColorMuted} />
+                        <Text className={`${theme.textMuted} text-xs`}>{pet.age}</Text>
                       </View>
                     )}
                     {pet.weight && (
                       <View className="flex-row items-center gap-1">
-                        <MaterialIcons name="fitness-center" size={14} color="#9ca3af" />
-                        <Text className="text-gray-400 text-xs">{pet.weight} {pet.weightUnit || 'кг'}</Text>
+                        <MaterialIcons name="fitness-center" size={14} color={theme.iconColorMuted} />
+                        <Text className={`${theme.textMuted} text-xs`}>{pet.weight} {pet.weightUnit || 'кг'}</Text>
                       </View>
                     )}
                     {pet.gender && (
@@ -277,9 +279,9 @@ export default function PetProfileScreen() {
                         <MaterialIcons 
                           name={pet.gender === 'male' ? 'male' : 'female'} 
                           size={14} 
-                          color="#9ca3af" 
+                          color={theme.iconColorMuted}
                         />
-                        <Text className="text-gray-400 text-xs">
+                        <Text className={`${theme.textMuted} text-xs`}>
                           {pet.gender === 'male' ? 'Хлопчик' : 'Дівчинка'}
                         </Text>
                       </View>
@@ -287,17 +289,17 @@ export default function PetProfileScreen() {
                   </View>
                 </View>
 
-                <MaterialIcons name="chevron-right" size={24} color="#d1d5db" />
+                <MaterialIcons name="chevron-right" size={24} color={theme.chevronColor} />
               </TouchableOpacity>
 
               {/* Profile Progress */}
               {(pet.profileCompleteness || 0) < 100 && (
                 <View className="px-4 pb-3">
                   <View className="flex-row items-center justify-between mb-1">
-                    <Text className="text-gray-500 text-xs">Заповненість профілю</Text>
-                    <Text className="text-gray-600 text-xs font-semibold">{pet.profileCompleteness || 0}%</Text>
+                    <Text className={`${theme.textSecondary} text-xs`}>Заповненість профілю</Text>
+                    <Text className={`${theme.isDark ? 'text-gray-400' : 'text-gray-600'} text-xs font-semibold`}>{pet.profileCompleteness || 0}%</Text>
                   </View>
-                  <View className="bg-gray-200 h-2 rounded-full overflow-hidden">
+                  <View className={`${theme.isDark ? 'bg-gray-700' : 'bg-gray-200'} h-2 rounded-full overflow-hidden`}>
                     <View
                       className={`h-full rounded-full ${
                         (pet.profileCompleteness || 0) >= 80 ? 'bg-green-500' : 'bg-orange-500'
@@ -309,7 +311,7 @@ export default function PetProfileScreen() {
               )}
 
               {/* Quick Actions */}
-              <View className="border-t border-gray-100 px-2 py-3">
+              <View className={`border-t ${theme.borderColor} px-2 py-3`}>
                 <View className="flex-row justify-around">
                   {petQuickActions.map((action) => (
                     <TouchableOpacity
@@ -320,7 +322,7 @@ export default function PetProfileScreen() {
                       <View className={`w-12 h-12 rounded-xl items-center justify-center ${action.bg} mb-1`}>
                         <MaterialIcons name={action.icon as any} size={24} color={action.color} />
                       </View>
-                      <Text className="text-gray-600 text-xs font-medium">{action.label}</Text>
+                      <Text className={`${theme.isDark ? 'text-gray-400' : 'text-gray-600'} text-xs font-medium`}>{action.label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -328,7 +330,7 @@ export default function PetProfileScreen() {
 
               {/* Last Activity */}
               {pet.weightHistory && pet.weightHistory.length > 0 && (
-                <View className="border-t border-gray-100 px-4 py-3 bg-gray-50">
+                <View className={`border-t ${theme.borderColor} px-4 py-3 ${theme.isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
                   <View className="flex-row items-center gap-2">
                     <MaterialIcons name="history" size={16} color="#9ca3af" />
                     <Text className="text-gray-500 text-xs">
@@ -350,13 +352,13 @@ export default function PetProfileScreen() {
         {pets.length > 0 && (
           <TouchableOpacity
             onPress={handleAddPet}
-            className="bg-orange-50 border-2 border-dashed border-orange-200 rounded-2xl p-6 flex-row items-center justify-center gap-4"
+            className={`${theme.isDark ? 'bg-orange-900/30' : 'bg-orange-50'} border-2 border-dashed border-orange-200 rounded-2xl p-6 flex-row items-center justify-center gap-4`}
           >
             <View className="bg-orange-100 w-14 h-14 rounded-full items-center justify-center">
               <MaterialIcons name="add" size={28} color="#f97316" />
             </View>
             <View>
-              <Text className="text-orange-700 font-bold text-lg">Додати улюбленця</Text>
+              <Text className={`${theme.isDark ? 'text-orange-400' : 'text-orange-700'} font-bold text-lg`}>Додати улюбленця</Text>
               <Text className="text-orange-500 text-sm">Створити новий профіль</Text>
             </View>
           </TouchableOpacity>
@@ -371,41 +373,42 @@ export default function PetProfileScreen() {
         onRequestClose={() => setIsWeightModalVisible(false)}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-white p-6 rounded-2xl w-[90%] gap-4">
+          <View className={`${theme.bgCard} p-6 rounded-2xl w-[90%] gap-4`}>
             <View className="items-center mb-2">
               <View className="bg-green-100 w-16 h-16 rounded-full items-center justify-center mb-2">
                 <MaterialIcons name="monitor-weight" size={32} color="#22c55e" />
               </View>
-              <Text className="text-xl font-bold text-gray-800">Зважування</Text>
-              <Text className="text-gray-500">{selectedPetForWeight?.name}</Text>
+              <Text className={`text-xl font-bold ${theme.textPrimary}`}>Зважування</Text>
+              <Text className={theme.textSecondary}>{selectedPetForWeight?.name}</Text>
             </View>
 
             <View className="flex-row items-center gap-2">
               <TextInput
-                className="flex-1 border border-gray-200 rounded-xl p-4 text-gray-800 text-2xl text-center font-bold"
+                className={`flex-1 border ${theme.borderColorMedium} rounded-xl p-4 ${theme.textPrimary} text-2xl text-center font-bold ${theme.bgInput}`}
                 keyboardType="numeric"
                 placeholder="0.0"
+                placeholderTextColor={theme.isDark ? '#6b7280' : '#9ca3af'}
                 value={newWeight}
                 onChangeText={setNewWeight}
               />
-              <Text className="text-xl font-bold text-gray-500">{selectedPetForWeight?.weightUnit || 'кг'}</Text>
+              <Text className={`text-xl font-bold ${theme.textSecondary}`}>{selectedPetForWeight?.weightUnit || 'кг'}</Text>
             </View>
 
             {selectedPetForWeight?.weight && (
-              <Text className="text-gray-400 text-center text-sm">
+              <Text className={`${theme.textMuted} text-center text-sm`}>
                 Попередня вага: {selectedPetForWeight.weight} {selectedPetForWeight.weightUnit || 'кг'}
               </Text>
             )}
 
             <View className="flex-row gap-4">
               <TouchableOpacity
-                className="flex-1 bg-gray-200 p-3 rounded-xl items-center"
+                className={`flex-1 ${theme.isDark ? 'bg-gray-700' : 'bg-gray-200'} p-3 rounded-xl items-center`}
                 onPress={() => {
                   setNewWeight('');
                   setIsWeightModalVisible(false);
                 }}
               >
-                <Text className="font-bold text-gray-700">Скасувати</Text>
+                <Text className={`font-bold ${theme.isDark ? 'text-gray-300' : 'text-gray-700'}`}>Скасувати</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 bg-green-500 p-3 rounded-xl items-center"
@@ -426,19 +429,20 @@ export default function PetProfileScreen() {
         onRequestClose={() => setIsNoteModalVisible(false)}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-white p-6 rounded-2xl w-[90%] gap-4">
+          <View className={`${theme.bgCard} p-6 rounded-2xl w-[90%] gap-4`}>
             <View className="items-center mb-2">
               <View className="bg-amber-100 w-16 h-16 rounded-full items-center justify-center mb-2">
                 <MaterialIcons name="note-add" size={32} color="#f59e0b" />
               </View>
-              <Text className="text-xl font-bold text-gray-800">Нова нотатка</Text>
-              <Text className="text-gray-500">{selectedPetForNote?.name}</Text>
+              <Text className={`text-xl font-bold ${theme.textPrimary}`}>Нова нотатка</Text>
+              <Text className={theme.textSecondary}>{selectedPetForNote?.name}</Text>
             </View>
 
             <TextInput
-              className="border border-gray-200 rounded-xl p-4 h-32 text-gray-800"
+              className={`border ${theme.borderColorMedium} rounded-xl p-4 h-32 ${theme.textPrimary} ${theme.bgInput}`}
               multiline
               placeholder="Напишіть щось про вашого улюбленця..."
+              placeholderTextColor={theme.isDark ? '#6b7280' : '#9ca3af'}
               textAlignVertical="top"
               value={newNote}
               onChangeText={setNewNote}
@@ -446,13 +450,13 @@ export default function PetProfileScreen() {
 
             <View className="flex-row gap-4">
               <TouchableOpacity
-                className="flex-1 bg-gray-200 p-3 rounded-xl items-center"
+                className={`flex-1 ${theme.isDark ? 'bg-gray-700' : 'bg-gray-200'} p-3 rounded-xl items-center`}
                 onPress={() => {
                   setNewNote('');
                   setIsNoteModalVisible(false);
                 }}
               >
-                <Text className="font-bold text-gray-700">Скасувати</Text>
+                <Text className={`font-bold ${theme.isDark ? 'text-gray-300' : 'text-gray-700'}`}>Скасувати</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 bg-amber-500 p-3 rounded-xl items-center"

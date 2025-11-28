@@ -14,20 +14,24 @@ import { Pet } from '@/types/pet.types';
 import { LoadingSpinner, ErrorState, EmptyState } from '@/components/ui';
 import { exportEventToCalendar, exportEventsToCalendar } from '@/utils/calendar';
 import { requestNotificationPermissions } from '@/utils/notifications';
+import { useEventsStore } from '@/store';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 export default function CalendarScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ petId?: string }>();
+  const theme = useThemedStyles();
   
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
   const [viewMode, setViewMode] = useState<'month' | 'day'>('month');
   const [selectedPetIds, setSelectedPetIds] = useState<string[]>([]);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [pets, setPets] = useState<Pet[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use events from shared store
+  const { events, fetchEvents, isLoading } = useEventsStore();
   
   // Create event modal
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -93,23 +97,15 @@ export default function CalendarScreen() {
     return marked;
   }, [filteredEvents, selectedDate]);
 
-  // Load events from API
+  // Load events from shared store
   const loadEvents = useCallback(async () => {
-    setIsLoading(true);
     setError(null);
     try {
-      // Load events for a wide range (current year)
-      const today = new Date();
-      const startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
-      const endDate = new Date(today.getFullYear() + 1, 11, 31).toISOString().split('T')[0];
-      const calendarEvents = await remindersService.getCalendarEvents(startDate, endDate);
-      setEvents(calendarEvents);
+      await fetchEvents();
     } catch (err: any) {
       setError(err.message || 'Не вдалося завантажити події');
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  }, [fetchEvents]);
 
   // Load pets from API
   const loadPets = useCallback(async () => {
@@ -180,11 +176,11 @@ export default function CalendarScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className={`flex-1 ${theme.bgPrimary}`}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <LinearGradient
-          colors={['#fb923c', '#f59e0b']}
+          colors={theme.gradientColors.orange}
           start={{ x: 1, y: 0 }}
           end={{ x: 0, y: 0 }}  
         >
@@ -217,15 +213,15 @@ export default function CalendarScreen() {
           </TouchableOpacity>
 
           {/* View Mode Toggle */}
-          <View className="flex-row gap-2 bg-gray-100 p-1 rounded-2xl">
+          <View className={`flex-row gap-2 ${theme.isDark ? 'bg-gray-800' : 'bg-gray-100'} p-1 rounded-2xl`}>
             <TouchableOpacity
               className={`flex-1 py-3 rounded-xl items-center ${
-                viewMode === 'month' ? 'bg-white shadow-sm' : ''
+                viewMode === 'month' ? (theme.isDark ? 'bg-gray-700 shadow-sm' : 'bg-white shadow-sm') : ''
               }`}
               onPress={() => setViewMode('month')}>
               <Text
                 className={`font-bold ${
-                  viewMode === 'month' ? 'text-orange-500' : 'text-gray-600'
+                  viewMode === 'month' ? 'text-orange-500' : theme.textSecondary
                 }`}>
                 Місяць
               </Text>

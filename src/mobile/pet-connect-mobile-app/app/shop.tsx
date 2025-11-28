@@ -11,7 +11,7 @@ import {
   Alert,
   Modal,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -22,9 +22,8 @@ import { subscriptionsService, CreateLocalSubscriptionDto } from '@/services/api
 import { CatalogItem, Category, Brand, ProductSortField } from '@/types/product.types';
 import { RecurrenceInterval, RECURRENCE_LABELS } from '@/types/order.types';
 import { getProductImageUrl } from '@/constants/api';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = (width - 48) / 2;
 const PAGE_SIZE = 10;
 
 // Sort options
@@ -35,9 +34,29 @@ const SORT_OPTIONS: { value: ProductSortField; label: string }[] = [
   { value: '-price', label: 'Ціна (спадання)' },
 ];
 
+// Category styling for placeholder images - using warm colors for pet store
+const CATEGORY_STYLES: Record<number, { bg: string; color: string; icon: keyof typeof MaterialIcons.glyphMap }> = {
+  1: { bg: '#fef3c7', color: '#d97706', icon: 'restaurant' },
+  2: { bg: '#dbeafe', color: '#2563eb', icon: 'sports-baseball' },
+  3: { bg: '#f3e8ff', color: '#7c3aed', icon: 'content-cut' },
+  4: { bg: '#dcfce7', color: '#16a34a', icon: 'medical-services' },
+  5: { bg: '#fce7f3', color: '#db2777', icon: 'checkroom' },
+  6: { bg: '#e0e7ff', color: '#4f46e5', icon: 'night-shelter' },
+  7: { bg: '#ccfbf1', color: '#0d9488', icon: 'local-shipping' },
+  8: { bg: '#fed7aa', color: '#ea580c', icon: 'set-meal' },
+};
+
+// Default placeholder style - warm orange for pets
+const DEFAULT_PLACEHOLDER = { bg: '#fef3c7', color: '#d97706', icon: 'pets' as keyof typeof MaterialIcons.glyphMap };
+
 export default function ShopScreen() {
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
+  const { width: screenWidth } = useWindowDimensions();
+  const theme = useThemedStyles();
+  
+  // Calculate item width for 2 columns with padding
+  const ITEM_WIDTH = (screenWidth - 48) / 2; // 16px padding on each side + 16px gap
   
   // Data
   const [products, setProducts] = useState<CatalogItem[]>([]);
@@ -72,6 +91,13 @@ export default function ShopScreen() {
   // Subscription modal
   const [isSubscriptionModalVisible, setIsSubscriptionModalVisible] = useState(false);
   const [subscriptionFrequency, setSubscriptionFrequency] = useState<RecurrenceInterval>('30.00:00:00');
+
+  // Get placeholder style for a product based on its first category
+  const getPlaceholderStyle = (categoryIds: number[]) => {
+    if (categoryIds.length === 0) return DEFAULT_PLACEHOLDER;
+    const firstCategoryId = categoryIds[0];
+    return CATEGORY_STYLES[firstCategoryId] || DEFAULT_PLACEHOLDER;
+  };
 
   // Build query params for API
   const buildQueryParams = useCallback((page: number) => {
@@ -201,6 +227,9 @@ export default function ShopScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadProducts(1, false);
+    // Update cart count
+    const basket = await basketService.getBasket();
+    setCartCount(basket.items.reduce((sum, item) => sum + item.quantity, 0));
     setRefreshing(false);
   }, [buildQueryParams]);
 
@@ -233,6 +262,11 @@ export default function ShopScreen() {
     setSelectedCategory(categoryId);
     // Scroll to top when category changes
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
+  // Navigate to cart
+  const handleCartPress = () => {
+    router.push('/cart');
   };
 
   const formatPrice = (price: number) => {
@@ -298,53 +332,77 @@ export default function ShopScreen() {
   // Active filters count
   const activeFiltersCount = selectedBrands.length + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0);
 
+  // Track image load errors
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
+  
+  const handleImageError = (productId: number) => {
+    setImageErrors(prev => ({ ...prev, [productId]: true }));
+  };
+
   // Render product item
-  const renderProduct = ({ item }: { item: CatalogItem }) => (
-    <TouchableOpacity
-      onPress={() => openProductModal(item)}
-      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm mb-4"
-      style={{ width: ITEM_WIDTH }}
-    >
-      <View className="aspect-square bg-gray-100 items-center justify-center">
-        {getProductImageUrl(item.pictureFileName) ? (
-          <Image
-            source={{ uri: getProductImageUrl(item.pictureFileName)! }}
-            className="w-full h-full"
-            contentFit="cover"
-          />
-        ) : (
-          <MaterialIcons name="inventory-2" size={48} color="#d1d5db" />
-        )}
-      </View>
-      <View className="p-3">
-        <Text className="text-gray-500 text-xs mb-1">{getBrandName(item.catalogBrandId)}</Text>
-        <Text className="text-gray-800 font-semibold text-sm" numberOfLines={2}>
-          {item.name}
-        </Text>
-        <View className="flex-row items-center justify-between mt-2">
-          <Text className="text-orange-600 font-bold text-lg">
-            {formatPrice(item.price)}
-          </Text>
-          <TouchableOpacity 
-            onPress={() => handleAddToCart(item)}
-            className="bg-orange-500 p-2 rounded-xl"
-          >
-            <MaterialIcons name="add-shopping-cart" size={18} color="white" />
-          </TouchableOpacity>
+  const renderProduct = ({ item }: { item: CatalogItem }) => {
+    const placeholderStyle = getPlaceholderStyle(item.categoryIds);
+    const imageUrl = getProductImageUrl(item.pictureFileName);
+    const showPlaceholder = !imageUrl || imageErrors[item.id];
+    
+    return (
+      <TouchableOpacity
+        onPress={() => openProductModal(item)}
+        className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm mb-4"
+        style={{ width: ITEM_WIDTH }}
+      >
+        <View 
+          className="aspect-square items-center justify-center"
+          style={{ backgroundColor: placeholderStyle.bg }}
+        >
+          {showPlaceholder ? (
+            <MaterialIcons 
+              name={placeholderStyle.icon} 
+              size={48} 
+              color={placeholderStyle.color} 
+            />
+          ) : (
+            <Image
+              source={{ uri: imageUrl }}
+              className="w-full h-full"
+              contentFit="cover"
+              onError={() => handleImageError(item.id)}
+            />
+          )}
         </View>
-        {item.availableStock <= 5 && item.availableStock > 0 && (
-          <Text className="text-amber-600 text-xs mt-1">
-            Залишилось: {item.availableStock}
+        <View className="p-3">
+          <Text className="text-gray-500 text-xs mb-1">{getBrandName(item.catalogBrandId)}</Text>
+          <Text className="text-gray-800 font-semibold text-sm" numberOfLines={2}>
+            {item.name}
           </Text>
-        )}
-        {item.availableStock === 0 && (
-          <Text className="text-red-500 text-xs mt-1 font-semibold">
-            Немає в наявності
-          </Text>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+          <View className="flex-row items-center justify-between mt-2">
+            <Text className="text-orange-600 font-bold text-lg">
+              {formatPrice(item.price)}
+            </Text>
+            <TouchableOpacity 
+              onPress={(e) => {
+                e.stopPropagation();
+                handleAddToCart(item);
+              }}
+              className="bg-orange-500 p-2 rounded-xl"
+            >
+              <MaterialIcons name="add-shopping-cart" size={18} color="white" />
+            </TouchableOpacity>
+          </View>
+          {item.availableStock <= 5 && item.availableStock > 0 && (
+            <Text className="text-amber-600 text-xs mt-1">
+              Залишилось: {item.availableStock}
+            </Text>
+          )}
+          {item.availableStock === 0 && (
+            <Text className="text-red-500 text-xs mt-1 font-semibold">
+              Немає в наявності
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   // Render footer (loading more indicator)
   const renderFooter = () => {
@@ -446,7 +504,7 @@ export default function ShopScreen() {
 
   if (isLoading && products.length === 0) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
+      <View className={`flex-1 justify-center items-center ${theme.bgPrimary}`}>
         <ActivityIndicator size="large" color="#f97316" />
       </View>
     );
@@ -455,10 +513,10 @@ export default function ShopScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="flex-1 bg-gray-50">
+      <View className={`flex-1 ${theme.bgPrimary}`}>
         {/* Header */}
         <LinearGradient
-          colors={['#fb923c', '#f59e0b']}
+          colors={theme.gradientColors.orange}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           className="pt-14 pb-6 px-6"
@@ -468,7 +526,7 @@ export default function ShopScreen() {
               <MaterialIcons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
             <Text className="text-white text-xl font-bold">Магазин</Text>
-            <TouchableOpacity className="p-2 -mr-2 relative">
+            <TouchableOpacity onPress={handleCartPress} className="p-2 -mr-2 relative">
               <MaterialIcons name="shopping-cart" size={24} color="white" />
               {cartCount > 0 && (
                 <View className="absolute -top-1 -right-1 bg-red-500 w-5 h-5 rounded-full items-center justify-center">
@@ -670,17 +728,32 @@ export default function ShopScreen() {
             {selectedProduct && (
               <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Product Image */}
-                <View className="aspect-square bg-gray-100 rounded-2xl items-center justify-center mb-4 overflow-hidden">
-                  {getProductImageUrl(selectedProduct.pictureFileName) ? (
-                    <Image
-                      source={{ uri: getProductImageUrl(selectedProduct.pictureFileName)! }}
-                      className="w-full h-full"
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <MaterialIcons name="inventory-2" size={80} color="#d1d5db" />
-                  )}
-                </View>
+                {(() => {
+                  const placeholderStyle = getPlaceholderStyle(selectedProduct.categoryIds);
+                  const imageUrl = getProductImageUrl(selectedProduct.pictureFileName);
+                  const showPlaceholder = !imageUrl || imageErrors[selectedProduct.id];
+                  return (
+                    <View 
+                      className="aspect-square rounded-2xl items-center justify-center mb-4 overflow-hidden"
+                      style={{ backgroundColor: placeholderStyle.bg }}
+                    >
+                      {showPlaceholder ? (
+                        <MaterialIcons 
+                          name={placeholderStyle.icon} 
+                          size={80} 
+                          color={placeholderStyle.color} 
+                        />
+                      ) : (
+                        <Image
+                          source={{ uri: imageUrl }}
+                          className="w-full h-full"
+                          contentFit="cover"
+                          onError={() => handleImageError(selectedProduct.id)}
+                        />
+                      )}
+                    </View>
+                  );
+                })()}
 
                 {/* Product Info */}
                 <Text className="text-gray-500 text-sm mb-1">

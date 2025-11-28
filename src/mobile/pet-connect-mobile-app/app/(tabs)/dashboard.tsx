@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Image } from 'expo-image';
 import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { usePetsStore } from '@/store';
-import { remindersService } from '@/services/api/reminders.service';
+import { usePetsStore, useEventsStore } from '@/store';
 import { CalendarEvent } from '@/types/reminder.types';
+import { Pet } from '@/types/pet.types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
 
 // Quick Actions - Real functions
 const quickActions = [
@@ -17,61 +18,93 @@ const quickActions = [
 ];
 
 const secondaryActions = [
-  { id: '5', title: 'Мої улюбленці', icon: 'pets', color: '#ef4444', bg: 'bg-red-100', route: '/pets-list' },
+  { id: '5', title: 'Здоров\'я', icon: 'favorite', color: '#ef4444', bg: 'bg-red-100', route: '/health' },
   { id: '6', title: 'Статистика', icon: 'analytics', color: '#06b6d4', bg: 'bg-cyan-100', route: '/stats' },
   { id: '7', title: 'Документи', icon: 'description', color: '#6b7280', bg: 'bg-gray-100', route: '/documents' },
   { id: '8', title: 'Налаштування', icon: 'settings', color: '#f59e0b', bg: 'bg-amber-100', route: '/settings' },
 ];
 
+// Tips bank - dynamic tips for pets
+interface Tip {
+  id: string;
+  text: string;
+  icon: string;
+  petType?: 'cat' | 'dog' | 'all';
+  dynamic?: boolean; // If true, will include pet name
+}
+
+const TIPS_BANK: Tip[] = [
+  // General tips
+  { id: '1', text: 'Регулярні прогулянки допомагають підтримувати здорову вагу та настрій вашого улюбленця!', icon: '🚶', petType: 'all' },
+  { id: '2', text: 'Свіжа вода повинна бути завжди доступна для вашого улюбленця. Міняйте воду щодня!', icon: '💧', petType: 'all' },
+  { id: '3', text: 'Регулярний огляд у ветеринара допоможе виявити проблеми зі здоров\'ям на ранній стадії.', icon: '🏥', petType: 'all' },
+  { id: '4', text: 'Чистіть зуби вашого улюбленця хоча б раз на тиждень для профілактики захворювань ясен.', icon: '🦷', petType: 'all' },
+  { id: '5', text: 'Грайтеся з вашим улюбленцем щодня — це зміцнює ваш зв\'язок!', icon: '🎾', petType: 'all' },
+  
+  // Dog-specific tips
+  { id: '6', text: 'Собаки люблять рутину. Годуйте та вигулюйте в один і той же час щодня.', icon: '🐕', petType: 'dog' },
+  { id: '7', text: 'Не забувайте про щеплення від сказу — це обов\'язково для всіх собак!', icon: '💉', petType: 'dog' },
+  { id: '8', text: 'Тренування слухняності зробить прогулянки приємнішими для вас обох.', icon: '🎓', petType: 'dog' },
+  
+  // Cat-specific tips
+  { id: '9', text: 'Коти потребують вертикального простору — встановіть полиці або купіть дряпку!', icon: '🐱', petType: 'cat' },
+  { id: '10', text: 'Чистіть лоток щодня — коти дуже чистоплотні і можуть відмовлятися від брудного.', icon: '🧹', petType: 'cat' },
+  { id: '11', text: 'Коти люблять ховатися — забезпечте затишне місце для сну та відпочинку.', icon: '🏠', petType: 'cat' },
+  
+  // Dynamic tips (with pet names)
+  { id: '12', text: 'Час зважити {petName}! Регулярний контроль ваги допоможе виявити проблеми зі здоров\'ям.', icon: '⚖️', petType: 'all', dynamic: true },
+  { id: '13', text: '{petName} буде радий(-а) новій іграшці! Змінюйте іграшки час від часу.', icon: '🧸', petType: 'all', dynamic: true },
+  { id: '14', text: 'Вичесуйте {petName} регулярно — це запобігає утворенню ковтунів та знімає стрес.', icon: '✨', petType: 'all', dynamic: true },
+  { id: '15', text: 'Чи отримує {petName} достатньо вітамінів? Поговоріть з ветеринаром про добавки.', icon: '💊', petType: 'all', dynamic: true },
+];
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { pets, fetchPets, isLoading, addPetWeight } = usePetsStore();
-  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
+  const { events, fetchEvents, getUpcomingEvents, isLoading: eventsLoading } = useEventsStore();
   const [refreshing, setRefreshing] = useState(false);
+  const theme = useThemedStyles();
 
   // Weight modal
   const [isWeightModalVisible, setIsWeightModalVisible] = useState(false);
   const [selectedPetForWeight, setSelectedPetForWeight] = useState<string | null>(null);
   const [newWeight, setNewWeight] = useState('');
 
-  const loadEvents = async () => {
-    try {
-      setEventsLoading(true);
-      const today = new Date().toISOString().split('T')[0];
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 3);
-      const events = await remindersService.getCalendarEvents(today, endDate.toISOString().split('T')[0]);
-      
-      // Filter only upcoming events and sort by date
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      
-      const upcoming = events
-        .filter(e => {
-          const eventDate = new Date(e.date);
-          eventDate.setHours(0, 0, 0, 0);
-          return eventDate >= now;
-        })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(0, 3); // Only 3 nearest events
-      
-      setUpcomingEvents(upcoming);
-    } catch (error) {
-      console.error('Error loading events:', error);
-    } finally {
-      setEventsLoading(false);
+  // Get 3 upcoming events from store
+  const upcomingEvents = useMemo(() => getUpcomingEvents(3), [events]);
+
+  // Generate random tip based on pets
+  const dailyTip = useMemo(() => {
+    // Get tips relevant to user's pets
+    const petTypes = new Set(pets.map(p => p.type));
+    const relevantTips = TIPS_BANK.filter(tip => 
+      tip.petType === 'all' || petTypes.has(tip.petType as 'cat' | 'dog')
+    );
+    
+    // Use date as seed for consistent daily tip
+    const today = new Date();
+    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const tipIndex = seed % relevantTips.length;
+    let tip = relevantTips[tipIndex];
+    
+    // Replace {petName} with actual pet name if dynamic
+    if (tip.dynamic && pets.length > 0) {
+      const petIndex = seed % pets.length;
+      const petName = pets[petIndex].name;
+      tip = { ...tip, text: tip.text.replace('{petName}', petName) };
     }
-  };
+    
+    return tip;
+  }, [pets]);
 
   useEffect(() => {
     fetchPets();
-    loadEvents();
+    fetchEvents();
   }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchPets(), loadEvents()]);
+    await Promise.all([fetchPets(), useEventsStore.getState().refreshEvents()]);
     setRefreshing(false);
   }, []);
 
@@ -159,11 +192,31 @@ export default function DashboardScreen() {
     return `Через ${diff} дн.`;
   };
 
+  // Health overview for pets
+  const getHealthStatus = (pet: Pet) => {
+    let status = 'good';
+    let issues: string[] = [];
+    
+    // Check profile completeness
+    if ((pet.profileCompleteness || 0) < 70) {
+      status = 'warning';
+      issues.push('Профіль неповний');
+    }
+    
+    // Check weight
+    if (!pet.weight) {
+      status = 'warning';
+      issues.push('Вага не вказана');
+    }
+    
+    return { status, issues };
+  };
+
   const selectedPet = pets.find(p => p.id === selectedPetForWeight);
 
   return (
     <ScrollView 
-      className="flex-1 bg-gray-50" 
+      className={`flex-1 ${theme.bgPrimary}`}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#f97316']} />
@@ -171,7 +224,7 @@ export default function DashboardScreen() {
     >
       {/* Header */}
       <LinearGradient
-        colors={['#fb923c', '#f59e0b']}
+        colors={theme.gradientColors.orange}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 0 }}
       >
@@ -236,30 +289,51 @@ export default function DashboardScreen() {
       {/* Main Content */}
       <View className="px-6 pt-6 gap-6 pb-8 -mt-2">
         
+        {/* Daily Tip */}
+        <View>
+          <LinearGradient
+            colors={theme.isDark ? ['#78350f', '#92400e'] : ['#fef3c7', '#fde68a']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View className={`flex-row items-start gap-4 rounded-2xl p-5 border ${theme.isDark ? 'border-amber-700' : 'border-amber-200'}`}>
+              <View className={`${theme.isDark ? 'bg-amber-600' : 'bg-amber-400'} p-3 rounded-xl`}>
+                <Text className="text-2xl">{dailyTip.icon}</Text>
+              </View>
+              <View className="flex-1">
+                <Text className={`${theme.isDark ? 'text-amber-200' : 'text-amber-900'} font-bold text-base`}>Порада дня 💡</Text>
+                <Text className={`${theme.isDark ? 'text-amber-300' : 'text-amber-800'} text-sm mt-1`}>
+                  {dailyTip.text}
+                </Text>
+              </View>
+              </View>
+          </LinearGradient>
+              </View>
+
         {/* Secondary Actions */}
         <View className="gap-3">
-          <Text className="text-lg font-bold text-gray-800 ml-1">Швидкі дії</Text>
+          <Text className={`text-lg font-bold ${theme.textPrimary} ml-1`}>Швидкі дії</Text>
           <View className="flex-row flex-wrap gap-3">
             {secondaryActions.map((action) => (
               <TouchableOpacity 
                 key={action.id} 
                 onPress={() => action.route && router.push(action.route as any)}
-                className="flex-row items-center bg-white p-4 rounded-2xl border border-gray-100 w-[48%] active:bg-gray-50 shadow-sm"
+                className={`flex-row items-center ${theme.bgCard} p-4 rounded-2xl border ${theme.borderColor} w-[48%] shadow-sm`}
               >
                 <View className={`w-10 h-10 rounded-xl items-center justify-center ${action.bg} mr-3`}>
                   <MaterialIcons name={action.icon as any} size={20} color={action.color} />
                 </View>
-                <Text className="text-gray-700 font-semibold text-sm flex-1">{action.title}</Text>
-                <MaterialIcons name="chevron-right" size={20} color="#d1d5db" />
+                <Text className={`${theme.isDark ? 'text-gray-200' : 'text-gray-700'} font-semibold text-sm flex-1`}>{action.title}</Text>
+                <MaterialIcons name="chevron-right" size={20} color={theme.chevronColor} />
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* My Pets */}
+        {/* Pet Health Overview */}
         <View className="gap-3">
           <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-gray-800 ml-1">Мої улюбленці</Text>
+            <Text className={`text-lg font-bold ${theme.textPrimary} ml-1`}>Здоров'я улюбленців</Text>
             <TouchableOpacity onPress={handleAddPet}>
               <View className="flex-row items-center gap-1">
                 <MaterialIcons name="add" size={18} color="#f97316" />
@@ -273,70 +347,63 @@ export default function DashboardScreen() {
           ) : pets.length === 0 ? (
             <TouchableOpacity 
               onPress={handleAddPet}
-              className="bg-white border-2 border-dashed border-orange-200 rounded-2xl p-8 items-center"
+              className={`${theme.bgCard} border-2 border-dashed border-orange-200 rounded-2xl p-8 items-center`}
             >
               <View className="bg-orange-100 w-16 h-16 rounded-full items-center justify-center mb-3">
                 <MaterialIcons name="pets" size={32} color="#f97316" />
               </View>
-              <Text className="text-gray-700 font-bold text-lg">Додайте першого улюбленця</Text>
-              <Text className="text-gray-500 text-center mt-1">Натисніть, щоб створити профіль</Text>
+              <Text className={`${theme.isDark ? 'text-gray-200' : 'text-gray-700'} font-bold text-lg`}>Додайте першого улюбленця</Text>
+              <Text className={theme.textSecondary + ' text-center mt-1'}>Натисніть, щоб створити профіль</Text>
             </TouchableOpacity>
           ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-2">
-              <View className="flex-row gap-4 px-2">
-            {pets.map((pet) => (
-              <TouchableOpacity 
-                key={pet.id} 
-                onPress={() => handlePetPress(pet.id)}
-                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 w-44"
-              >
-                    <View className="items-center">
-                      <View className="relative mb-3">
-                <Image
-                  source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
-                          className="w-20 h-20 rounded-full bg-gray-100"
-                          style={{ width: 80, height: 80 }}
-                />
-                        <View className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full items-center justify-center ${
-                          (pet.profileCompleteness || 0) > 80 ? 'bg-green-500' : 'bg-orange-500'
-                        }`}>
-                          <MaterialIcons 
-                            name={(pet.profileCompleteness || 0) > 80 ? 'check' : 'priority-high'} 
-                            size={14} 
-                            color="white" 
-                          />
-                    </View>
-                  </View>
-                      <Text className="text-gray-800 font-bold text-base">{pet.name}</Text>
-                      <Text className="text-gray-500 text-xs">
-                        {pet.type === 'cat' ? '🐱 Кіт' : pet.type === 'dog' ? '🐕 Собака' : pet.type}
-                  </Text>
-                      {pet.weight && (
-                        <Text className="text-gray-400 text-xs mt-1">
-                          {pet.weight} {pet.weightUnit || 'кг'}
+            <View className="gap-3">
+              {pets.map((pet) => {
+                const { status, issues } = getHealthStatus(pet);
+                return (
+                  <TouchableOpacity 
+                    key={pet.id}
+                    onPress={() => handlePetPress(pet.id)}
+                    className={`${theme.bgCard} rounded-2xl p-4 shadow-sm border ${theme.borderColor} flex-row items-center`}
+                  >
+                    <Image
+                      source={pet.photoUrl ? { uri: pet.photoUrl } : require('@/assets/images/pet-cat-mock-profile-image.png')}
+                      className={`w-14 h-14 rounded-full ${theme.isDark ? 'bg-gray-700' : 'bg-gray-100'}`}
+                      style={{ width: 56, height: 56 }}
+                    />
+                    <View className="flex-1 ml-4">
+                      <Text className={`${theme.textPrimary} font-bold text-base`}>{pet.name}</Text>
+                      <View className="flex-row items-center gap-2 mt-1">
+                        <Text className={`${theme.textSecondary} text-sm`}>
+                          {pet.type === 'cat' ? '🐱' : '🐕'} {pet.breed || 'Не вказано'}
                         </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-                <TouchableOpacity
-                  onPress={handleAddPet}
-                  className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-4 w-44 items-center justify-center"
-                >
-                  <View className="bg-gray-200 w-12 h-12 rounded-full items-center justify-center mb-2">
-                    <MaterialIcons name="add" size={24} color="#9ca3af" />
-                  </View>
-                  <Text className="text-gray-400 font-semibold text-sm">Додати</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                        {pet.weight && (
+                          <Text className={`${theme.textMuted} text-sm`}>• {pet.weight} {pet.weightUnit || 'кг'}</Text>
+                        )}
+                      </View>
+                      {issues.length > 0 && (
+                        <Text className="text-amber-600 text-xs mt-1">⚠️ {issues[0]}</Text>
+                      )}
+                    </View>
+                    <View className={`w-10 h-10 rounded-full items-center justify-center ${
+                      status === 'good' ? 'bg-green-100' : 'bg-amber-100'
+                    }`}>
+                      <MaterialIcons 
+                        name={status === 'good' ? 'check-circle' : 'warning'} 
+                        size={22} 
+                        color={status === 'good' ? '#22c55e' : '#f59e0b'} 
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           )}
         </View>
 
         {/* Upcoming Events */}
         <View className="gap-3">
           <View className="flex-row justify-between items-center">
-          <Text className="text-lg font-bold text-gray-800 ml-1">Найближчі події</Text>
+          <Text className={`text-lg font-bold ${theme.textPrimary} ml-1`}>Найближчі події</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/calendar')}>
               <Text className="text-orange-500 font-semibold text-sm">Всі події →</Text>
             </TouchableOpacity>
@@ -347,13 +414,13 @@ export default function DashboardScreen() {
           ) : upcomingEvents.length === 0 ? (
             <TouchableOpacity 
               onPress={() => router.push('/(tabs)/calendar')}
-              className="bg-white border border-gray-100 rounded-2xl p-6 items-center shadow-sm"
+              className={`${theme.bgCard} border ${theme.borderColor} rounded-2xl p-6 items-center shadow-sm`}
             >
-              <View className="bg-gray-100 w-14 h-14 rounded-full items-center justify-center mb-3">
+              <View className={`${theme.isDark ? 'bg-gray-700' : 'bg-gray-100'} w-14 h-14 rounded-full items-center justify-center mb-3`}>
                 <MaterialIcons name="event-available" size={28} color="#9ca3af" />
               </View>
-              <Text className="text-gray-600 font-semibold">Немає запланованих подій</Text>
-              <Text className="text-gray-400 text-sm mt-1">Натисніть, щоб додати</Text>
+              <Text className={`${theme.isDark ? 'text-gray-300' : 'text-gray-600'} font-semibold`}>Немає запланованих подій</Text>
+              <Text className={theme.textMuted + ' text-sm mt-1'}>Натисніть, щоб додати</Text>
             </TouchableOpacity>
           ) : (
           <View className="gap-3">
@@ -363,17 +430,17 @@ export default function DashboardScreen() {
                   <TouchableOpacity 
                     key={event.id}
                     onPress={() => router.push('/(tabs)/calendar')}
-                    className={`${colors.bg} border ${colors.border} rounded-2xl p-4 flex-row items-center gap-4 shadow-sm`}
+                    className={`${theme.isDark ? theme.bgCard : colors.bg} border ${theme.isDark ? theme.borderColor : colors.border} rounded-2xl p-4 flex-row items-center gap-4 shadow-sm`}
                   >
                     <View className={`${colors.badge} p-3 rounded-xl`}>
                       <MaterialIcons name={colors.icon as any} size={24} color={colors.iconColor} />
                     </View>
                     <View className="flex-1">
-                      <Text className="font-bold text-gray-800">{event.title}</Text>
-                      <Text className="text-gray-600 text-sm">{formatEventDate(event.date, event.time)}</Text>
+                      <Text className={`font-bold ${theme.textPrimary}`}>{event.title}</Text>
+                      <Text className={`${theme.textSecondary} text-sm`}>{formatEventDate(event.date, event.time)}</Text>
                       <View className="flex-row items-center gap-1 mt-1">
                         <MaterialIcons name="pets" size={12} color="#9ca3af" />
-                        <Text className="text-gray-400 text-xs">{event.petName}</Text>
+                        <Text className={`${theme.textMuted} text-xs`}>{event.petName}</Text>
                       </View>
                     </View>
                     <View className={`${colors.badge} px-3 py-1 rounded-lg`}>
@@ -387,27 +454,6 @@ export default function DashboardScreen() {
             </View>
           )}
         </View>
-
-        {/* Health Tips Card */}
-        <View className="mt-2">
-          <LinearGradient
-            colors={['#fef3c7', '#fde68a']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View className="flex-row items-start gap-4 rounded-2xl p-5 border border-amber-200">
-              <View className="bg-amber-400 p-3 rounded-xl">
-                <MaterialIcons name="lightbulb" size={24} color="white" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-amber-900 font-bold text-base">Порада дня 💡</Text>
-                <Text className="text-amber-800 text-sm mt-1">
-                  Регулярні прогулянки допомагають підтримувати здорову вагу та настрій вашого улюбленця!
-                </Text>
-              </View>
-              </View>
-          </LinearGradient>
-              </View>
             </View>
 
       {/* Weight Modal */}
@@ -418,13 +464,13 @@ export default function DashboardScreen() {
         onRequestClose={() => setIsWeightModalVisible(false)}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-white p-6 rounded-2xl w-[90%] gap-4">
+          <View className={`${theme.bgCard} p-6 rounded-2xl w-[90%] gap-4`}>
             <View className="items-center mb-2">
               <View className="bg-green-100 w-16 h-16 rounded-full items-center justify-center mb-2">
                 <MaterialIcons name="monitor-weight" size={32} color="#22c55e" />
               </View>
-              <Text className="text-xl font-bold text-gray-800">Зважування</Text>
-              <Text className="text-gray-500">Введіть поточну вагу улюбленця</Text>
+              <Text className={`text-xl font-bold ${theme.textPrimary}`}>Зважування</Text>
+              <Text className={theme.textSecondary}>Введіть поточну вагу улюбленця</Text>
               </View>
 
             {/* Pet selector */}
@@ -436,10 +482,10 @@ export default function DashboardScreen() {
                       key={`weight-selector-${pet.id}`}
                       onPress={() => setSelectedPetForWeight(pet.id)}
                       className={`px-4 py-2 rounded-full flex-row items-center gap-2 ${
-                        selectedPetForWeight === pet.id ? 'bg-green-500' : 'bg-gray-100'
+                        selectedPetForWeight === pet.id ? 'bg-green-500' : theme.isDark ? 'bg-gray-700' : 'bg-gray-100'
                       }`}
                     >
-                      <Text className={selectedPetForWeight === pet.id ? 'text-white font-semibold' : 'text-gray-600'}>
+                      <Text className={selectedPetForWeight === pet.id ? 'text-white font-semibold' : theme.isDark ? 'text-gray-300' : 'text-gray-600'}>
                         {pet.name}
                       </Text>
                     </TouchableOpacity>
@@ -450,24 +496,25 @@ export default function DashboardScreen() {
 
             <View className="flex-row items-center gap-2">
               <TextInput
-                className="flex-1 border border-gray-200 rounded-xl p-4 text-gray-800 text-2xl text-center font-bold"
+                className={`flex-1 border ${theme.borderColorMedium} rounded-xl p-4 ${theme.textPrimary} text-2xl text-center font-bold ${theme.bgInput}`}
                 keyboardType="numeric"
                 placeholder="0.0"
+                placeholderTextColor={theme.isDark ? '#6b7280' : '#9ca3af'}
                 value={newWeight}
                 onChangeText={setNewWeight}
               />
-              <Text className="text-xl font-bold text-gray-500">{selectedPet?.weightUnit || 'кг'}</Text>
+              <Text className={`text-xl font-bold ${theme.textSecondary}`}>{selectedPet?.weightUnit || 'кг'}</Text>
             </View>
 
             <View className="flex-row gap-4">
               <TouchableOpacity
-                className="flex-1 bg-gray-200 p-3 rounded-xl items-center"
+                className={`flex-1 ${theme.isDark ? 'bg-gray-700' : 'bg-gray-200'} p-3 rounded-xl items-center`}
                 onPress={() => {
                   setNewWeight('');
                   setIsWeightModalVisible(false);
                 }}
               >
-                <Text className="font-bold text-gray-700">Скасувати</Text>
+                <Text className={`font-bold ${theme.isDark ? 'text-gray-300' : 'text-gray-700'}`}>Скасувати</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 bg-green-500 p-3 rounded-xl items-center"

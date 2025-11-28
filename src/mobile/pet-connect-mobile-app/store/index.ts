@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { Pet, CreatePetDto, UpdatePetDto } from '@/types/pet.types';
+import { CalendarEvent } from '@/types/reminder.types';
 import { petsService } from '@/services/api/pets.service';
+import { remindersService } from '@/services/api/reminders.service';
 
 interface PetsState {
   pets: Pet[];
@@ -181,4 +183,78 @@ export const usePetsStore = create<PetsState>((set, get) => ({
   },
 
   selectPet: (pet) => set({ selectedPet: pet }),
+}));
+
+// ============ Events Store ============
+
+interface EventsState {
+  events: CalendarEvent[];
+  isLoading: boolean;
+  error: string | null;
+  lastFetched: string | null;
+
+  fetchEvents: () => Promise<void>;
+  getUpcomingEvents: (limit?: number) => CalendarEvent[];
+  getEventsForDate: (date: string) => CalendarEvent[];
+  refreshEvents: () => Promise<void>;
+}
+
+export const useEventsStore = create<EventsState>((set, get) => ({
+  events: [],
+  isLoading: false,
+  error: null,
+  lastFetched: null,
+
+  fetchEvents: async () => {
+    // Don't refetch if fetched recently (within last minute)
+    const { lastFetched, isLoading } = get();
+    if (isLoading) return;
+    
+    const now = new Date().getTime();
+    if (lastFetched && now - new Date(lastFetched).getTime() < 60000) {
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 6);
+      
+      const events = await remindersService.getCalendarEvents(today, endDate.toISOString().split('T')[0]);
+      set({ 
+        events, 
+        isLoading: false, 
+        lastFetched: new Date().toISOString() 
+      });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  getUpcomingEvents: (limit?: number) => {
+    const { events } = get();
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    const upcoming = events
+      .filter(e => {
+        const eventDate = new Date(e.date);
+        eventDate.setHours(0, 0, 0, 0);
+        return eventDate >= now;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    return limit ? upcoming.slice(0, limit) : upcoming;
+  },
+
+  getEventsForDate: (date: string) => {
+    const { events } = get();
+    return events.filter(e => e.date === date);
+  },
+
+  refreshEvents: async () => {
+    set({ lastFetched: null });
+    await get().fetchEvents();
+  },
 }));

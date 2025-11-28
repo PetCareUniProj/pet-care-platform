@@ -14,6 +14,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 
 const REMINDERS_STORAGE_KEY = '@pet_connect_reminders';
+const MOCK_EVENTS_STORAGE_KEY = '@pet_connect_mock_events';
+const MOCK_EVENTS_GENERATED_KEY = '@pet_connect_mock_events_generated';
 
 class RemindersService {
   // ============ Real API calls (for future backend integration) ============
@@ -50,9 +52,6 @@ class RemindersService {
     reminders.push(newReminder);
     await this.saveLocalReminders(reminders);
 
-    // Note: Notifications are not scheduled automatically
-    // They can be scheduled later if needed
-
     return newReminder;
   }
 
@@ -76,9 +75,6 @@ class RemindersService {
     const reminders = await this.getLocalReminders();
     const filtered = reminders.filter((r) => r.id !== id);
     await this.saveLocalReminders(filtered);
-    
-    // Cancel notification
-    await cancelNotification(id);
   }
 
   async complete(id: string): Promise<Reminder | null> {
@@ -96,8 +92,8 @@ class RemindersService {
     // Convert reminders to calendar events
     const reminderEvents = await this.remindersToCalendarEvents(reminders, startDate, endDate);
     
-    // Get mock events from vet clinic
-    const mockEvents = this.getMockCalendarEvents(startDate, endDate);
+    // Get or generate mock events (persisted)
+    const mockEvents = await this.getOrGenerateMockEvents(startDate, endDate);
     
     // Combine and sort by date
     const allEvents = [...reminderEvents, ...mockEvents];
@@ -188,7 +184,7 @@ class RemindersService {
         // For recurring reminders, generate occurrences
         let currentDate = new Date(reminder.dueDate);
         let occurrence = 0;
-        const maxOccurrences = 50; // Limit to prevent infinite loops
+        const maxOccurrences = 50;
 
         while (currentDate <= end && occurrence < maxOccurrences) {
           if (currentDate >= start) {
@@ -204,7 +200,6 @@ class RemindersService {
             });
           }
 
-          // Move to next occurrence
           switch (reminder.frequency) {
             case 'daily':
               currentDate.setDate(currentDate.getDate() + 1);
@@ -227,12 +222,46 @@ class RemindersService {
     return events;
   }
 
-  // ============ Mock Data ============
+  // ============ Mock Data (Persisted) ============
 
-  private getMockCalendarEvents(startDate: string, endDate: string): CalendarEvent[] {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+  private async getOrGenerateMockEvents(startDate: string, endDate: string): Promise<CalendarEvent[]> {
+    try {
+      // Check if we already generated mock events
+      const generated = await AsyncStorage.getItem(MOCK_EVENTS_GENERATED_KEY);
+      const storedEvents = await AsyncStorage.getItem(MOCK_EVENTS_STORAGE_KEY);
+      
+      if (generated && storedEvents) {
+        const events: CalendarEvent[] = JSON.parse(storedEvents);
+        // Filter events within date range
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        return events.filter(e => {
+          const eventDate = new Date(e.date);
+          return eventDate >= start && eventDate <= end;
+        });
+      }
+      
+      // Generate and persist mock events
+      const mockEvents = this.generateMockEvents();
+      await AsyncStorage.setItem(MOCK_EVENTS_STORAGE_KEY, JSON.stringify(mockEvents));
+      await AsyncStorage.setItem(MOCK_EVENTS_GENERATED_KEY, 'true');
+      
+      // Filter events within date range
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      return mockEvents.filter(e => {
+        const eventDate = new Date(e.date);
+        return eventDate >= start && eventDate <= end;
+      });
+    } catch (error) {
+      console.error('Error getting mock events:', error);
+      return [];
+    }
+  }
+
+  private generateMockEvents(): CalendarEvent[] {
     const events: CalendarEvent[] = [];
+    const now = new Date();
     
     const eventTypes: ReminderType[] = ['vaccination', 'vet_visit', 'medication', 'parasite_treatment', 'grooming'];
     const eventTitles: Record<ReminderType, string[]> = {
@@ -249,40 +278,48 @@ class RemindersService {
       { id: '2', name: 'Барон' },
     ];
     
-    const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+    const times = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
     
-    let currentDate = new Date(start);
-    let eventId = 1;
-    
-    // Generate events every 3-5 days
-    while (currentDate <= end) {
-      const daysSinceStart = Math.floor((currentDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysSinceStart % 4 === 0 || (daysSinceStart % 4 === 1 && Math.random() > 0.6)) {
-        const eventsCount = Math.floor(Math.random() * 2) + 1;
+    // Generate events for next 6 months with deterministic seed
+    for (let dayOffset = 0; dayOffset < 180; dayOffset += 3) {
+      const eventDate = new Date(now);
+      eventDate.setDate(eventDate.getDate() + dayOffset);
+      
+      // Use day of year as pseudo-random seed
+      const dayOfYear = Math.floor((eventDate.getTime() - new Date(eventDate.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+      const shouldHaveEvent = (dayOfYear * 7) % 11 < 4;
+      
+      if (shouldHaveEvent) {
+        const eventsCount = ((dayOfYear * 3) % 2) + 1;
         
         for (let i = 0; i < eventsCount; i++) {
-          const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+          const typeIndex = (dayOfYear + i * 3) % eventTypes.length;
+          const type = eventTypes[typeIndex];
           const titles = eventTitles[type];
-          const title = titles[Math.floor(Math.random() * titles.length)];
-          const pet = pets[Math.floor(Math.random() * pets.length)];
-          const time = times[Math.floor(Math.random() * times.length)];
+          const titleIndex = (dayOfYear + i) % titles.length;
+          const petIndex = (dayOfYear + i * 2) % pets.length;
+          const timeIndex = (dayOfYear + i * 5) % times.length;
           
           events.push({
-            id: `mock-event-${eventId++}`,
-            title: title,
-            date: currentDate.toISOString().split('T')[0],
-            time: time,
+            id: `mock-event-${dayOffset}-${i}`,
+            title: titles[titleIndex],
+            date: eventDate.toISOString().split('T')[0],
+            time: times[timeIndex],
             type: type,
-            petId: pet.id,
-            petName: pet.name,
+            petId: pets[petIndex].id,
+            petName: pets[petIndex].name,
           });
         }
       }
-      
-      currentDate.setDate(currentDate.getDate() + 1);
     }
     
     return events;
+  }
+
+  // Clear mock events (for testing)
+  async resetMockEvents(): Promise<void> {
+    await AsyncStorage.removeItem(MOCK_EVENTS_STORAGE_KEY);
+    await AsyncStorage.removeItem(MOCK_EVENTS_GENERATED_KEY);
   }
 }
 

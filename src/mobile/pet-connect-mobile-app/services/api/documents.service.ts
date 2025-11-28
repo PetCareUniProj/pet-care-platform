@@ -5,90 +5,85 @@ import * as Crypto from 'expo-crypto';
 import { PetDocument, CreateDocumentDto, UpdateDocumentDto } from '@/types/document.types';
 
 const DOCUMENTS_STORAGE_KEY = '@pet_connect_documents';
-
-// Mock documents data
-const mockDocuments: PetDocument[] = [
-  {
-    id: '1',
-    petId: '1',
-    petName: 'Мурзик',
-    name: 'Паспорт Мурзика',
-    type: 'passport',
-    description: 'Міжнародний ветеринарний паспорт',
-    fileSize: '2.3 МБ',
-    date: '2024-01-15',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: '2',
-    petId: '1',
-    petName: 'Мурзик',
-    name: 'Сертифікат вакцинації',
-    type: 'vaccination',
-    description: 'Комплексна вакцинація FVRCP',
-    fileSize: '1.1 МБ',
-    date: '2024-10-15',
-    expiryDate: '2025-10-15',
-    createdAt: '2024-10-15T14:30:00Z',
-    updatedAt: '2024-10-15T14:30:00Z',
-  },
-  {
-    id: '3',
-    petId: '2',
-    petName: 'Барон',
-    name: 'Страховий поліс',
-    type: 'insurance',
-    description: 'Страхування здоров\'я тварини',
-    fileSize: '540 КБ',
-    date: '2024-06-01',
-    expiryDate: '2025-06-01',
-    createdAt: '2024-06-01T09:00:00Z',
-    updatedAt: '2024-06-01T09:00:00Z',
-  },
-  {
-    id: '4',
-    petId: '1',
-    petName: 'Мурзик',
-    name: 'Виписка з клініки',
-    type: 'medical',
-    description: 'Профілактичний огляд',
-    fileSize: '890 КБ',
-    date: '2024-11-20',
-    createdAt: '2024-11-20T16:00:00Z',
-    updatedAt: '2024-11-20T16:00:00Z',
-  },
-  {
-    id: '5',
-    petId: '1',
-    petName: 'Мурзик',
-    name: 'Рецепт на ліки',
-    type: 'prescription',
-    description: 'Протипаразитарний препарат',
-    fileSize: '120 КБ',
-    date: '2024-11-20',
-    createdAt: '2024-11-20T16:30:00Z',
-    updatedAt: '2024-11-20T16:30:00Z',
-  },
-];
+const DOCUMENTS_INITIALIZED_KEY = '@pet_connect_documents_initialized';
 
 class DocumentsService {
   private initialized = false;
 
-  private async initializeIfNeeded(): Promise<void> {
-    if (this.initialized) return;
-    
-    const stored = await AsyncStorage.getItem(DOCUMENTS_STORAGE_KEY);
-    if (!stored) {
-      await AsyncStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(mockDocuments));
+  // Initialize with sample documents for demo (only once)
+  async initializeWithPets(pets: { id: string; name: string }[]): Promise<void> {
+    try {
+      const alreadyInitialized = await AsyncStorage.getItem(DOCUMENTS_INITIALIZED_KEY);
+      if (alreadyInitialized === 'true' || pets.length === 0) {
+        this.initialized = true;
+        return;
+      }
+
+      // Create sample documents for the first pet
+      const firstPet = pets[0];
+      const sampleDocs: PetDocument[] = [
+        {
+          id: Crypto.randomUUID(),
+          petId: firstPet.id,
+          petName: firstPet.name,
+          name: `Паспорт ${firstPet.name}`,
+          type: 'passport',
+          description: 'Міжнародний ветеринарний паспорт',
+          fileSize: '2.3 МБ',
+          date: '2024-01-15',
+          createdAt: '2024-01-15T10:00:00Z',
+          updatedAt: '2024-01-15T10:00:00Z',
+        },
+        {
+          id: Crypto.randomUUID(),
+          petId: firstPet.id,
+          petName: firstPet.name,
+          name: 'Сертифікат вакцинації',
+          type: 'vaccination',
+          description: 'Комплексна вакцинація',
+          fileSize: '1.1 МБ',
+          date: '2024-10-15',
+          expiryDate: '2025-10-15',
+          createdAt: '2024-10-15T14:30:00Z',
+          updatedAt: '2024-10-15T14:30:00Z',
+        },
+      ];
+
+      // If there's a second pet, add documents for it too
+      if (pets.length > 1) {
+        const secondPet = pets[1];
+        sampleDocs.push({
+          id: Crypto.randomUUID(),
+          petId: secondPet.id,
+          petName: secondPet.name,
+          name: 'Страховий поліс',
+          type: 'insurance',
+          description: 'Страхування здоров\'я тварини',
+          fileSize: '540 КБ',
+          date: '2024-06-01',
+          expiryDate: '2025-06-01',
+          createdAt: '2024-06-01T09:00:00Z',
+          updatedAt: '2024-06-01T09:00:00Z',
+        });
+      }
+
+      await AsyncStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(sampleDocs));
+      await AsyncStorage.setItem(DOCUMENTS_INITIALIZED_KEY, 'true');
+      this.initialized = true;
+    } catch (error) {
+      console.error('Error initializing documents:', error);
+      this.initialized = true;
     }
-    this.initialized = true;
   }
 
   private async getLocalDocuments(): Promise<PetDocument[]> {
-    await this.initializeIfNeeded();
-    const stored = await AsyncStorage.getItem(DOCUMENTS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = await AsyncStorage.getItem(DOCUMENTS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error getting documents:', error);
+      return [];
+    }
   }
 
   private async saveLocalDocuments(documents: PetDocument[]): Promise<void> {
@@ -171,7 +166,12 @@ class DocumentsService {
       return expiry >= now && expiry <= futureDate;
     });
   }
+
+  // Clear initialization flag (for testing)
+  async resetInitialization(): Promise<void> {
+    await AsyncStorage.removeItem(DOCUMENTS_INITIALIZED_KEY);
+    this.initialized = false;
+  }
 }
 
 export const documentsService = new DocumentsService();
-

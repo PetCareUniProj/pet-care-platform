@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   Text,
@@ -13,15 +13,16 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme, ThemeMode } from '@/context/ThemeContext';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { themeMode, colorScheme, setThemeMode, isDark } = useTheme();
   
   // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [eventReminders, setEventReminders] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
   const handleToggleNotifications = async (value: boolean) => {
     if (value) {
@@ -39,6 +40,11 @@ export default function SettingsScreen() {
       }
     }
     setNotificationsEnabled(value);
+  };
+
+  const handleThemeChange = async (mode: ThemeMode) => {
+    await setThemeMode(mode);
+    // No need for reload message - theme changes instantly
   };
 
   const handleClearCache = async () => {
@@ -67,104 +73,35 @@ export default function SettingsScreen() {
     Linking.openURL('mailto:support@petconnect.com');
   };
 
-  const settingSections = [
-    {
-      title: 'Сповіщення',
-      items: [
-        {
-          icon: 'notifications',
-          label: 'Сповіщення',
-          description: 'Отримувати push-сповіщення',
-          type: 'switch',
-          value: notificationsEnabled,
-          onValueChange: handleToggleNotifications,
-        },
-        {
-          icon: 'event',
-          label: 'Нагадування про події',
-          description: 'Сповіщення перед подіями',
-          type: 'switch',
-          value: eventReminders,
-          onValueChange: setEventReminders,
-        },
-        {
-          icon: 'mail',
-          label: 'Щотижневий дайджест',
-          description: 'Email зі статистикою',
-          type: 'switch',
-          value: weeklyDigest,
-          onValueChange: setWeeklyDigest,
-        },
-      ],
-    },
-    {
-      title: 'Вигляд',
-      items: [
-        {
-          icon: 'dark-mode',
-          label: 'Темна тема',
-          description: 'Скоро буде доступна',
-          type: 'switch',
-          value: darkMode,
-          onValueChange: setDarkMode,
-          disabled: true,
-        },
-      ],
-    },
-    {
-      title: 'Дані',
-      items: [
-        {
-          icon: 'cloud-upload',
-          label: 'Експорт даних',
-          description: 'Завантажити всі дані',
-          type: 'action',
-          onPress: () => Alert.alert('Скоро', 'Ця функція буде доступна пізніше'),
-        },
-        {
-          icon: 'cached',
-          label: 'Очистити кеш',
-          description: 'Видалити локальні дані',
-          type: 'action',
-          onPress: handleClearCache,
-        },
-      ],
-    },
-    {
-      title: 'Допомога',
-      items: [
-        {
-          icon: 'help',
-          label: 'Часті питання',
-          description: 'Відповіді на питання',
-          type: 'action',
-          onPress: () => Alert.alert('FAQ', 'Скоро буде доступно'),
-        },
-        {
-          icon: 'email',
-          label: 'Зв\'язатися з нами',
-          description: 'support@petconnect.com',
-          type: 'action',
-          onPress: handleContact,
-        },
-        {
-          icon: 'info',
-          label: 'Про застосунок',
-          description: 'Версія 1.0.0',
-          type: 'action',
-          onPress: () => Alert.alert('Pet Connect', 'Версія 1.0.0\n\n© 2025 Pet Connect\nВсі права захищені'),
-        },
-      ],
-    },
-  ];
+  const getThemeLabel = (mode: ThemeMode) => {
+    switch (mode) {
+      case 'light': return '☀️ Світла';
+      case 'dark': return '🌙 Темна';
+      case 'system': return '📱 Системна';
+    }
+  };
+
+  const getCurrentThemeDescription = () => {
+    if (themeMode === 'system') {
+      return `Використовується ${colorScheme === 'dark' ? 'темна' : 'світла'} (системна)`;
+    }
+    return getThemeLabel(themeMode);
+  };
+
+  // Dynamic colors based on theme
+  const bgColor = isDark ? 'bg-gray-900' : 'bg-gray-50';
+  const cardBg = isDark ? 'bg-gray-800' : 'bg-white';
+  const textColor = isDark ? 'text-gray-100' : 'text-gray-800';
+  const textSecondary = isDark ? 'text-gray-400' : 'text-gray-500';
+  const borderColor = isDark ? 'border-gray-700' : 'border-gray-100';
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={false}>
+      <ScrollView className={`flex-1 ${bgColor}`} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <LinearGradient
-          colors={['#f59e0b', '#d97706']}
+          colors={isDark ? ['#78350f', '#92400e'] : ['#f59e0b', '#d97706']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
@@ -192,42 +129,181 @@ export default function SettingsScreen() {
         </LinearGradient>
 
         <View className="px-6 py-6 gap-6 -mt-4">
-          {settingSections.map((section) => (
-            <View key={section.title} className="gap-3">
-              <Text className="text-lg font-bold text-gray-800 ml-1">{section.title}</Text>
-              <View className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                {section.items.map((item, index) => (
-                  <TouchableOpacity
-                    key={item.label}
-                    onPress={item.type === 'action' ? (item as any).onPress : undefined}
-                    disabled={item.type === 'switch' ? (item as any).disabled : false}
-                    className={`flex-row items-center p-4 ${
-                      index < section.items.length - 1 ? 'border-b border-gray-100' : ''
-                    } ${item.type === 'switch' && (item as any).disabled ? 'opacity-50' : ''}`}
-                  >
-                    <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
-                      <MaterialIcons name={item.icon as any} size={22} color="#f59e0b" />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-gray-800 font-semibold">{item.label}</Text>
-                      <Text className="text-gray-500 text-sm">{item.description}</Text>
-                    </View>
-                    {item.type === 'switch' ? (
-                      <Switch
-                        value={(item as any).value}
-                        onValueChange={(item as any).onValueChange}
-                        disabled={(item as any).disabled}
-                        trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
-                        thumbColor={(item as any).value ? '#f59e0b' : '#f4f4f5'}
-                      />
-                    ) : (
-                      <MaterialIcons name="chevron-right" size={24} color="#d1d5db" />
-                    )}
-                  </TouchableOpacity>
-                ))}
+          {/* Notifications Section */}
+          <View className="gap-3">
+            <Text className={`text-lg font-bold ${textColor} ml-1`}>Сповіщення</Text>
+            <View className={`${cardBg} rounded-2xl border ${borderColor} shadow-sm overflow-hidden`}>
+              <View className={`flex-row items-center p-4 border-b ${borderColor}`}>
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="notifications" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Сповіщення</Text>
+                  <Text className={`${textSecondary} text-sm`}>Отримувати push-сповіщення</Text>
+                </View>
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={handleToggleNotifications}
+                  trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
+                  thumbColor={notificationsEnabled ? '#f59e0b' : '#f4f4f5'}
+                />
+              </View>
+              
+              <View className={`flex-row items-center p-4 border-b ${borderColor}`}>
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="event" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Нагадування про події</Text>
+                  <Text className={`${textSecondary} text-sm`}>Сповіщення перед подіями</Text>
+                </View>
+                <Switch
+                  value={eventReminders}
+                  onValueChange={setEventReminders}
+                  trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
+                  thumbColor={eventReminders ? '#f59e0b' : '#f4f4f5'}
+                />
+              </View>
+              
+              <View className="flex-row items-center p-4">
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="mail" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Щотижневий дайджест</Text>
+                  <Text className={`${textSecondary} text-sm`}>Email зі статистикою</Text>
+                </View>
+                <Switch
+                  value={weeklyDigest}
+                  onValueChange={setWeeklyDigest}
+                  trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
+                  thumbColor={weeklyDigest ? '#f59e0b' : '#f4f4f5'}
+                />
               </View>
             </View>
-          ))}
+          </View>
+
+          {/* Appearance Section */}
+          <View className="gap-3">
+            <Text className={`text-lg font-bold ${textColor} ml-1`}>Вигляд</Text>
+            <View className={`${cardBg} rounded-2xl border ${borderColor} shadow-sm overflow-hidden`}>
+              <View className="p-4">
+                <View className="flex-row items-center mb-4">
+                  <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                    <MaterialIcons name="dark-mode" size={22} color="#f59e0b" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className={`${textColor} font-semibold`}>Тема</Text>
+                    <Text className={`${textSecondary} text-sm`}>{getCurrentThemeDescription()}</Text>
+                  </View>
+                </View>
+                
+                <View className="flex-row gap-2">
+                  {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+                    <TouchableOpacity
+                      key={mode}
+                      onPress={() => handleThemeChange(mode)}
+                      className={`flex-1 p-3 rounded-xl items-center ${
+                        themeMode === mode 
+                          ? 'bg-amber-500' 
+                          : isDark ? 'bg-gray-700' : 'bg-gray-100'
+                      }`}
+                    >
+                      <Text className={`font-semibold ${
+                        themeMode === mode 
+                          ? 'text-white' 
+                          : isDark ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {getThemeLabel(mode)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Data Section */}
+          <View className="gap-3">
+            <Text className={`text-lg font-bold ${textColor} ml-1`}>Дані</Text>
+            <View className={`${cardBg} rounded-2xl border ${borderColor} shadow-sm overflow-hidden`}>
+              <TouchableOpacity 
+                onPress={() => Alert.alert('Скоро', 'Ця функція буде доступна пізніше')}
+                className={`flex-row items-center p-4 border-b ${borderColor}`}
+              >
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="cloud-upload" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Експорт даних</Text>
+                  <Text className={`${textSecondary} text-sm`}>Завантажити всі дані</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color={isDark ? '#6b7280' : '#d1d5db'} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={handleClearCache}
+                className="flex-row items-center p-4"
+              >
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="cached" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Очистити кеш</Text>
+                  <Text className={`${textSecondary} text-sm`}>Видалити локальні дані</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color={isDark ? '#6b7280' : '#d1d5db'} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Help Section */}
+          <View className="gap-3">
+            <Text className={`text-lg font-bold ${textColor} ml-1`}>Допомога</Text>
+            <View className={`${cardBg} rounded-2xl border ${borderColor} shadow-sm overflow-hidden`}>
+              <TouchableOpacity 
+                onPress={() => Alert.alert('FAQ', 'Скоро буде доступно')}
+                className={`flex-row items-center p-4 border-b ${borderColor}`}
+              >
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="help" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Часті питання</Text>
+                  <Text className={`${textSecondary} text-sm`}>Відповіді на питання</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color={isDark ? '#6b7280' : '#d1d5db'} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={handleContact}
+                className={`flex-row items-center p-4 border-b ${borderColor}`}
+              >
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="email" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Зв'язатися з нами</Text>
+                  <Text className={`${textSecondary} text-sm`}>support@petconnect.com</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color={isDark ? '#6b7280' : '#d1d5db'} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => Alert.alert('Pet Connect', 'Версія 1.0.0\n\n© 2025 Pet Connect\nВсі права захищені')}
+                className="flex-row items-center p-4"
+              >
+                <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
+                  <MaterialIcons name="info" size={22} color="#f59e0b" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`${textColor} font-semibold`}>Про застосунок</Text>
+                  <Text className={`${textSecondary} text-sm`}>Версія 1.0.0</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={24} color={isDark ? '#6b7280' : '#d1d5db'} />
+              </TouchableOpacity>
+            </View>
+          </View>
 
           {/* Logout Button */}
           <TouchableOpacity
@@ -240,8 +316,8 @@ export default function SettingsScreen() {
 
           {/* Version Info */}
           <View className="items-center py-4">
-            <Text className="text-gray-400 text-sm">Pet Connect v1.0.0</Text>
-            <Text className="text-gray-300 text-xs mt-1">© 2025 Pet Connect</Text>
+            <Text className={`${textSecondary} text-sm`}>Pet Connect v1.0.0</Text>
+            <Text className={`${isDark ? 'text-gray-600' : 'text-gray-300'} text-xs mt-1`}>© 2025 Pet Connect</Text>
           </View>
         </View>
       </ScrollView>

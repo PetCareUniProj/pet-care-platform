@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Image } from 'expo-image';
 import {
   ScrollView,
   Text,
@@ -13,12 +14,18 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import { subscriptionsService, LocalSubscription } from '@/services/api/subscriptions.service';
 import { RECURRENCE_LABELS } from '@/types/order.types';
+import { useThemedStyles } from '@/hooks/useThemedStyles';
+
+// Placeholder style for subscription images
+const PLACEHOLDER_STYLE = { bg: '#f3e8ff', color: '#8b5cf6' };
 
 export default function SubscriptionsScreen() {
   const router = useRouter();
+  const theme = useThemedStyles();
   const [subscriptions, setSubscriptions] = useState<LocalSubscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const loadSubscriptions = async () => {
     try {
@@ -42,6 +49,10 @@ export default function SubscriptionsScreen() {
     setRefreshing(false);
   }, []);
 
+  const handleImageError = (subId: string) => {
+    setImageErrors(prev => ({ ...prev, [subId]: true }));
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const monthNames = ['січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд'];
@@ -51,15 +62,17 @@ export default function SubscriptionsScreen() {
   const handlePauseSubscription = (sub: LocalSubscription) => {
     Alert.alert(
       'Призупинити підписку',
-      `Ви впевнені, що хочете призупинити підписку на "${sub.productName}"?`,
+      `Ви впевнені, що хочете призупинити підписку на "${sub.productName}"?\n\nВи зможете відновити її в будь-який час.`,
       [
         { text: 'Скасувати', style: 'cancel' },
         {
           text: 'Призупинити',
+          style: 'default',
           onPress: async () => {
             try {
               await subscriptionsService.pause(sub.id);
               await loadSubscriptions();
+              Alert.alert('Готово', 'Підписку призупинено');
             } catch (error) {
               Alert.alert('Помилка', 'Не вдалося призупинити підписку');
             }
@@ -69,21 +82,35 @@ export default function SubscriptionsScreen() {
     );
   };
 
-  const handleResumeSubscription = async (sub: LocalSubscription) => {
-    try {
-      await subscriptionsService.resume(sub.id);
-      await loadSubscriptions();
-    } catch (error) {
-      Alert.alert('Помилка', 'Не вдалося відновити підписку');
-    }
+  const handleResumeSubscription = (sub: LocalSubscription) => {
+    Alert.alert(
+      'Відновити підписку',
+      `Відновити підписку на "${sub.productName}"?`,
+      [
+        { text: 'Скасувати', style: 'cancel' },
+        {
+          text: 'Відновити',
+          style: 'default',
+          onPress: async () => {
+            try {
+              await subscriptionsService.resume(sub.id);
+              await loadSubscriptions();
+              Alert.alert('Готово', 'Підписку відновлено');
+            } catch (error) {
+              Alert.alert('Помилка', 'Не вдалося відновити підписку');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleCancelSubscription = (sub: LocalSubscription) => {
     Alert.alert(
-      'Скасувати підписку',
-      `Ви впевнені, що хочете скасувати підписку на "${sub.productName}"? Цю дію неможливо скасувати.`,
+      '⚠️ Скасувати підписку',
+      `Ви впевнені, що хочете повністю скасувати підписку на "${sub.productName}"?\n\nЦю дію неможливо буде відмінити.`,
       [
-        { text: 'Ні', style: 'cancel' },
+        { text: 'Ні, залишити', style: 'cancel' },
         {
           text: 'Так, скасувати',
           style: 'destructive',
@@ -91,6 +118,7 @@ export default function SubscriptionsScreen() {
             try {
               await subscriptionsService.cancel(sub.id);
               await loadSubscriptions();
+              Alert.alert('Готово', 'Підписку скасовано');
             } catch (error) {
               Alert.alert('Помилка', 'Не вдалося скасувати підписку');
             }
@@ -100,13 +128,40 @@ export default function SubscriptionsScreen() {
     );
   };
 
+  const renderSubscriptionImage = (sub: LocalSubscription) => {
+    const showPlaceholder = !sub.productImage || imageErrors[sub.id];
+    
+    return (
+      <View 
+        className="w-16 h-16 rounded-xl items-center justify-center overflow-hidden"
+        style={{ backgroundColor: PLACEHOLDER_STYLE.bg }}
+      >
+        {showPlaceholder ? (
+          <MaterialIcons name="shopping-bag" size={28} color={PLACEHOLDER_STYLE.color} />
+        ) : (
+          <Image
+            source={{ uri: sub.productImage }}
+            className="w-full h-full"
+            contentFit="cover"
+            onError={() => handleImageError(sub.id)}
+          />
+        )}
+      </View>
+    );
+  };
+
   const activeSubscriptions = subscriptions.filter((s) => s.status === 'active');
   const pausedSubscriptions = subscriptions.filter((s) => s.status === 'paused');
   const totalMonthly = subscriptionsService.calculateMonthlyTotal(subscriptions);
 
+  // Format monthly total with 1 decimal place
+  const formatMonthlyTotal = (amount: number) => {
+    return amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(1);
+  };
+
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
+      <View className={`flex-1 justify-center items-center ${theme.bgPrimary}`}>
         <ActivityIndicator size="large" color="#8b5cf6" />
       </View>
     );
@@ -116,7 +171,7 @@ export default function SubscriptionsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView 
-        className="flex-1 bg-gray-50" 
+        className={`flex-1 ${theme.bgPrimary}`}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#8b5cf6']} />
@@ -124,7 +179,7 @@ export default function SubscriptionsScreen() {
       >
         {/* Header */}
         <LinearGradient
-          colors={['#8b5cf6', '#7c3aed']}
+          colors={theme.gradientColors.violet}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
@@ -144,7 +199,7 @@ export default function SubscriptionsScreen() {
             </View>
             <View className="flex-1 bg-white/20 rounded-2xl p-4 border border-white/30">
               <Text className="text-white/80 text-sm">На місяць</Text>
-              <Text className="text-white text-2xl font-bold">₴{totalMonthly}</Text>
+              <Text className="text-white text-2xl font-bold">₴{formatMonthlyTotal(totalMonthly)}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -160,9 +215,7 @@ export default function SubscriptionsScreen() {
                   className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
                 >
                   <View className="flex-row items-start gap-4">
-                    <View className="bg-violet-100 w-16 h-16 rounded-xl items-center justify-center">
-                      <MaterialIcons name="autorenew" size={32} color="#8b5cf6" />
-                    </View>
+                    {renderSubscriptionImage(sub)}
                     <View className="flex-1">
                       <Text className="text-gray-800 font-bold text-base" numberOfLines={2}>
                         {sub.productName}
@@ -219,8 +272,20 @@ export default function SubscriptionsScreen() {
                   className="bg-gray-100 rounded-2xl p-4 border border-gray-200"
                 >
                   <View className="flex-row items-center gap-4">
-                    <View className="bg-gray-200 w-14 h-14 rounded-xl items-center justify-center">
-                      <MaterialIcons name="pause-circle" size={28} color="#9ca3af" />
+                    <View 
+                      className="w-14 h-14 rounded-xl items-center justify-center overflow-hidden"
+                      style={{ backgroundColor: '#e5e7eb' }}
+                    >
+                      {sub.productImage && !imageErrors[sub.id] ? (
+                        <Image
+                          source={{ uri: sub.productImage }}
+                          className="w-full h-full"
+                          contentFit="cover"
+                          onError={() => handleImageError(sub.id)}
+                        />
+                      ) : (
+                        <MaterialIcons name="pause-circle" size={28} color="#9ca3af" />
+                      )}
                     </View>
                     <View className="flex-1">
                       <Text className="text-gray-600 font-bold" numberOfLines={1}>
@@ -230,11 +295,21 @@ export default function SubscriptionsScreen() {
                         {RECURRENCE_LABELS[sub.frequency] || sub.frequency} • ₴{sub.price}
                       </Text>
                     </View>
+                  </View>
+                  <View className="flex-row gap-3 mt-4">
                     <TouchableOpacity
                       onPress={() => handleResumeSubscription(sub)}
-                      className="bg-violet-500 px-4 py-2 rounded-xl"
+                      className="flex-1 bg-violet-500 py-3 rounded-xl flex-row items-center justify-center gap-2"
                     >
+                      <MaterialIcons name="play-arrow" size={18} color="white" />
                       <Text className="text-white font-semibold">Відновити</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleCancelSubscription(sub)}
+                      className="flex-1 bg-red-100 py-3 rounded-xl flex-row items-center justify-center gap-2"
+                    >
+                      <MaterialIcons name="delete-outline" size={18} color="#ef4444" />
+                      <Text className="text-red-500 font-semibold">Видалити</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
