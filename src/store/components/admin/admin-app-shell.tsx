@@ -9,7 +9,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 export function AdminAppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-svh w-full bg-muted/30">
+      <div className="admin-theme flex min-h-svh w-full bg-muted/30">
         <AdminSidebar />
         <SidebarInset>
           <AdminTopBar />
