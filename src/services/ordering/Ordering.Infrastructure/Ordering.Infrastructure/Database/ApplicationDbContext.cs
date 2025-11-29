@@ -10,6 +10,7 @@ using Ordering.Infrastructure.DomainEvents;
 using SharedKernel;
 
 namespace Ordering.Infrastructure.Database;
+
 public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     public DbSet<Order> Orders { get; set; }

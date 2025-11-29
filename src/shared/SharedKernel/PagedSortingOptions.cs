@@ -1,4 +1,5 @@
 ﻿namespace SharedKernel;
+
 public record PagedSortingOptions
 {
     public string? SortField { get; set; }

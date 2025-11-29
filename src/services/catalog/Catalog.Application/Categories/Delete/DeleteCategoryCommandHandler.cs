@@ -1,8 +1,8 @@
-using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Categories.Delete;
+
 internal sealed class DeleteCategoryCommandHandler : ICommandHandler<DeleteCategoryCommand, Result>
 {
     private readonly IApplicationDbContext _dbContext;

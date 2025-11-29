@@ -1,20 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.0" />
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.0.1">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+	<OutputType>Exe</OutputType>
+	<IsPackable>false</IsPackable>
     <UserSecretsId>3dcbe420-7211-4d2c-a659-f7ab350d4dd2</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
     <PackageReference Include="Aspire.Hosting.Keycloak" />
-    <PackageReference Include="Aspire.Hosting.NodeJs" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="Aspire.Hosting.Redis" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.JavaScript.Extensions" />
     <PackageReference Include="Scalar.Aspire" />
   </ItemGroup>
 

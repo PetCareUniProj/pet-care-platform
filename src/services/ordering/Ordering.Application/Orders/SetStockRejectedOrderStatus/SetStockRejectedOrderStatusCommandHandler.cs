@@ -1,6 +1,7 @@
 ﻿using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Orders.SetStockRejectedOrderStatus;
+
 internal sealed class SetStockRejectedOrderStatusCommandHandler
     (IApplicationDbContext dbContext)
     : ICommandHandler<SetStockRejectedOrderStatusCommand, Result>

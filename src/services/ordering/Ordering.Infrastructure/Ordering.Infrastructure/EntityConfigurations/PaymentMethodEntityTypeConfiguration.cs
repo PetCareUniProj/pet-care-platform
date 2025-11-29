@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Ordering.Domain.Buyers;
 
 namespace Ordering.Infrastructure.EntityConfigurations;
+
 internal sealed class PaymentMethodEntityTypeConfiguration
         : IEntityTypeConfiguration<PaymentMethod>
 {

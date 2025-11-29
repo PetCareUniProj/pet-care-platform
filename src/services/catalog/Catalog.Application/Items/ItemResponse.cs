@@ -1,4 +1,5 @@
 ﻿namespace Catalog.Application.Items;
+
 public record ItemResponse
 {
     public int Id { get; init; }

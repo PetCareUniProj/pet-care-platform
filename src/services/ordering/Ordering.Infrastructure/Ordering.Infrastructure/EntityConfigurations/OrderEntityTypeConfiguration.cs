@@ -4,6 +4,7 @@ using Ordering.Domain.Buyers;
 using Ordering.Domain.Orders;
 
 namespace Ordering.Infrastructure.EntityConfigurations;
+
 internal sealed class OrderEntityTypeConfiguration
     : IEntityTypeConfiguration<Order>
 {

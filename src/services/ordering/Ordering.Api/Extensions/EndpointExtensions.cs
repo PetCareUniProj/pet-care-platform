@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Ordering.Api.Endpoints;
 
 namespace Ordering.Api.Extensions;
 

@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.Extensions.Hosting;
 
-public static partial class RabbitMqDependencyInjectionExtensions
+public static class RabbitMqDependencyInjectionExtensions
 {
     // {
     //   "EventBus": {
@@ -18,10 +18,7 @@ public static partial class RabbitMqDependencyInjectionExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.AddRabbitMQClient(connectionName, configureConnectionFactory: factory =>
-        {
-            factory.DispatchConsumersAsync = true;
-        });
+        builder.AddRabbitMQClient(connectionName);
 
         // RabbitMQ.Client doesn't have built-in support for OpenTelemetry, so we need to add it ourselves
         builder.Services.AddOpenTelemetry()
@@ -40,5 +37,10 @@ public static partial class RabbitMqDependencyInjectionExtensions
         builder.Services.AddSingleton<IHostedService>(sp => (RabbitMQEventBus)sp.GetRequiredService<IEventBus>());
 
         return new EventBusBuilder(builder.Services);
+    }
+
+    private class EventBusBuilder(IServiceCollection services) : IEventBusBuilder
+    {
+        public IServiceCollection Services => services;
     }
 }

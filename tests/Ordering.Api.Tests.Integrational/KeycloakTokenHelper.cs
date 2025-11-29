@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Ordering.Api.Tests.Integrational;
 

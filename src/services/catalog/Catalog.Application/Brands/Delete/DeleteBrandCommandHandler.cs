@@ -1,8 +1,8 @@
-using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Brands.Delete;
+
 internal sealed class DeleteBrandCommandHandler : ICommandHandler<DeleteBrandCommand, Result>
 {
     private readonly IApplicationDbContext _dbContext;

@@ -1,4 +1,3 @@
-using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 

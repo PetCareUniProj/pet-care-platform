@@ -37,41 +37,24 @@ builder.AddProject<OrderProcessor>("orderprocessor")
         .WithReference(orderDb).WaitFor(orderDb)
         .WithReference(rabbitMq).WaitFor(rabbitMq);
 
+builder.AddProject<SubscriptionProcessor>("subscriptionprocessor")
+    .WithReference(orderDb).WaitFor(orderDb)
+    .WithReference(rabbitMq).WaitFor(rabbitMq);
 builder.AddProject<PaymentProcessor>("paymentprocessor")
     .WithReference(rabbitMq).WaitFor(rabbitMq);
-
-builder.AddNpmApp("subscription-api", "../../services/subscription", "start:dev")
-    .WithNpmPackageInstallation()
-    .WithHttpEndpoint(env: "PORT")
-    .WithReference(rabbitMq).WaitFor(rabbitMq)
-    .WithReference(subscriptionDb).WaitFor(subscriptionDb)
-    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
 var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
     .WithReference(rabbitMq).WaitFor(rabbitMq)
     .WithReference(catalogDb).WaitFor(catalogDb)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
-var orderingApiEndpoint = orderingApi.GetEndpoint("https");
-var basketApiEndpoint = basketApi.GetEndpoint("https");
-var catalogApiEndpoint = catalogApi.GetEndpoint("https");
-
-var storeWeb = builder.AddNpmApp("store-web", "../../store", "start:dev")
-    .WithNpmPackageInstallation()
+builder.AddJavaScriptApp("store-web", "../../store", "start:dev")
     .WithHttpEndpoint(env: "PORT")
     .WithReference(orderingApi).WaitFor(orderingApi)
     .WithReference(basketApi).WaitFor(basketApi)
     .WithReference(catalogApi).WaitFor(catalogApi)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint)
-    .WithEnvironment("NEXT_PUBLIC_ORDERING_API_BASE_URL", orderingApiEndpoint)
-    .WithEnvironment("NEXT_PUBLIC_BASKET_API_BASE_URL", basketApiEndpoint)
-    .WithEnvironment("NEXT_PUBLIC_CATALOG_API_BASE_URL", catalogApiEndpoint);
 
-var storeWebEndpoint = storeWeb.GetEndpoint("http");
-
-catalogApi.WithEnvironment("Cors__AllowedOrigins__0", storeWebEndpoint);
-orderingApi.WithEnvironment("Cors__AllowedOrigins__0", storeWebEndpoint);
-basketApi.WithEnvironment("Cors__AllowedOrigins__0", storeWebEndpoint);
 
 // Add Scalar API Reference with debugging enabled
 var scalar = builder.AddScalarApiReference(options =>

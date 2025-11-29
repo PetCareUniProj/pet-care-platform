@@ -1,6 +1,7 @@
 ﻿using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Orders.SetPaidOrderStatus;
+
 internal sealed class SetPaidOrderStatusCommandHandler
     (IApplicationDbContext dbContext)
     : ICommandHandler<SetPaidOrderStatusCommand, Result>

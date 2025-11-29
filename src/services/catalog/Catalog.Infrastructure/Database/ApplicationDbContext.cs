@@ -5,6 +5,7 @@ using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Infrastructure.Database;
+
 public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     public DbSet<Item> Items { get; set; }

@@ -1,8 +1,8 @@
-using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Brands.GetById;
+
 internal sealed class GetBrandByIdQueryHandler : IQueryHandler<GetBrandByIdQuery, Result<BrandResponse>>
 {
     private readonly IApplicationDbContext _dbContext;

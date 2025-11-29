@@ -1,4 +1,5 @@
 ﻿namespace SharedKernel;
+
 public record PagedResponse<TResponse>
 {
     public required IEnumerable<TResponse> Items { get; init; } = [];
