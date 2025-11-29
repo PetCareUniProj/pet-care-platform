@@ -4,6 +4,7 @@ import React from 'react';
 import { Search, ShoppingBag, Heart, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import Navigation from "@/app/components/Navigation";
 import TopBar from "@/app/components/TopBar";
+import Footer from "@/app/components/Footer";
 
 export default function PetShopAbout() {
     return (
@@ -184,81 +185,7 @@ export default function PetShopAbout() {
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="w-full px-4 md:px-20 lg:px-80 py-16 bg-gray-50 relative overflow-hidden">
-                <div className="flex flex-col gap-14">
-                    <div className="flex flex-wrap justify-between gap-8">
-                        <div className="flex flex-col gap-5 max-w-xs">
-                            <div className="flex items-center gap-2">
-                                <div className="flex gap-1">
-                                    <div className="w-5 h-3.5 bg-black rounded" />
-                                    <div className="w-1.5 h-2 bg-black rounded" />
-                                    <div className="w-1 h-2 bg-black rounded" />
-                                    <div className="w-1.5 h-2 bg-black rounded" />
-                                    <div className="w-1.5 h-2 bg-black rounded" />
-                                </div>
-                                <span className="text-black text-xl font-bold">Pet Shop</span>
-                            </div>
-                            <p className="text-black text-base leading-5">Sed viverra eget fames sit varius. Pellentesque mattis libero viverra dictumst ornaresed justo convallis vitae</p>
-                            <div className="flex gap-5">
-                                <Facebook className="w-6 h-6 cursor-pointer hover:text-orange-500" />
-                                <Twitter className="w-6 h-6 cursor-pointer hover:text-orange-500" />
-                                <Instagram className="w-6 h-6 cursor-pointer hover:text-orange-500" />
-                                <Youtube className="w-6 h-6 cursor-pointer hover:text-orange-500" />
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-5">
-                            <h4 className="text-black text-base font-semibold">Company</h4>
-                            <div className="flex flex-col gap-4">
-                                <a href="#" className="text-black text-base hover:text-orange-500">About Us</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Blog</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Gift cards</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Careers</a>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-5">
-                            <h4 className="text-black text-base font-semibold">Useful Links</h4>
-                            <div className="flex flex-col gap-4">
-                                <a href="#" className="text-black text-base hover:text-orange-500">New products</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Best sellers</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Discount</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">F.A.Q</a>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-5">
-                            <h4 className="text-black text-base font-semibold">Customer Service</h4>
-                            <div className="flex flex-col gap-4">
-                                <a href="#" className="text-black text-base hover:text-orange-500">Contact Us</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Shipping</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Returns</a>
-                                <a href="#" className="text-black text-base hover:text-orange-500">Order tracking</a>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-5">
-                            <h4 className="text-black text-base font-semibold">Store</h4>
-                            <div className="flex flex-col gap-5">
-                                <p className="text-black text-base font-medium leading-5">8592 Fairground St.<br/>Tallahassee, FL 32303</p>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-black text-base font-medium">+775 378-6348</span>
-                                    <span className="text-black text-base font-medium">rgarton@outlook.com</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap justify-between items-center gap-4 pt-8 border-t border-black/10">
-                        <p className="text-black/50 text-sm">© Copyright Pet Shop 2024. Design by Figma.guru</p>
-                        <div className="h-6 w-64 bg-black/80 rounded" />
-                    </div>
-                </div>
-
-                {/* Decorative shape */}
-                <div className="absolute right-0 top-80 w-44 h-48 bg-gradient-to-l from-orange-400 to-amber-500 rounded-[40px] opacity-20 rotate-[13deg]" />
-            </div>
+          <Footer/>
         </div>
     );
 }

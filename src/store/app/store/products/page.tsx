@@ -5,6 +5,7 @@ import { ShoppingCart, Heart, Search, ChevronLeft, ChevronRight, Phone, Mail, Ma
 import TopBar from "@/app/components/TopBar";
 import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
+import NavLink from "@/app/components/NavLink";
 
 const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, '');
 const catalogApiOrigin = process.env.NEXT_PUBLIC_CATALOG_API_BASE_URL ?? 'https://localhost:5251';
@@ -258,9 +259,7 @@ const PetShop: React.FC = () => {
                             <h1 className="text-black text-5xl font-bold leading-tight">If animals could talk, they'd talk about us!</h1>
                         </div>
                         <p className="text-black/80 text-base leading-6 max-w-md">Your trusted partner for quality pet products and exceptional care.</p>
-                        <button className="px-10 py-4 bg-neutral-950 rounded-xl text-white text-xl font-semibold hover:bg-neutral-800 transition-colors w-fit">
-                            Shop Now
-                        </button>
+
                     </div>
 
                     <div className="relative w-[536px] h-[515px]">
@@ -277,17 +276,9 @@ const PetShop: React.FC = () => {
             </div>
 
             {/* Shop by Pet */}
-            <div className="px-16 py-14">
+            <div id="shop-by-pet" className="px-16 py-14">
                 <div className="flex justify-between items-end mb-14">
-                    <h2 className="text-4xl font-semibold">Shop by pet</h2>
-                    <div className="flex gap-10">
-                        <button className="w-10 h-10 bg-black rounded-full flex items-center justify-center rotate-180 hover:bg-orange-500 transition-colors">
-                            <ChevronRight className="w-6 h-6 text-white" />
-                        </button>
-                        <button className="w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors">
-                            <ChevronRight className="w-6 h-6 text-white" />
-                        </button>
-                    </div>
+                    <h2  className="text-4xl font-semibold">Shop by pet</h2>
                 </div>
 
                 <div className="grid grid-cols-6 gap-6 max-w-[1296px] mx-auto">
@@ -375,8 +366,6 @@ const PetShop: React.FC = () => {
                                 onChange={(e) => setSortBy(e.target.value)}
                                 className="appearance-none px-4 py-3 pr-10 rounded-md border-[1.5px] border-gray-500 text-gray-500 text-xl font-medium cursor-pointer bg-white"
                             >
-                                <option value="-id">Sort by latest</option>
-                                <option value="id">Sort by oldest</option>
                                 <option value="name">Sort by name (A-Z)</option>
                                 <option value="-name">Sort by name (Z-A)</option>
                                 <option value="price">Sort by price (low to high)</option>

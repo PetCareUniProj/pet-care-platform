@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navigation from "@/app/components/Navigation";
 import TopBar from "@/app/components/TopBar";
 import Image from "next/image";
+import NavLink from "@/app/components/NavLink";
 
 export default function Home() {
     const [cartCount] = useState(0);
@@ -71,9 +72,11 @@ export default function Home() {
                             <h1 className="text-black text-5xl font-bold leading-tight">If animals could talk, they'd talk about us!</h1>
                         </div>
                         <p className="text-black/80 text-base leading-6 max-w-md">At et vehicula sodales est proin turpis pellentesque sinulla a aliquam amet rhoncus quisque eget sit</p>
-                        <button className="px-10 py-4 bg-neutral-950 rounded-xl text-white text-xl font-semibold hover:bg-neutral-800 transition-colors w-fit">
-                            Shop Now
-                        </button>
+                        <NavLink href="/store/products#shop-by-pet">
+                            <button className="px-10 py-4 bg-neutral-950 rounded-xl text-white text-xl font-semibold hover:bg-neutral-800 transition-colors w-fit">
+                                Shop Now
+                            </button>
+                        </NavLink>
                     </div>
 
                     <div className="relative w-[536px] h-[610px]">
@@ -233,25 +236,25 @@ export default function Home() {
             </div>
 
             {/* News & Blog */}
-            <div className="px-80 py-14">
-                <h2 className="text-4xl font-semibold text-center mb-14">News & Blog</h2>
-                <div className="grid grid-cols-3 gap-6">
-                    {blogPosts.map((post, index) => (
-                        <div key={index} className="rounded-[20px] overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
-                            <div className="relative h-96">
-                                <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
-                                <div className="absolute top-5 left-5 bg-black text-white px-6 py-2 rounded-[20px] text-base font-semibold">
-                                    News
-                                </div>
-                            </div>
-                            <div className="py-5">
-                                <div className="text-black/60 mb-3 capitalize">{post.date}</div>
-                                <div className="text-xl font-semibold capitalize leading-8">{post.title}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            {/*<div className="px-80 py-14">*/}
+            {/*    <h2 className="text-4xl font-semibold text-center mb-14">News & Blog</h2>*/}
+            {/*    <div className="grid grid-cols-3 gap-6">*/}
+            {/*        {blogPosts.map((post, index) => (*/}
+            {/*            <div key={index} className="rounded-[20px] overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">*/}
+            {/*                <div className="relative h-96">*/}
+            {/*                    <img src={post.image} alt={post.title} className="w-full h-full object-cover" />*/}
+            {/*                    <div className="absolute top-5 left-5 bg-black text-white px-6 py-2 rounded-[20px] text-base font-semibold">*/}
+            {/*                        News*/}
+            {/*                    </div>*/}
+            {/*                </div>*/}
+            {/*                <div className="py-5">*/}
+            {/*                    <div className="text-black/60 mb-3 capitalize">{post.date}</div>*/}
+            {/*                    <div className="text-xl font-semibold capitalize leading-8">{post.title}</div>*/}
+            {/*                </div>*/}
+            {/*            </div>*/}
+            {/*        ))}*/}
+            {/*    </div>*/}
+            {/*</div>*/}
 
             {/* Footer */}
             <div className="px-80 py-16 bg-gray-50 relative overflow-hidden">
