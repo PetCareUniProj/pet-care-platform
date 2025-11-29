@@ -441,3 +441,5 @@ npm-debug.log*
 # temp directory
 .temp
 .tmp
+/src/store/.next/dev
+/src/mobile/pet-connect-mobile-app/.idea
