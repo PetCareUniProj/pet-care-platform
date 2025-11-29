@@ -62,9 +62,9 @@ async function loadCatalogData(filters: CatalogFilters): Promise<{ data: Catalog
   try {
     const taxonomyQuery = new URLSearchParams({ PageSize: String(MAX_PAGE_SIZE), Page: "1", SortBy: "name" }).toString();
     const itemsQuery = buildApiItemsQueryString(filters);
-    const itemsUrl = `${catalogApiBaseUrl}/api/items?${itemsQuery}`;
-    const brandsUrl = `${catalogApiBaseUrl}/api/brand?${taxonomyQuery}`;
-    const categoriesUrl = `${catalogApiBaseUrl}/api/category?${taxonomyQuery}`;
+    const itemsUrl = `${catalogApiBaseUrl}/api/catalog/items?${itemsQuery}`;
+    const brandsUrl = `${catalogApiBaseUrl}/api/catalog/brand?${taxonomyQuery}`;
+    const categoriesUrl = `${catalogApiBaseUrl}/api/catalog/category?${taxonomyQuery}`;
     
     const [itemsResponse, brandsResponse, categoriesResponse] = await Promise.all([
       fetch(itemsUrl, commonFetchInit),
