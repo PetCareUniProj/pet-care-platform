@@ -18,7 +18,11 @@ import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/admin/theme-toggle";
 
-export function AdminTopBar() {
+interface AdminTopBarProps {
+  accountSettingsUrl: string;
+}
+
+export function AdminTopBar({ accountSettingsUrl }: AdminTopBarProps) {
   const { data: session } = useSession();
   const initials = session?.user?.name
     ?.split(" ")
@@ -58,7 +62,11 @@ export function AdminTopBar() {
             <DropdownMenuItem asChild>
               <Link href="/admin/settings">Workspace settings</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>View Keycloak profile</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a href={accountSettingsUrl} target="_blank" rel="noreferrer noopener">
+                Account settings
+              </a>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => signOut({ callbackUrl: "/" })}>
               Sign out
