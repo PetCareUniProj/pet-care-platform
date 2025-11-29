@@ -51,6 +51,7 @@ var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
 
 builder.AddJavaScriptApp("store-web", "../../store", "start:dev")
     .WithHttpEndpoint(env: "PORT")
+    .WithExternalHttpEndpoints()
     .WithReference(orderingApi).WaitFor(orderingApi)
     .WithReference(basketApi).WaitFor(basketApi)
     .WithReference(catalogApi).WaitFor(catalogApi)
