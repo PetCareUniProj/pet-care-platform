@@ -27,7 +27,12 @@ function buildItemsQuery(params?: GetItemsParams) {
 }
 
 export async function getCatalogItems(params?: GetItemsParams) {
-  return client.request<ItemsResponse>("/api/items", { method: "GET" }, buildItemsQuery(params));
+  try {
+    return await client.request<ItemsResponse>("/api/items", { method: "GET" }, buildItemsQuery(params));
+  } catch (error) {
+    console.error("Failed to load catalog items", { params, error });
+    throw error;
+  }
 }
 
 export async function getCatalogItem(idOrSlug: string) {
