@@ -116,6 +116,14 @@ class ApiClient {
         statusCode: error.response.status,
         code: (error.response.data as any)?.code || error.code,
         errors: (error.response.data as any)?.errors,
+        // Detailed error info for debugging
+        details: {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          headers: error.response.headers,
+          data: error.response.data,
+          config: error.config,
+        },
       };
       return apiError;
     } else if (error.request) {
@@ -124,6 +132,10 @@ class ApiClient {
         message: `Network error. Please check your internet connection. URL: ${error.config?.baseURL}${error.config?.url}`,
         statusCode: 0,
         code: error.code || 'NETWORK_ERROR',
+        details: {
+          request: error.request,
+          config: error.config,
+        },
       };
       return networkError;
     } else {
@@ -131,6 +143,9 @@ class ApiClient {
       const unexpectedError: ApiError = {
         message: error.message || 'An unexpected error occurred',
         code: error.code,
+        details: {
+          error,
+        },
       };
       return unexpectedError;
     }

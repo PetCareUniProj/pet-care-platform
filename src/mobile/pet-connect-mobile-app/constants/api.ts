@@ -1,13 +1,13 @@
 // API Configuration Constants
 
 // Base URLs for microservices
-export const CATALOG_API_URL = process.env.EXPO_PUBLIC_CATALOG_API_URL || 'http://localhost:5251';
-export const ORDERING_API_URL = process.env.EXPO_PUBLIC_ORDERING_API_URL || 'http://localhost:5276';
-export const BASKET_API_URL = process.env.EXPO_PUBLIC_BASKET_API_URL || 'http://localhost:5273';
-export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL || 'http://localhost:62942';
+export const CATALOG_API_URL = process.env.EXPO_PUBLIC_CATALOG_API_URL || 'http://10.0.2.2:64416/';
+export const ORDERING_API_URL = process.env.EXPO_PUBLIC_ORDERING_API_URL || 'http://10.0.2.2:64416/';
+export const BASKET_API_URL = process.env.EXPO_PUBLIC_BASKET_API_URL || 'http://10.0.2.2:64416/';
+export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL || 'http://10.0.2.2:62942';
 
 // Legacy - for backward compatibility
-export const API_BASE_URL = CATALOG_API_URL;
+export const API_BASE_URL = 'http://10.0.2.2:64416/';
 
 export const API_ENDPOINTS = {
   // ============ Catalog API ============
@@ -91,7 +91,7 @@ export const API_ENDPOINTS = {
 
   // ============ Keycloak Auth ============
   AUTH: {
-    KEYCLOAK_BASE: process.env.EXPO_PUBLIC_KEYCLOAK_URL || 'http://localhost:8080',
+    KEYCLOAK_BASE: process.env.EXPO_PUBLIC_KEYCLOAK_URL || 'http://10.0.2.2:8080',
     REALM: process.env.EXPO_PUBLIC_KEYCLOAK_REALM || 'pet-care-platform',
     CLIENT_ID: process.env.EXPO_PUBLIC_KEYCLOAK_CLIENT_ID || 'pet-connect-mobile',
   },

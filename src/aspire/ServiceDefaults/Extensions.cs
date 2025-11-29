@@ -48,20 +48,6 @@ public static partial class Extensions
 
         builder.ConfigureOpenTelemetry();
 
-        // Add CORS for development (allow mobile/web apps to access API)
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy(CorsPolicy.AllowAll, policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader();
-                });
-            });
-        }
-
         return builder;
     }
     public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
@@ -133,9 +119,6 @@ public static partial class Extensions
         // See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
         if (app.Environment.IsDevelopment())
         {
-            // Enable CORS for development
-            app.UseCors(CorsPolicy.AllowAll);
-
             // All health checks must pass for app to be considered ready to accept traffic after starting
             app.MapHealthChecks(HealthEndpointPath);
 

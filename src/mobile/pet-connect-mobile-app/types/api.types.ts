@@ -20,6 +20,10 @@ export interface ApiError {
   statusCode?: number;
   errors?: Record<string, string[]>;
   problemDetails?: ProblemDetails;
+  /**
+   * Optional detailed error info for debugging (status, headers, data, config, etc.)
+   */
+  details?: any;
 }
 
 /**

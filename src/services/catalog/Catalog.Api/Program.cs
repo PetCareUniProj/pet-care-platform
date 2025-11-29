@@ -9,10 +9,8 @@ builder.AddApplicationServices();
 
 var app = builder.Build();
 
-// CORS must be before other middleware
-app.MapDefaultEndpoints();
-
 app.CreateApiVersionSet();
+app.MapDefaultEndpoints();
 app.MapEndpoints();
 app.MapOpenApi();
 
@@ -24,7 +22,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
 await app.RunAsync();
 
 public partial class Program { }
