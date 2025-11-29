@@ -1,39 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, FormEvent, ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition, FormEvent, ChangeEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type {
-  BrandResponse,
-  BrandsResponse,
-  CategoryResponse,
-  CategoriesResponse,
-  ItemResponse,
-  ItemsResponse,
-} from "@/lib/api/types/catalog";
-
-interface CatalogItemsApiResponse {
-  readonly items: ItemResponse[];
-  readonly total: number;
-  readonly page: number;
-  readonly pageSize: number;
-  readonly brands: BrandResponse[];
-  readonly categories: CategoryResponse[];
-}
-
-interface CatalogFilters {
-  readonly name?: string;
-  readonly brandId?: number;
-  readonly categoryId?: number;
-  readonly sortBy?: string;
-  readonly page: number;
-  readonly pageSize: number;
-}
+import type { BrandResponse, CategoryResponse, ItemResponse } from "@/lib/api/types/catalog";
+import {
+  CatalogFilters,
+  CatalogItemsApiResponse,
+  DEFAULT_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+  buildFiltersFromUrlSearchParams,
+  buildRouterQueryString,
+  normalizePageSize,
+} from "./catalog-items-shared";
 
 interface CatalogFilterFormState {
   readonly name: string;
@@ -71,28 +54,25 @@ const sortOptions = [
   { value: "-price", label: "Price (high → low)" },
 ];
 
-const DEFAULT_PAGE_SIZE = 20;
-const MIN_PAGE_SIZE = 1;
-const MAX_PAGE_SIZE = 25;
-const pageSizeOptions = Array.from({ length: MAX_PAGE_SIZE }, (_, index) => index + 1);
-
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
 });
 
-const catalogApiBaseUrl = process.env.NEXT_PUBLIC_CATALOG_API_BASE_URL;
+interface CatalogItemsClientProps {
+  readonly data: CatalogItemsApiResponse | null;
+  readonly loadError: string | null;
+}
 
-export default function CatalogItemsClient() {
-  const { filters, applyFilters } = useQueryLinkedFilters();
-  const { data, isLoading, loadError } = useCatalogData(filters);
+export default function CatalogItemsClient({ data, loadError }: CatalogItemsClientProps) {
+  const { filters, applyFilters, isNavigating } = useQueryLinkedFilters();
   const filterForm = useCatalogFilterForm(filters, applyFilters);
   const pagination = usePaginationControls({
     filters,
     applyFilters,
     total: data?.total ?? 0,
     itemsCount: data?.items.length ?? 0,
-    isLoading,
+    isLoading: isNavigating,
     hasData: data !== null,
   });
 
@@ -106,12 +86,12 @@ export default function CatalogItemsClient() {
         onReset={filterForm.handleReset}
         brandOptions={data?.brands ?? []}
         categoryOptions={data?.categories ?? []}
-        isLoading={isLoading}
+        isLoading={isNavigating}
       />
       <CatalogInventoryCard
         items={data?.items ?? []}
         total={data?.total ?? 0}
-        isLoading={isLoading}
+        isLoading={isNavigating}
         loadError={loadError}
         pagination={pagination}
       />
@@ -236,7 +216,7 @@ function CatalogFiltersCard({
               onChange={(event) => onFieldChange("pageSize", event.target.value)}
               className={selectInputClassName}
             >
-              {pageSizeOptions.map((size) => (
+              {PAGE_SIZE_OPTIONS.map((size) => (
                 <option key={size} value={size}>
                   {size}
                 </option>
@@ -378,31 +358,25 @@ function useQueryLinkedFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsKey = searchParams.toString();
+  const [isNavigating, startTransition] = useTransition();
 
   const filters = useMemo<CatalogFilters>(() => {
     const params = new URLSearchParams(searchParamsKey);
-    const parsedPage = parseNumber(params.get("page")) ?? 1;
-    const parsedPageSize = parseNumber(params.get("pageSize")) ?? DEFAULT_PAGE_SIZE;
-    return {
-      name: params.get("name") ?? undefined,
-      brandId: parseNumber(params.get("brandId")),
-      categoryId: parseNumber(params.get("categoryId")),
-      sortBy: params.get("sortBy") ?? undefined,
-      page: Math.max(parsedPage, 1),
-      pageSize: normalizePageSize(parsedPageSize),
-    };
+    return buildFiltersFromUrlSearchParams(params);
   }, [searchParamsKey]);
 
   const applyFilters = useCallback(
     (nextFilters: CatalogFilters) => {
       const queryString = buildRouterQueryString(nextFilters);
       const nextUrl = queryString ? `/admin/catalog/items?${queryString}` : "/admin/catalog/items";
-      router.replace(nextUrl, { scroll: false });
+      startTransition(() => {
+        router.replace(nextUrl, { scroll: false });
+      });
     },
     [router]
   );
 
-  return { filters, applyFilters };
+  return { filters, applyFilters, isNavigating };
 }
 
 function useCatalogFilterForm(filters: CatalogFilters, applyFilters: (filters: CatalogFilters) => void) {
@@ -415,6 +389,7 @@ function useCatalogFilterForm(filters: CatalogFilters, applyFilters: (filters: C
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync form controls with URL-driven filters after navigation completes.
     setFormState({
       name: filters.name ?? "",
       brandId: filters.brandId ? String(filters.brandId) : "",
@@ -455,110 +430,6 @@ function useCatalogFilterForm(filters: CatalogFilters, applyFilters: (filters: C
   return { formState, handleFieldChange, handleSubmit, handleReset };
 }
 
-function useCatalogData(filters: CatalogFilters) {
-  const { data: session, status: sessionStatus } = useSession();
-  const accessToken = (session?.accessToken as string | undefined) ?? undefined;
-  const [data, setData] = useState<CatalogItemsApiResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    async function fetchData() {
-      if (sessionStatus === "loading") {
-        return;
-      }
-
-      if (sessionStatus !== "authenticated") {
-        setLoadError("Sign in to load catalog items.");
-        setData(null);
-        setIsLoading(false);
-        return;
-      }
-
-      if (!catalogApiBaseUrl) {
-        setLoadError("Missing NEXT_PUBLIC_CATALOG_API_BASE_URL. Start Aspire or configure the variable.");
-        setData(null);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setLoadError(null);
-
-      try {
-        const headers = new Headers({ Accept: "application/json" });
-        if (accessToken) {
-          headers.set("Authorization", `Bearer ${accessToken}`);
-        }
-
-        const taxonomyQuery = new URLSearchParams({ PageSize: String(MAX_PAGE_SIZE), Page: "1", SortBy: "name" }).toString();
-        const itemsQuery = buildApiItemsQueryString(filters);
-        const itemsUrl = `${catalogApiBaseUrl}/api/items?${itemsQuery}`;
-        const brandsUrl = `${catalogApiBaseUrl}/api/brand?${taxonomyQuery}`;
-        const categoriesUrl = `${catalogApiBaseUrl}/api/category?${taxonomyQuery}`;
-
-        const [itemsResponse, brandsResponse, categoriesResponse] = await Promise.all([
-          fetch(itemsUrl, { method: "GET", headers, cache: "no-store", signal: abortController.signal }),
-          fetch(brandsUrl, { method: "GET", headers, cache: "no-store", signal: abortController.signal }),
-          fetch(categoriesUrl, { method: "GET", headers, cache: "no-store", signal: abortController.signal }),
-        ]);
-
-        if (!itemsResponse.ok) {
-          const message = await itemsResponse.text();
-          throw new Error(message || "Failed to load catalog items.");
-        }
-
-        if (!brandsResponse.ok) {
-          const message = await brandsResponse.text();
-          throw new Error(message || "Failed to load catalog brands.");
-        }
-
-        if (!categoriesResponse.ok) {
-          const message = await categoriesResponse.text();
-          throw new Error(message || "Failed to load catalog categories.");
-        }
-
-        const itemsPayload = (await itemsResponse.json()) as ItemsResponse;
-        const brandsPayload = (await brandsResponse.json()) as BrandsResponse;
-        const categoriesPayload = (await categoriesResponse.json()) as CategoriesResponse;
-
-        if (!abortController.signal.aborted) {
-          setData({
-            items: itemsPayload.items,
-            total: itemsPayload.total,
-            page: itemsPayload.page,
-            pageSize: itemsPayload.pageSize,
-            brands: brandsPayload.items ?? [],
-            categories: categoriesPayload.items ?? [],
-          });
-          setLoadError(null);
-        }
-      } catch (error) {
-        if ((error as Error).name === "AbortError") {
-          return;
-        }
-        const message = error instanceof Error ? error.message : "Failed to load catalog items.";
-        setLoadError(message);
-        setData(null);
-      } finally {
-        if (!abortController.signal.aborted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    fetchData();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [accessToken, filters, sessionStatus]);
-
-  return { data, isLoading, loadError };
-}
-
 interface PaginationOptions {
   readonly filters: CatalogFilters;
   readonly applyFilters: (filters: CatalogFilters) => void;
@@ -573,6 +444,7 @@ function usePaginationControls(options: PaginationOptions): PaginationState {
   const [pageInputValue, setPageInputValue] = useState<string>(String(filters.page));
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Keep pagination input aligned with router state without remounting the control.
     setPageInputValue(String(filters.page));
   }, [filters.page]);
 
@@ -634,39 +506,8 @@ function usePaginationControls(options: PaginationOptions): PaginationState {
   };
 }
 
-function parseNumber(value: string | null): number | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const parsed = Number(value);
-  return Number.isNaN(parsed) ? undefined : parsed;
-}
-
 function formatPrice(value: number) {
   return currencyFormatter.format(value);
-}
-
-function buildRouterQueryString(filters: CatalogFilters) {
-  const query = new URLSearchParams();
-  if (filters.name) query.set("name", filters.name);
-  if (filters.brandId) query.set("brandId", filters.brandId.toString());
-  if (filters.categoryId) query.set("categoryId", filters.categoryId.toString());
-  if (filters.sortBy) query.set("sortBy", filters.sortBy);
-  if (filters.page > 1) query.set("page", filters.page.toString());
-  if (filters.pageSize !== DEFAULT_PAGE_SIZE) query.set("pageSize", filters.pageSize.toString());
-  return query.toString();
-}
-
-function buildApiItemsQueryString(filters: CatalogFilters) {
-  const query = new URLSearchParams();
-  if (filters.name) query.set("Name", filters.name);
-  if (filters.brandId) query.set("BrandId", filters.brandId.toString());
-  if (filters.categoryId) query.set("CategoryId", filters.categoryId.toString());
-  if (filters.sortBy) query.set("SortBy", filters.sortBy);
-  query.set("Page", filters.page.toString());
-  query.set("PageSize", filters.pageSize.toString());
-  return query.toString();
 }
 
 function getInventoryStatus(item: ItemResponse) {
@@ -683,11 +524,4 @@ function getInventoryStatus(item: ItemResponse) {
   }
 
   return { label: "Active", variant: "secondary" as const };
-}
-
-function normalizePageSize(value: number | undefined) {
-  if (!Number.isFinite(value)) {
-    return DEFAULT_PAGE_SIZE;
-  }
-  return Math.min(Math.max(value ?? DEFAULT_PAGE_SIZE, MIN_PAGE_SIZE), MAX_PAGE_SIZE);
 }
