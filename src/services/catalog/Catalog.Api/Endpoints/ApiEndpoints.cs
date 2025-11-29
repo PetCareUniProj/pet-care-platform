@@ -2,7 +2,7 @@
 
 public static class ApiEndpoints
 {
-    private const string ApiBase = $"api";
+    private const string ApiBase = $"api/catalog";
     public static class Brands
     {
         private const string Base = $"{ApiBase}/brand";
