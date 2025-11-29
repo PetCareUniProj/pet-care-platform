@@ -1,5 +1,4 @@
-﻿using Ordering.Api.Endpoints;
-using Ordering.Api.Extensions;
+﻿using Ordering.Api.Extensions;
 using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);

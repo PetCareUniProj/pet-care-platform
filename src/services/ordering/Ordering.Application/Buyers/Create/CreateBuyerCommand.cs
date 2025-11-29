@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Application.Buyers.Create;
+
 public sealed record CreateBuyerCommand : ICommand<Result>
 {
     public required Guid Id { get; init; }

@@ -2,6 +2,7 @@
 using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Orders.GetById;
+
 internal sealed class GetOrderByIdQueryHandler
     (IApplicationDbContext dbContext)
     : IQueryHandler<GetOrderByIdQuery, Result<OrderResponse>>

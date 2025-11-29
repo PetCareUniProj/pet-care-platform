@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
 
 namespace Catalog.Api.Endpoints.Items;
+
 internal sealed class Get : IEndpoint
 {
     public const string Name = "GetItems";

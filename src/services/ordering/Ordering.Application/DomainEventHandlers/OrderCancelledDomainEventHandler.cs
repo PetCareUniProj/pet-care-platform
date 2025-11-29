@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Application.DomainEventHandlers;
+
 internal sealed class OrderCancelledDomainEventHandler
     (IOrderingIntegrationEventService orderingIntegrationEventService) : IDomainEventHandler<OrderCancelledDomainEvent>
 {

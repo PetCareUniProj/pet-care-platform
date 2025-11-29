@@ -1,6 +1,4 @@
-﻿using SharedKernel;
-
-namespace Ordering.Api.Infrastructure;
+﻿namespace Ordering.Api.Infrastructure;
 
 public static class CustomResults
 {

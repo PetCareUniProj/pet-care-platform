@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 
 namespace ServiceDefaults;
+
 public static class ConfigurationExtensions
 {
     public static string GetRequiredValue(this IConfiguration configuration, string name) =>

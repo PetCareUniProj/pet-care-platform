@@ -1,7 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-using Ordering.Api.Endpoints;
-using Ordering.Application.Buyers.GetCardTypes;
+﻿using Ordering.Application.Buyers.GetCardTypes;
 
 namespace Ordering.Api.Tests.Integrational.Orders.CardTypes;
 

@@ -1,6 +1,7 @@
 ﻿using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Orders.SetStockConfirmedOrderStatus;
+
 internal sealed class SetStockConfirmedOrderStatusCommandHandler
     (IApplicationDbContext dbContext)
     : ICommandHandler<SetStockConfirmedOrderStatusCommand, Result>

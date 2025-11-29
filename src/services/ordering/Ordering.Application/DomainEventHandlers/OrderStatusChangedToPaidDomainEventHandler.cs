@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 namespace Ordering.Application.DomainEventHandlers;
+
 internal sealed class OrderStatusChangedToPaidDomainEventHandler
     (IApplicationDbContext dbContext,
     IOrderingIntegrationEventService orderingIntegrationEventService)

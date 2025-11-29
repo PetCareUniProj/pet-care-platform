@@ -2,6 +2,7 @@
 using Npgsql;
 
 namespace OrderProcessor;
+
 public class NpgsqlConnectionFactory : IDbConnectionFactory
 {
     private readonly NpgsqlDataSource _dataSource;

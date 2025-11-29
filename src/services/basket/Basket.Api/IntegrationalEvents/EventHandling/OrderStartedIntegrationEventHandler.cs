@@ -1,5 +1,4 @@
 ﻿using Basket.Api.IntegrationalEvents.Events;
-using EventBus.Abstractions;
 
 namespace Basket.Api.IntegrationalEvents.EventHandling;
 

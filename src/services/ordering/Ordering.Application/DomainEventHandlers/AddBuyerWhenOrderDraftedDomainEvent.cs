@@ -1,6 +1,7 @@
 ﻿using Ordering.Application.Buyers.Create;
 
 namespace Ordering.Application.DomainEventHandlers;
+
 internal sealed class AddBuyerWhenOrderDraftedDomainEvent(IMediator mediator) : IDomainEventHandler<OrderDraftedDomainEvent>
 {
     public async Task Handle(OrderDraftedDomainEvent domainEvent, CancellationToken cancellationToken)

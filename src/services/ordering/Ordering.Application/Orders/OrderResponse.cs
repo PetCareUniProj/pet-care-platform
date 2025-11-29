@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Application.Orders;
+
 public record OrderResponse
 {
     public int Id { get; init; }

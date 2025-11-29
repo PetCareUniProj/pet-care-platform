@@ -49,8 +49,7 @@ var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
     .WithReference(catalogDb).WaitFor(catalogDb)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
-builder.AddNpmApp("store-web", "../../store", "start:dev")
-    .WithNpmPackageInstallation()
+builder.AddJavaScriptApp("store-web", "../../store", "start:dev")
     .WithHttpEndpoint(env: "PORT")
     .WithReference(orderingApi).WaitFor(orderingApi)
     .WithReference(basketApi).WaitFor(basketApi)

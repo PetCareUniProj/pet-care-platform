@@ -1,6 +1,7 @@
 using FluentValidation;
 
 namespace Catalog.Application.Brands.Get;
+
 internal sealed class GetBrandsQueryValidator : AbstractValidator<GetBrandsQuery>
 {
     private static readonly string[] AcceptableSortFields =

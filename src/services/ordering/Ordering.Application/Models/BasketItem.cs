@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Application.Models;
+
 public record BasketItem
 {
     public int ProductId { get; init; }
