@@ -25,7 +25,7 @@ function resolveIssuer() {
   return undefined;
 }
 
-const clientId = process.env.KEYCLOAK_CLIENT_ID ?? "account";
+const clientId = process.env.KEYCLOAK_CLIENT_ID ?? "public-client-web"; //account?
 const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
 
 export const authConfig = {
