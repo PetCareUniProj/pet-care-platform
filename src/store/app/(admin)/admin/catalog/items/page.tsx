@@ -60,7 +60,7 @@ async function loadCatalogData(filters: CatalogFilters): Promise<{ data: Catalog
   };
 
   try {
-    const taxonomyQuery = new URLSearchParams({ PageSize: String(MAX_PAGE_SIZE), Page: "1", SortBy: "name" }).toString();
+    const taxonomyQuery = new URLSearchParams({ SortBy: "name" }).toString();
     const itemsQuery = buildApiItemsQueryString(filters);
     const itemsUrl = `${catalogApiBaseUrl}/api/catalog/items?${itemsQuery}`;
     const brandsUrl = `${catalogApiBaseUrl}/api/catalog/brand?${taxonomyQuery}`;
