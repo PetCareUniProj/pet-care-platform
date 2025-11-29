@@ -1,7 +1,7 @@
-using Catalog.Application.Abstractions.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Categories.Get;
+
 internal sealed class GetCategoriesQueryHandler : IQueryHandler<GetCategoriesQuery, Result<CategoriesResponse>>
 {
     private readonly IApplicationDbContext _dbContext;

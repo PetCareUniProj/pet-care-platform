@@ -1,6 +1,7 @@
 using FluentValidation;
 
 namespace Catalog.Application.Categories.Get;
+
 internal sealed class GetCategoriesQueryValidator : AbstractValidator<GetCategoriesQuery>
 {
     private static readonly string[] AcceptableSortFields =

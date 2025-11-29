@@ -69,7 +69,7 @@ public sealed class RecurringOrderActivationService(
         {
             using var connection = await connectionFactory.CreateConnectionAsync();
 
-             const string query = """
+            const string query = """
                 SELECT "id"
                 FROM public.orders
                 WHERE "is_recurring" = true

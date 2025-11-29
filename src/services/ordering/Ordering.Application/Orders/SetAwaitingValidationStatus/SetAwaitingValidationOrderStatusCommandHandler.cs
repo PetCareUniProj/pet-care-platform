@@ -1,6 +1,7 @@
 ﻿using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Orders.SetAwaitingValidationStatus;
+
 internal sealed class SetAwaitingValidationOrderStatusCommandHandler(IApplicationDbContext dbContext) : ICommandHandler<SetAwaitingValidationOrderStatusCommand, Result>
 {
     public async ValueTask<Result> Handle(SetAwaitingValidationOrderStatusCommand command, CancellationToken cancellationToken)

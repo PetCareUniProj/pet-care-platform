@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 
 namespace Ordering.Application.Orders.Create;
+
 internal sealed class CreateOrderCommandValidator
     : AbstractValidator<CreateOrderCommand>
 {

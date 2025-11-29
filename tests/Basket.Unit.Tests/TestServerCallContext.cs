@@ -1,6 +1,7 @@
 ﻿using Grpc.Core;
 
 namespace Basket.Unit.Tests;
+
 public class TestServerCallContext : ServerCallContext
 {
     private readonly Metadata _requestHeaders;

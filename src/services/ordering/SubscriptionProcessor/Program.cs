@@ -1,5 +1,5 @@
-using SubscriptionProcessor.Extensions;
 using ServiceDefaults;
+using SubscriptionProcessor.Extensions;
 
 var builder = Host.CreateApplicationBuilder(args);
 

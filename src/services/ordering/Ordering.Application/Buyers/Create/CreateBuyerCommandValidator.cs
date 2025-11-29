@@ -2,6 +2,7 @@
 using FluentValidation;
 
 namespace Ordering.Application.Buyers.Create;
+
 internal sealed class CreateBuyerCommandValidator
     : AbstractValidator<CreateBuyerCommand>
 {

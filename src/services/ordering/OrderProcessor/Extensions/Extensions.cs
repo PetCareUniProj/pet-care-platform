@@ -3,6 +3,7 @@ using EventBus.Extensions;
 using OrderProcessor.Events;
 using OrderProcessor.Services;
 namespace OrderProcessor.Extensions;
+
 public static class Extensions
 {
     public static void AddApplicationServices(this IHostApplicationBuilder builder)

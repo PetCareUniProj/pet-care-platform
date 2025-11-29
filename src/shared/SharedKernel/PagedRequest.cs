@@ -1,4 +1,5 @@
 ﻿namespace SharedKernel;
+
 public record PagedRequest
 {
     public const int DefaultPage = 1;

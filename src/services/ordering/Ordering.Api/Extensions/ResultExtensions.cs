@@ -1,6 +1,4 @@
-﻿using SharedKernel;
-
-namespace Ordering.Api.Extensions;
+﻿namespace Ordering.Api.Extensions;
 
 public static class ResultExtensions
 {

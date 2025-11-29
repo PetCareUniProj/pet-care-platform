@@ -2,6 +2,7 @@
 using Ordering.Application.Orders;
 
 namespace Ordering.Application.Extensions;
+
 public static class BasketItemExtensions
 {
     public static IEnumerable<OrderItemDTO> ToOrderItemsDTO(this IEnumerable<BasketItem> basketItems)

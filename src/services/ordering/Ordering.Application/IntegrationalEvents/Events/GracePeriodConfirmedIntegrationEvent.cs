@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Application.IntegrationalEvents.Events;
+
 public record GracePeriodConfirmedIntegrationEvent : IntegrationEvent
 {
     public int OrderId { get; }
