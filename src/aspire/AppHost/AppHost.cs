@@ -40,6 +40,7 @@ builder.AddProject<OrderProcessor>("orderprocessor")
 builder.AddProject<SubscriptionProcessor>("subscriptionprocessor")
     .WithReference(orderDb).WaitFor(orderDb)
     .WithReference(rabbitMq).WaitFor(rabbitMq);
+
 builder.AddProject<PaymentProcessor>("paymentprocessor")
     .WithReference(rabbitMq).WaitFor(rabbitMq);
 
@@ -53,8 +54,7 @@ builder.AddJavaScriptApp("store-web", "../../store", "start:dev")
     .WithReference(orderingApi).WaitFor(orderingApi)
     .WithReference(basketApi).WaitFor(basketApi)
     .WithReference(catalogApi).WaitFor(catalogApi)
-    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint)
-
+    .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
 // Add Scalar API Reference with debugging enabled
 var scalar = builder.AddScalarApiReference(options =>

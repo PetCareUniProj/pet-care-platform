@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\services\ordering\Ordering.Api\Ordering.Api.csproj" />
     <ProjectReference Include="..\..\services\ordering\OrderProcessor\OrderProcessor.csproj" />
     <ProjectReference Include="..\..\services\ordering\PaymentProcessor\PaymentProcessor.csproj" />
+    <ProjectReference Include="..\..\services\ordering\SubscriptionProcessor\SubscriptionProcessor.csproj" />
   </ItemGroup>
 
   <ItemGroup>
