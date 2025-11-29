@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 
 namespace Catalog.Application.Items.Delete;
+
 internal sealed class DeleteItemCommandValidator : AbstractValidator<DeleteItemCommand>
 {
     public DeleteItemCommandValidator()

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 namespace Ordering.Application.DomainEventHandlers;
+
 internal sealed class OrderStatusChangedToAwaitingValidationDomainEventHandler
     (IApplicationDbContext dbContext, IOrderingIntegrationEventService orderingIntegrationEventService)
     : IDomainEventHandler<OrderStatusChangedToAwaitingValidationDomainEvent>

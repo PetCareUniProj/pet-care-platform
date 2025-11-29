@@ -1,5 +1,4 @@
-﻿using Catalog.Application.Abstractions.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Items.Get;
 

@@ -1,8 +1,8 @@
-using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Categories.GetById;
+
 internal sealed class GetCategoryByIdQueryHandler : IQueryHandler<GetCategoryByIdQuery, Result<CategoryResponse>>
 {
     private readonly IApplicationDbContext _dbContext;

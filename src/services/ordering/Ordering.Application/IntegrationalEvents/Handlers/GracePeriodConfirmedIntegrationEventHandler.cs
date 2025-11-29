@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Ordering.Application.Orders.SetAwaitingValidationStatus;
 
 namespace Ordering.Application.IntegrationalEvents.Handlers;
+
 public sealed class GracePeriodConfirmedIntegrationEventHandler
     (IMediator mediator,
     ILogger<GracePeriodConfirmedIntegrationEventHandler> logger)

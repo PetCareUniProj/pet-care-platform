@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 
 namespace Ordering.Application.Orders;
+
 internal sealed class OrderItemDTOValidator : AbstractValidator<OrderItemDTO>
 {
     public OrderItemDTOValidator()

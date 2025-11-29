@@ -1,4 +1,5 @@
 ﻿namespace OrderProcessor;
+
 public class BackgroundTaskOptions
 {
     public int GracePeriodTime { get; set; }

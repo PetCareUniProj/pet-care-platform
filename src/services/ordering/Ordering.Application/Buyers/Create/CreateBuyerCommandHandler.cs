@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Ordering.Domain.Errors;
 
 namespace Ordering.Application.Buyers.Create;
+
 internal sealed class CreateBuyerCommandHandler(IApplicationDbContext applicationDbContext) : ICommandHandler<CreateBuyerCommand, Result>
 {
     public async ValueTask<Result> Handle(CreateBuyerCommand command, CancellationToken cancellationToken)

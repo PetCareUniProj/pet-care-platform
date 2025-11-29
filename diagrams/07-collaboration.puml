@@ -1,0 +1,95 @@
+@startuml Collaboration Diagram - Order Processing Objects
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 10
+skinparam defaultFontName Arial
+
+' Enhanced styling
+skinparam component {
+    BackgroundColor #E8F4F8
+    BorderColor #2E86AB
+    BorderThickness 2
+}
+
+skinparam arrow {
+    Color #1E3A5F
+    Thickness 1
+}
+
+' Actor
+rectangle "Клієнт" as Client #FFE5B4
+
+' Frontend Layer
+component "StoreWeb" as StoreWeb
+
+' Business Services
+component "BasketService" as BasketSvc
+component "OrderService" as OrderSvc
+component "CatalogService" as CatalogSvc
+component "PaymentService" as PaymentSvc
+
+' Event System
+component "EventPublisher" as EventPub
+component "RabbitMQ" as EventBus
+
+' Data Access
+component "BasketRepository" as BasketRepo
+component "OrderRepository" as OrderRepo
+component "ItemRepository" as ItemRepo
+
+' Infrastructure
+component "PostgreSQL" as DB
+component "Redis Cache" as Cache
+
+' Browse Cart Flow (1-8)
+Client --> StoreWeb : 1: browseCart()
+StoreWeb --> BasketSvc : 2: getBasket()
+BasketSvc --> BasketRepo : 3: getByUserId()
+BasketRepo --> Cache : 4: get()
+Cache --> BasketRepo : 5: return
+BasketRepo --> BasketSvc : 6: return
+BasketSvc --> StoreWeb : 7: return
+StoreWeb --> Client : 8: display
+
+' Checkout Flow (9-27)
+Client --> StoreWeb : 9: checkout()
+StoreWeb --> OrderSvc : 10: createOrder()
+
+OrderSvc --> CatalogSvc : 11: validateStock()
+CatalogSvc --> ItemRepo : 12: getItems()
+ItemRepo --> DB : 13: SELECT
+DB --> ItemRepo : 14: return
+ItemRepo --> CatalogSvc : 15: return
+CatalogSvc --> OrderSvc : 16: validated
+
+OrderSvc --> OrderRepo : 17: save()
+OrderRepo --> DB : 18: INSERT
+DB --> OrderRepo : 19: orderId
+OrderRepo --> OrderSvc : 20: saved
+
+OrderSvc --> EventPub : 21: publish()
+EventPub --> EventBus : 22: publish()
+
+OrderSvc --> PaymentSvc : 24: initiatePayment()
+PaymentSvc --> OrderSvc : 25: paymentUrl
+OrderSvc --> StoreWeb : 26: result
+StoreWeb --> Client : 27: redirect
+
+' Payment Callback (28-31)
+PaymentSvc --> OrderSvc : 28: callback()
+OrderSvc --> OrderRepo : 29: updateStatus()
+OrderRepo --> DB : 30: UPDATE
+DB --> OrderRepo : 31: ok
+
+' Event-driven Basket Cleanup (32-36)
+EventBus --> BasketSvc : 32: event()
+BasketSvc --> BasketRepo : 33: delete()
+BasketRepo --> Cache : 34: delete()
+Cache --> BasketRepo : 35: ok
+BasketRepo --> BasketSvc : 36: cleared
+
+' Final Response (37-38)
+OrderSvc --> StoreWeb : 37: completed
+StoreWeb --> Client : 38: success
+
+@enduml

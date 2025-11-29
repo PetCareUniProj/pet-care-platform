@@ -1,4 +1,5 @@
 ﻿namespace Ordering.Application.IntegrationalEvents.Events;
+
 public record OrderStockItem
 {
     public int ProductId { get; }

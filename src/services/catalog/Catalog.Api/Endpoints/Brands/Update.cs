@@ -7,6 +7,7 @@ using Mediator;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Catalog.Api.Endpoints.Brands;
+
 internal sealed class Update : IEndpoint
 {
     public const string Name = "UpdateBrand";

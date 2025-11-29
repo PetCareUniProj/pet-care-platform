@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Ordering.Application.Orders.SetPaidOrderStatus;
 
 namespace Ordering.Application.IntegrationalEvents.Handlers;
+
 public class OrderPaymentSucceededIntegrationEventHandler
     (IMediator mediator,
     ILogger<OrderPaymentSucceededIntegrationEventHandler> logger) :

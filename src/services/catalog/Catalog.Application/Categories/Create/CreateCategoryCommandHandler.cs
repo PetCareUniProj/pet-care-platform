@@ -1,9 +1,9 @@
-using Catalog.Application.Abstractions.Data;
 using Catalog.Domain.Entities;
 using Catalog.Domain.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Application.Categories.Create;
+
 internal sealed class CreateCategoryCommandHandler : ICommandHandler<CreateCategoryCommand, Result<CategoryResponse>>
 {
     private readonly IApplicationDbContext _dbContext;

@@ -1,0 +1,78 @@
+@startuml Activity Diagram - Subscription Reminder & Order Processing
+
+<style>
+activityDiagram {
+    BackgroundColor #FEFEFE
+    FontSize 11
+    FontName Arial
+    activity {
+        BackgroundColor #F2E6FF
+        BorderColor #9900CC
+        FontSize 11
+        FontName Arial
+    }
+    diamond {
+        BackgroundColor #E6CCFF
+        BorderColor #770099
+        FontSize 11
+        FontName Arial
+    }
+    partition {
+        BackgroundColor #D9CCFF
+        BorderColor #550077
+        FontSize 11
+        FontName Arial
+    }
+    note {
+        BackgroundColor #FFFACD
+        BorderColor #FFD700
+        BorderThickness 1
+        FontSize 11
+        FontName Arial
+    }
+}
+</style>
+
+
+start
+
+partition "Backend (Subscription Processor)" {
+    :Перевірити графік підписки;
+    :Створити попереднє замовлення;
+    :Надіслати Push-сповіщення;
+}
+
+partition "Мобільний Застосунок (Клієнт)" {
+    :Відобразити нагадування;
+}
+
+partition "Клієнт (Власник тварини)" {
+    :Прийняти рішення щодо замовлення;
+}
+
+if (Замовлення підтверджено?) then (так       )
+    partition "Backend (Subscription Processor)" {
+        :Ініціювати платіжну операцію;
+        :Перевірити статус оплати;
+    }
+  
+    if (Оплата успішна?) then (так       )
+        partition "Backend (Subscription Processor)" {
+            :Змінити статус замовлення на "Опрацьовано";
+            :Підготовити до відправлення;
+        }
+        stop
+    else (       ні)
+        partition "Backend (Subscription Processor)" {
+            :Надіслати сповіщення про помилку;
+        }
+        stop
+    endif
+else (        ні)
+    partition "Backend (Subscription Processor)" {
+        :Скасувати замовлення;
+    }
+    stop
+endif
+
+@enduml

@@ -1,8 +1,6 @@
 ﻿using System.Reflection;
 using Asp.Versioning;
-using EventBus.Abstractions;
-using EventBus.Extensions;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Ordering.Api.Auth;
 using Ordering.Api.Infrastructure;
 using Ordering.Application;
@@ -84,10 +82,15 @@ internal static class Extensions
                     }
                 };
                 document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
                 document.Components.SecuritySchemes.Add("oauth2", securityScheme);
 
-                var securityRequirement = new OpenApiSecurityRequirement { [securityScheme] = [] };
-                document.SecurityRequirements = [securityRequirement];
+                var schemeReference = new OpenApiSecuritySchemeReference("oauth", document);
+                var securityRequirement = new OpenApiSecurityRequirement
+                {
+                    [schemeReference] = []
+                };
+                document.Security = [securityRequirement];
 
                 return Task.CompletedTask;
             });

@@ -1,4 +1,5 @@
 namespace Catalog.Application.Categories;
+
 public record CategoryResponse
 {
     public int Id { get; init; }

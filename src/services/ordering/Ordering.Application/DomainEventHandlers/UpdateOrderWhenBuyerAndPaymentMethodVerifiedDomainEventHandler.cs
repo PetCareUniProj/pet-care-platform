@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 
 namespace Ordering.Application.DomainEventHandlers;
+
 internal sealed class UpdateOrderWhenBuyerAndPaymentMethodVerifiedDomainEventHandler
     (IApplicationDbContext dbContext,
     ILogger<UpdateOrderWhenBuyerAndPaymentMethodVerifiedDomainEventHandler> logger)

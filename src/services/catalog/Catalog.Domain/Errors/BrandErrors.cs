@@ -1,6 +1,7 @@
 using SharedKernel;
 
 namespace Catalog.Domain.Errors;
+
 public static class BrandErrors
 {
     public static Error NotFound(int brandId) => Error.NotFound(
