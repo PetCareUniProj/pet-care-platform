@@ -58,6 +58,7 @@ builder.AddJavaScriptApp("store-web", "../../store", "start:dev")
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
 
 builder.AddYarp("mobile-bff")
+    .WithHostPort(8888)
     .WithExternalHttpEndpoints()
     .ConfigureMobileBffRoutes(catalogApi, orderingApi, basketApi, keycloak);
 

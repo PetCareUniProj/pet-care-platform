@@ -1,30 +1,30 @@
 // API Configuration Constants
 
 // Base URLs for microservices
-export const CATALOG_API_URL = process.env.EXPO_PUBLIC_CATALOG_API_URL || 'http://10.0.2.2:64416/';
-export const ORDERING_API_URL = process.env.EXPO_PUBLIC_ORDERING_API_URL || 'http://10.0.2.2:64416/';
-export const BASKET_API_URL = process.env.EXPO_PUBLIC_BASKET_API_URL || 'http://10.0.2.2:64416/';
-export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL || 'http://10.0.2.2:62942';
+export const CATALOG_API_URL = process.env.EXPO_PUBLIC_CATALOG_API_URL || 'http://10.0.2.2:8888/';
+export const ORDERING_API_URL = process.env.EXPO_PUBLIC_ORDERING_API_URL || 'http://10.0.2.2:8888/';
+export const BASKET_API_URL = process.env.EXPO_PUBLIC_BASKET_API_URL || 'http://10.0.2.2:8888/';
+export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL || 'http://10.0.2.2:8888/';
 
 // Legacy - for backward compatibility
-export const API_BASE_URL = 'http://10.0.2.2:64416/';
+export const API_BASE_URL = 'http://10.0.2.2:8888/';
 
 export const API_ENDPOINTS = {
   // ============ Catalog API ============
   CATALOG: {
     BASE: '/api',
     ITEMS: {
-      GET_ALL: '/api/items',
-      GET_BY_ID: (idOrSlug: string) => `/api/items/${idOrSlug}`,
-      GET_PICTURE: (id: number) => `${CATALOG_API_URL}/api/items/${id}/pic`,
+      GET_ALL: '/api/catalog/items',
+      GET_BY_ID: (idOrSlug: string) => `/api/catalog/items/${idOrSlug}`,
+      GET_PICTURE: (id: number) => `${CATALOG_API_URL}/api/catalog/items/${id}/pic`,
     },
     CATEGORIES: {
-      GET_ALL: '/api/category',
-      GET_BY_ID: (id: number) => `/api/category/${id}`,
+      GET_ALL: '/api/catalog/category',
+      GET_BY_ID: (id: number) => `/api/catalog/category/${id}`,
     },
     BRANDS: {
-      GET_ALL: '/api/brand',
-      GET_BY_ID: (id: number) => `/api/brand/${id}`,
+      GET_ALL: '/api/catalog/brand',
+      GET_BY_ID: (id: number) => `/api/catalog/brand/${id}`,
     },
   },
 
