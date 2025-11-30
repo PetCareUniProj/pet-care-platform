@@ -1,165 +1,174 @@
-import { shipOrderAction, cancelOrderAction } from "@/app/(admin)/admin/orders/actions";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getOrdersByUserId, getOrdersForCurrentUser } from "@/lib/api/ordering";
-import type { OrderResponse } from "@/lib/api/types/ordering";
+import { Button } from "@/components/ui/button";
+import { getOrders } from "@/lib/api/ordering";
+import { ApiError } from "@/lib/api/http";
+import { ORDER_STATUS_VALUES, type OrdersResponse } from "@/lib/api/types/ordering";
+import { OrdersFolderList } from "@/app/(admin)/admin/orders/orders-folders";
+import {
+  PAGE_SIZE_OPTIONS,
+  buildGetOrdersParams,
+  buildOrdersHref,
+  parseOrdersFilters,
+  type OrdersFilterState,
+} from "@/app/(admin)/admin/orders/orders-filtering";
+import { OrdersPagination } from "@/app/(admin)/admin/orders/orders-pagination";
+import Link from "next/link";
 
-const friendlyStatusMap: Record<string, string> = {
-  awaitingvalidation: "Awaiting validation",
-  awaitingstock: "Awaiting stock",
-  paid: "Paid",
-  shipped: "Shipped",
-};
-
-function formatStatus(value: string) {
-  const key = value.toLowerCase().replaceAll(" ", "");
-  return friendlyStatusMap[key] ?? value;
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function canShip(order: OrderResponse) {
-  const status = order.orderStatus.toLowerCase();
-  return status.includes("paid") || status.includes("ready");
-}
-
-function canCancel(order: OrderResponse) {
-  const status = order.orderStatus.toLowerCase();
-  return !status.includes("shipped");
-}
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface OrdersPageProps {
   searchParams?: Record<string, string | string[]>;
 }
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
-  const userId = typeof searchParams?.userId === "string" ? searchParams.userId.trim() : "";
-  const pageParam = typeof searchParams?.page === "string" ? Number(searchParams.page) : 1;
-  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
-
-  let ordersResponse: Awaited<ReturnType<typeof getOrdersForCurrentUser>> | null = null;
-  let error: string | null = null;
+  const filters = await parseOrdersFilters(searchParams);
+  const currentPath = buildOrdersHref("/admin/orders", filters);
+  let ordersResponse: Awaited<ReturnType<typeof getOrders>> | null = null;
+  let loadError: string | null = null;
 
   try {
-    if (userId) {
-      ordersResponse = await getOrdersByUserId(userId, { page, pageSize: 20 });
+    ordersResponse = await getOrders(buildGetOrdersParams(filters));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      ordersResponse = buildEmptyOrdersResponse(filters);
     } else {
-      ordersResponse = await getOrdersForCurrentUser({ page, pageSize: 20 });
+      loadError = error instanceof Error ? error.message : "Failed to load orders.";
     }
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Unable to load orders.";
   }
 
-  const orders = ordersResponse?.items ?? [];
+  const items = ordersResponse?.items ?? [];
+  const total = ordersResponse?.total ?? 0;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <header className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Orders</h1>
+          <h1 className="text-2xl font-semibold">Order management</h1>
           <p className="text-muted-foreground text-sm">
-            View, ship, or cancel orders through the protected Ordering API endpoints.
+            Audit every order via the Ordering API and ship paid orders from one workspace.
           </p>
         </div>
-        <form className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center" action="/admin/orders">
-          <Input
-            name="userId"
-            placeholder="User ID (GUID)"
-            defaultValue={userId}
-            className="md:w-72"
-          />
-          <Button type="submit">Load orders</Button>
-        </form>
-      </div>
+        <Button asChild>
+          <Link href="/admin/orders/user/me">My orders</Link>
+        </Button>
+      </header>
 
-      {error ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+          <CardDescription>Query the `/api/orders` endpoint by status, page size, and recurrence.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <OrdersFiltersForm filters={filters} />
+        </CardContent>
+      </Card>
+
+      {loadError ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          {loadError}
         </div>
       ) : null}
 
       <Card>
-        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Live orders</CardTitle>
-            <CardDescription>
-              {userId ? `Showing orders for user ${userId}` : "Showing your own orders. Filter by user id to audit others."}
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" disabled>
-              Filter
-            </Button>
-            <Button disabled>Download CSV</Button>
+        <CardHeader>
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <CardTitle>Orders</CardTitle>
+              <CardDescription>Fold open an order to inspect its shipping info and items.</CardDescription>
+            </div>
+            <p className="text-xs text-muted-foreground">{total} total records</p>
           </div>
         </CardHeader>
-        <CardContent>
-          {orders.length === 0 ? (
-            <div className="text-muted-foreground text-sm">No orders found for the selected user.</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => {
-                  const status = formatStatus(order.orderStatus);
-                  const shipAllowed = canShip(order);
-                  const cancelAllowed = canCancel(order);
-                  return (
-                    <TableRow key={order.id}>
-                      <TableCell>#{order.id}</TableCell>
-                      <TableCell className="max-w-[220px] truncate">
-                        {order.buyerId ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={status.toLowerCase().includes("awaiting") ? "destructive" : "secondary"}>{status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
-                      <TableCell className="text-right">{formatDate(order.orderDate)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <form action={cancelOrderAction}>
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <Button variant="outline" size="sm" type="submit" disabled={!cancelAllowed}>
-                              Cancel
-                            </Button>
-                          </form>
-                          <form action={shipOrderAction}>
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <Button size="sm" type="submit" disabled={!shipAllowed}>
-                              Ship
-                            </Button>
-                          </form>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+        <CardContent className="space-y-4">
+          <OrdersFolderList orders={items} currentPath={currentPath} />
+          <OrdersPagination filters={filters} total={total} itemsOnPage={items.length} basePath="/admin/orders" />
         </CardContent>
       </Card>
     </div>
   );
+}
+
+interface OrdersFiltersFormProps {
+  filters: OrdersFilterState;
+}
+
+function buildEmptyOrdersResponse(filters: OrdersFilterState): OrdersResponse {
+  return {
+    items: [],
+    total: 0,
+    page: filters.page,
+    pageSize: filters.pageSize,
+    hasNextPage: false,
+  };
+}
+
+function OrdersFiltersForm({ filters }: OrdersFiltersFormProps) {
+  const recurringValue = typeof filters.isRecurring === "boolean" ? String(filters.isRecurring) : "";
+  return (
+    <form className="space-y-4" method="get">
+      <input type="hidden" name="page" value="1" />
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Statuses</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {ORDER_STATUS_VALUES.map((status) => (
+            <label key={status} className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                name="status"
+                value={status}
+                defaultChecked={filters.statuses.includes(status)}
+                className="h-4 w-4 rounded border border-input text-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+              <span>{formatStatusLabel(status)}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium" htmlFor="pageSize">
+            Page size
+          </label>
+          <select
+            id="pageSize"
+            name="pageSize"
+            defaultValue={String(filters.pageSize)}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={String(size)}>
+                {size} per page
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium" htmlFor="recurring">
+            Recurrence
+          </label>
+          <select
+            id="recurring"
+            name="recurring"
+            defaultValue={recurringValue}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="">All orders</option>
+            <option value="true">Recurring only</option>
+            <option value="false">One-time orders</option>
+          </select>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit">Apply filters</Button>
+        <Button type="button" variant="outline" asChild>
+          <Link href="/admin/orders">Reset</Link>
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function formatStatusLabel(value: string) {
+  return value.replace(/([a-z])([A-Z])/g, "$1 $2");
 }

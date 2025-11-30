@@ -36,3 +36,15 @@ export interface OrderResponse {
 }
 
 export type OrdersResponse = PagedResponse<OrderResponse>;
+
+export const ORDER_STATUS_VALUES = [
+  "Draft",
+  "Submitted",
+  "AwaitingValidation",
+  "StockConfirmed",
+  "Paid",
+  "Shipped",
+  "Cancelled",
+] as const;
+
+export type OrderStatusValue = (typeof ORDER_STATUS_VALUES)[number];
