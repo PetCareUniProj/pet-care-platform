@@ -29,7 +29,7 @@ public class Ship : IEndpoint
         .WithSummary("Ship an order")
         .WithDescription("This endpoint allows you to ship an order by its ID.")
         .Produces(StatusCodes.Status200OK)
-        .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
-        .RequireAuthorization(AuthConstants.AdminUserPolicyName);
+        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+        // .RequireAuthorization(AuthConstants.AdminUserPolicyName);
     }
 }

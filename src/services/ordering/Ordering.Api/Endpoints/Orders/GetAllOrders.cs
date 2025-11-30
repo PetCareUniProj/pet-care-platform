@@ -49,7 +49,7 @@ internal sealed class GetAllOrders : IEndpoint
         .WithSummary("Get All Orders")
         .WithDescription("Gets all orders with optional filters for admin users.")
         .Produces<OrdersResponse>(StatusCodes.Status200OK)
-        .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
-        .RequireAuthorization(AuthConstants.AdminUserPolicyName);
+        .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
+        // .RequireAuthorization(AuthConstants.AdminUserPolicyName);
     }
 }
