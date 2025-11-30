@@ -60,9 +60,6 @@ export function AdminTopBar({ accountSettingsUrl }: AdminTopBarProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/admin/settings">Workspace settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
               <a href={accountSettingsUrl} target="_blank" rel="noreferrer noopener">
                 Account settings
               </a>

@@ -90,11 +90,6 @@ export const adminNav: AdminNavSection[] = [
         href: "/admin/catalog/price-books",
         icon: Cuboid,
         badge: "todo"
-      },
-      {
-        title: "Settings",
-        href: "/admin/settings",
-        icon: Settings
       }
     ]
   }
