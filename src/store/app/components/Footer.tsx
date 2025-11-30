@@ -11,20 +11,10 @@ const Footer: React.FC<FooterProps> = ({ className = "" }) => {
 
             <div className="relative grid grid-cols-5 gap-8 mb-14">
                 <div className="col-span-2">
-                    <div className="text-xl font-bold mb-5">🐾 Pet Shop</div>
+                    <div className="text-xl font-bold mb-5">PET SHOP</div>
                     <p className="text-black mb-5 leading-5">
-                        Sed viverra eget fames sit varius. Pellentesque mattis libero viverra dictumst
-                        ornaresed justo convallis vitae
+                        We are committed to providing the best products and services for your beloved pets. Your satisfaction is our priority.
                     </p>
-
-                    <div className="flex gap-5">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div
-                                key={i}
-                                className="w-6 h-6 bg-black rounded cursor-pointer hover:bg-orange-500 transition-colors"
-                            />
-                        ))}
-                    </div>
                 </div>
 
                 <div>
@@ -60,13 +50,7 @@ const Footer: React.FC<FooterProps> = ({ className = "" }) => {
 
             <div className="border-t border-black/10 pt-8 flex justify-between items-center">
                 <div className="text-black/50 text-sm">
-                    © Copyright Pet Shop 2024. Design by Figma.guru
-                </div>
-
-                <div className="flex gap-4">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="w-12 h-8 bg-black/80 rounded" />
-                    ))}
+                    © Copyright Pet Shop 2025. All rights reserved. OWO
                 </div>
             </div>
         </div>
