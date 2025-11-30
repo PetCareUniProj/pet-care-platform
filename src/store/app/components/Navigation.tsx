@@ -143,7 +143,7 @@ export default function Navigation({
             <div className="w-full">
                 <div className="mb-6 mt-6 flex justify-center">
                     <div className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-400 px-6 py-3 text-2xl font-bold text-white shadow-lg">
-                        <span className="tracking-[0.2em]">PET SHOP</span>
+                        <span className="tracking-[0.2em]">PET CONNECT</span>
                     </div>
                 </div>
                 <div className="bg-white rounded-[40px] shadow-lg px-10 py-6 flex justify-between items-center relative z-30">

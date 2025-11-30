@@ -11,7 +11,7 @@ const Footer: React.FC<FooterProps> = ({ className = "" }) => {
 
             <div className="relative grid grid-cols-5 gap-8 mb-14">
                 <div className="col-span-2">
-                    <div className="text-xl font-bold mb-5">PET SHOP</div>
+                    <div className="text-xl font-bold mb-5">PET CONNECT</div>
                     <p className="text-black mb-5 leading-5">
                         We are committed to providing the best products and services for your beloved pets. Your satisfaction is our priority.
                     </p>
@@ -50,7 +50,7 @@ const Footer: React.FC<FooterProps> = ({ className = "" }) => {
 
             <div className="border-t border-black/10 pt-8 flex justify-between items-center">
                 <div className="text-black/50 text-sm">
-                    © Copyright Pet Shop 2025. All rights reserved. OWO
+                    © Copyright Pet Connect 2025. All rights reserved. OWO
                 </div>
             </div>
         </div>

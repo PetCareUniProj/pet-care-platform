@@ -51,7 +51,7 @@ export const PetShopContact : React.FC<PetShopContactProps> = ({
                 <div className="w-full max-w-7xl relative flex flex-wrap justify-between items-center gap-8">
                     <div className="flex-1 min-w-[300px] flex flex-col gap-11">
                         <div className="flex flex-col gap-5">
-                            <span className="text-orange-500 text-base font-bold uppercase">Pet shop</span>
+                            <span className="text-orange-500 text-base font-bold uppercase">Pet Connect</span>
                             <h1 className="text-black text-5xl font-bold leading-tight">If animals could talk, they'd talk about us!</h1>
                         </div>
                         <p className="text-black/80 text-base leading-6 max-w-md">Trusted by pet owners, loved by pets. We are dedicated to providing premium supplies and exceptional care advice for every animal companion.</p>
