@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ShoppingCart, X, Plus, Minus, Trash2, Loader2 } from 'lucide-react';
 import { useCart } from '@/app/context/CartContext';
+import { useRouter } from 'next/navigation';
 
 interface CartPopupProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ const CartPopup: React.FC<CartPopupProps> = ({
     catalogApiUrl
 }) => {
     const { items: cartItems, loading, error, updateQuantity, removeItem, clearCart, enrichItems } = useCart();
+    const router = useRouter();
     const normalizedCatalogApiUrl = useMemo(() => catalogApiUrl.replace(/\/+$/, ''), [catalogApiUrl]);
     const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({});
 
@@ -189,7 +191,13 @@ const CartPopup: React.FC<CartPopupProps> = ({
                         </div>
 
                         <div className="space-y-2">
-                            <button className="w-full py-4 bg-orange-500 text-white font-bold text-lg rounded-xl hover:bg-orange-600 transition-colors">
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    router.push('/store/checkout/review');
+                                }}
+                                className="w-full py-4 bg-orange-500 text-white font-bold text-lg rounded-xl hover:bg-orange-600 transition-colors"
+                            >
                                 Proceed to Checkout
                             </button>
                             <button

@@ -1,6 +1,13 @@
 import { auth } from "@/auth";
 import { ApiError } from "@/lib/api/http";
-import type { OrderResponse, OrdersResponse } from "@/lib/api/types/ordering";
+import type {
+  CardTypeResponse,
+  CreateOrderDraftRequest,
+  CreateOrderRequest,
+  OrderDraftResponse,
+  OrderResponse,
+  OrdersResponse,
+} from "@/lib/api/types/ordering";
 import { getServiceEndpoint } from "@/service-discovery";
 
 const ORDERING_SERVICE_NAME = "ordering-api";
@@ -131,4 +138,22 @@ export async function shipOrder(orderId: number) {
 
 export async function cancelOrder(orderId: number) {
   return orderingRequest<void>(`/api/orders/cancel/${orderId}`, { method: "POST" });
+}
+
+export async function createOrderDraft(payload: CreateOrderDraftRequest) {
+  return orderingRequest<OrderDraftResponse>("/api/orders/draft", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function createOrder(payload: CreateOrderRequest) {
+  return orderingRequest<OrderResponse>("/api/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getCardTypes() {
+  return orderingRequest<CardTypeResponse[]>("/api/orders/cardtypes", { method: "GET" });
 }
