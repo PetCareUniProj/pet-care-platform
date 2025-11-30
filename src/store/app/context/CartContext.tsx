@@ -20,13 +20,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode; basketApiUrl?: string; catalogApiUrl?: string }> = ({
     children,
-    basketApiUrl = '',
-    catalogApiUrl = ''
+    basketApiUrl = '/api/storefront/basket',
+    catalogApiUrl = '/api/storefront/catalog'
 }) => {
     const [items, setItems] = useState<BasketItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [basketClient] = useState(() => new BasketClient(basketApiUrl));
+    const [basketClient] = useState(() => new BasketClient(basketApiUrl, { resourcePath: '' }));
 
     // Встановлюємо catalogApiUrl в sessionStorage
     useEffect(() => {
@@ -57,14 +57,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode; basketApiUrl?: 
     }, [fetchCart]);
 
     const enrichItems = useCallback(async (catalogApiUrl: string) => {
-        const API_BASE_URL = `${catalogApiUrl.replace(/\/+$/, '')}/api`;
-
+        const apiBaseUrl = catalogApiUrl.replace(/\/+$/, '');
         const enrichedItems = await Promise.all(
             items.map(async (item) => {
                 if (item.name && item.price) return item; // Already enriched
 
                 try {
-                    const response = await fetch(`${API_BASE_URL}/items/${item.product_id}`);
+                    const response = await fetch(`${apiBaseUrl}/items/${item.product_id}`);
                     if (response.ok) {
                         const product = await response.json();
                         return {

@@ -1,13 +1,12 @@
-import { getServiceEndpoint } from '@/service-discovery';
 import { CartProvider } from "@/app/context/CartContext";
 import React from 'react';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-    const catalogApiUrl = getServiceEndpoint("catalog-api") || 'http://localhost:5000';
-    const basketApiUrl = getServiceEndpoint("basket-api") || 'http://localhost:5001';
+const STOREFRONT_CATALOG_API_BASE = '/api/storefront/catalog';
+const STOREFRONT_BASKET_API_BASE = '/api/storefront/basket';
 
+export default function Layout({ children }: { children: React.ReactNode }) {
     return (
-        <CartProvider basketApiUrl={basketApiUrl} catalogApiUrl={catalogApiUrl}>
+        <CartProvider basketApiUrl={STOREFRONT_BASKET_API_BASE} catalogApiUrl={STOREFRONT_CATALOG_API_BASE}>
             {children}
         </CartProvider>
     );

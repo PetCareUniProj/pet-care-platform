@@ -2,7 +2,7 @@
 
 import { Search, ShoppingCart, Heart, Menu, X } from "lucide-react";
 import NavLink from "./NavLink";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import CartPopup from "@/app/store/cart/CartPopup";
 
 interface ItemResponse {
@@ -26,6 +26,7 @@ const Navigation: React.FC<NavigationProps> = ({
                                                    basketApiUrl,
                                                    catalogApiUrl,
                                                }) => {
+    const normalizedCatalogApiUrl = useMemo(() => catalogApiUrl.replace(/\/+$/, ''), [catalogApiUrl]);
     const [open, setOpen] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [cartCount, setCartCount] = useState(initialCartCount);
@@ -48,7 +49,7 @@ const Navigation: React.FC<NavigationProps> = ({
         setIsSearching(true);
         try {
             const response = await fetch(
-                `${catalogApiUrl}/api/catalog/items?Name=${encodeURIComponent(query)}&PageSize=5`
+                `${normalizedCatalogApiUrl}/items?Name=${encodeURIComponent(query)}&PageSize=5`
             );
             if (response.ok) {
                 const data = await response.json();
@@ -142,7 +143,7 @@ const Navigation: React.FC<NavigationProps> = ({
                                                 >
                                                     {item.pictureFileName && (
                                                         <img
-                                                            src={`${catalogApiUrl}/images/${item.pictureFileName}`}
+                                                            src={`${normalizedCatalogApiUrl}/images/${item.pictureFileName}`}
                                                             alt={item.name}
                                                             className="w-10 h-10 object-cover rounded"
                                                         />

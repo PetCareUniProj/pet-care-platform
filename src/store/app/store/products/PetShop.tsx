@@ -7,58 +7,18 @@ import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
 import { useCart } from '@/app/context/CartContext';
 import Link from "next/link";
+import type {
+    BrandResponse,
+    BrandsResponse,
+    CategoryResponse,
+    CategoriesResponse,
+    ItemResponse,
+    ItemsResponse
+} from "@/lib/api/types/catalog";
 
 const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, '');
 
 // Types
-interface ItemResponse {
-    id: number;
-    slug: string;
-    name: string;
-    description: string | null;
-    price: number;
-    pictureFileName: string | null;
-    catalogBrandId: number;
-    availableStock: number;
-    restockThreshold: number;
-    maxStockThreshold: number;
-    onReorder: boolean;
-    categoryIds: number[];
-}
-
-interface ItemsResponse {
-    items: ItemResponse[];
-    pageSize: number;
-    page: number;
-    total: number;
-    hasNextPage: boolean;
-}
-
-interface CategoryResponse {
-    id: number;
-    name: string;
-}
-
-interface CategoriesResponse {
-    items: CategoryResponse[];
-    pageSize: number;
-    page: number;
-    total: number;
-    hasNextPage: boolean;
-}
-
-interface BrandResponse {
-    id: number;
-    name: string;
-}
-
-interface BrandsResponse {
-    items: BrandResponse[];
-    pageSize: number;
-    page: number;
-    total: number;
-    hasNextPage: boolean;
-}
 
 interface Pet {
     name: string;
@@ -70,14 +30,15 @@ interface ProductCardProps {
     product: ItemResponse;
     onAddToWishlist: (product: ItemResponse) => void;
     onAddToCart: (product: ItemResponse) => void;
+    catalogImageBase: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onAddToCart }) => (
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onAddToCart, catalogImageBase }) => (
     <Link href={`/store/products/${product.slug}`}>
         <div className="border border-gray-50 rounded-[20px] overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full">
             <div className="w-full h-80 bg-gray-100 flex items-center justify-center relative group">
                 {product.pictureFileName ? (
-                    <img src={`/images/${product.pictureFileName}`} alt={product.name} className="w-full h-full object-cover" />
+                    <img src={`${catalogImageBase}/images/${product.pictureFileName}`} alt={product.name} className="w-full h-full object-cover" />
                 ) : (
                     <div className="text-gray-400 text-6xl">🐾</div>
                 )}
@@ -123,25 +84,40 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onA
 interface PetShopProps {
     basketApiUrl: string;
     catalogApiUrl: string;
+    initialItems: ItemResponse[];
+    initialCategories: CategoryResponse[];
+    initialBrands: BrandResponse[];
+    initialTotalItems: number;
+    initialPage: number;
+    pageSize: number;
 }
 
 // Main Component
-const PetShop: React.FC<PetShopProps> = ({ basketApiUrl, catalogApiUrl}) => {
-    const API_BASE_URL = `${normalizeBaseUrl(catalogApiUrl)}/api/catalog`;
+const PetShop: React.FC<PetShopProps> = ({
+    basketApiUrl,
+    catalogApiUrl,
+    initialItems,
+    initialCategories,
+    initialBrands,
+    initialTotalItems,
+    initialPage,
+    pageSize,
+}) => {
+    const API_BASE_URL = normalizeBaseUrl(catalogApiUrl);
     const { addItem: addToCart } = useCart();
 
-    const [items, setItems] = useState<ItemResponse[]>([]);
-    const [categories, setCategories] = useState<CategoryResponse[]>([]);
-    const [brands, setBrands] = useState<BrandResponse[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [items, setItems] = useState<ItemResponse[]>(initialItems);
+    const [categories, setCategories] = useState<CategoryResponse[]>(initialCategories);
+    const [brands, setBrands] = useState<BrandResponse[]>(initialBrands);
+    const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [addingToCart, setAddingToCart] = useState<number | null>(null);
 
     const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
     const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [pageSize] = useState<number>(12);
-    const [totalItems, setTotalItems] = useState<number>(0);
+    const [currentPage, setCurrentPage] = useState<number>(initialPage || 1);
+    const [pageSizeState] = useState<number>(pageSize);
+    const [totalItems, setTotalItems] = useState<number>(initialTotalItems);
     const [sortBy, setSortBy] = useState<string>('name');
 
     useEffect(() => {
@@ -153,11 +129,15 @@ const PetShop: React.FC<PetShopProps> = ({ basketApiUrl, catalogApiUrl}) => {
         setError(null);
 
         try {
-            await Promise.all([
-                fetchItems(),
-                fetchCategories(),
-                fetchBrands()
-            ]);
+            await fetchItems();
+
+            if (categories.length === 0) {
+                await fetchCategories();
+            }
+
+            if (brands.length === 0) {
+                await fetchBrands();
+            }
 
             setLoading(false);
         } catch (err) {
@@ -170,7 +150,7 @@ const PetShop: React.FC<PetShopProps> = ({ basketApiUrl, catalogApiUrl}) => {
         try {
             const params = new URLSearchParams({
                 Page: currentPage.toString(),
-                PageSize: pageSize.toString(),
+                PageSize: pageSizeState.toString(),
                 SortBy: sortBy
             });
 
@@ -278,7 +258,7 @@ const PetShop: React.FC<PetShopProps> = ({ basketApiUrl, catalogApiUrl}) => {
         }
     };
 
-    const totalPages: number = Math.ceil(totalItems / pageSize);
+    const totalPages: number = Math.ceil(totalItems / pageSizeState);
 
     const pets: Pet[] = [
         { name: 'Cat', image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop', bgColor: 'bg-gradient-to-l from-orange-400 to-amber-500' },
@@ -403,7 +383,7 @@ const PetShop: React.FC<PetShopProps> = ({ basketApiUrl, catalogApiUrl}) => {
                 <div className="flex-1 flex flex-col gap-14">
                     <div className="flex justify-between items-center">
                         <div className="text-gray-500 text-xl font-medium">
-                            Showing {items.length > 0 ? ((currentPage - 1) * pageSize + 1) : 0}-{Math.min(currentPage * pageSize, totalItems)} of {totalItems} results
+                            Showing {items.length > 0 ? ((currentPage - 1) * pageSizeState + 1) : 0}-{Math.min(currentPage * pageSizeState, totalItems)} of {totalItems} results
                         </div>
                         <div className="relative">
                             <select
@@ -442,6 +422,7 @@ const PetShop: React.FC<PetShopProps> = ({ basketApiUrl, catalogApiUrl}) => {
                                     product={product}
                                     onAddToWishlist={handleAddToWishlist}
                                     onAddToCart={handleAddToCart}
+                                    catalogImageBase={API_BASE_URL}
                                 />
                             ))}
                         </div>

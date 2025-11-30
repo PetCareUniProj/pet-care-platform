@@ -10,11 +10,19 @@ export interface CustomerBasket {
     items: BasketItem[];
 }
 
-class BasketClient {
-    private baseUrl: string;
+interface BasketClientOptions {
+    resourcePath?: string;
+}
 
-    constructor(baseUrl: string = '') {
-        this.baseUrl = baseUrl || process.env.NEXT_PUBLIC_BASKET_API_URL || '';
+class BasketClient {
+    private readonly endpoint: string;
+
+    constructor(baseUrl: string = '', options?: BasketClientOptions) {
+        const normalizedBase = (baseUrl || process.env.NEXT_PUBLIC_BASKET_API_URL || '').replace(/\/+$/, '');
+        const resourcePath = options?.resourcePath ?? '/api/basket';
+        this.endpoint = resourcePath
+            ? `${normalizedBase}${resourcePath.startsWith('/') ? resourcePath : `/${resourcePath}`}` || '/api/basket'
+            : normalizedBase || '/api/basket';
     }
 
     /**
@@ -22,7 +30,7 @@ class BasketClient {
      */
     async getBasket(): Promise<CustomerBasket> {
         try {
-            const response = await fetch(`${this.baseUrl}/api/basket`, {
+            const response = await fetch(this.endpoint, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -85,7 +93,7 @@ class BasketClient {
      */
     async updateBasket(items: BasketItem[]): Promise<CustomerBasket> {
         try {
-            const response = await fetch(`${this.baseUrl}/api/basket`, {
+            const response = await fetch(this.endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -111,7 +119,7 @@ class BasketClient {
      */
     async clearBasket(): Promise<void> {
         try {
-            const response = await fetch(`${this.baseUrl}/api/basket`, {
+            const response = await fetch(this.endpoint, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

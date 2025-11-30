@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ShoppingCart, X, Plus, Minus, Trash2, Loader2 } from 'lucide-react';
 import { useCart } from '@/app/context/CartContext';
 
@@ -18,12 +18,13 @@ const CartPopup: React.FC<CartPopupProps> = ({
     catalogApiUrl
 }) => {
     const { items: cartItems, loading, error, updateQuantity, removeItem, clearCart, enrichItems } = useCart();
+    const normalizedCatalogApiUrl = useMemo(() => catalogApiUrl.replace(/\/+$/, ''), [catalogApiUrl]);
 
     useEffect(() => {
         if (isOpen && cartItems.length > 0) {
-            enrichItems(catalogApiUrl);
+            enrichItems(normalizedCatalogApiUrl);
         }
-    }, [isOpen, cartItems.length, catalogApiUrl, enrichItems]);
+    }, [isOpen, cartItems.length, normalizedCatalogApiUrl, enrichItems]);
 
     useEffect(() => {
         if (onCartUpdate) {
@@ -90,8 +91,8 @@ const CartPopup: React.FC<CartPopupProps> = ({
                                 >
                                     <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                                         {item.pictureFileName ? (
-                                            <img
-                                                src={`/images/${item.pictureFileName}`}
+                                                <img
+                                                src={`${normalizedCatalogApiUrl}/images/${item.pictureFileName}`}
                                                 alt={item.name}
                                                 className="w-full h-full object-cover"
                                             />
