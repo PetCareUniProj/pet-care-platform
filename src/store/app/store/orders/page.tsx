@@ -17,6 +17,44 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+function resolveStatusStyles(status: string) {
+  const normalized = status.toLowerCase();
+  switch (normalized) {
+    case "shipped":
+      return {
+        badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        card: "border-emerald-100 shadow-emerald-50",
+      };
+    case "paid":
+    case "stockconfirmed":
+      return {
+        badge: "bg-blue-50 text-blue-700 border-blue-200",
+        card: "border-blue-100 shadow-blue-50",
+      };
+    case "awaitingvalidation":
+    case "submitted":
+      return {
+        badge: "bg-amber-50 text-amber-700 border-amber-200",
+        card: "border-amber-100 shadow-amber-50",
+      };
+    case "cancelled":
+      return {
+        badge: "bg-rose-50 text-rose-700 border-rose-200",
+        card: "border-rose-100 shadow-rose-50",
+      };
+    case "draft":
+      return {
+        badge: "bg-slate-100 text-slate-700 border-slate-200",
+        card: "border-slate-200",
+      };
+    default:
+      return {
+        badge: "bg-gray-100 text-gray-700 border-gray-200",
+        card: "border-gray-200",
+      };
+  }
+}
+
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const aSearchParams = await searchParams;
   const session = await auth();
@@ -52,11 +90,15 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         ) : (
           <div className="space-y-4">
             {orderItems.map((order) => (
+              (() => {
+                const styles = resolveStatusStyles(order.orderStatus ?? "");
+                const isHighlight = highlightId === order.id;
+                const cardBorder = isHighlight ? "border-orange-400 shadow-orange-100" : styles.card;
+                const badge = styles.badge;
+                return (
               <div
                 key={order.id}
-                className={`rounded-3xl border bg-white px-6 py-5 shadow-sm transition ${
-                  highlightId === order.id ? "border-orange-400 shadow-orange-100" : "border-gray-100"
-                }`}
+                className={`rounded-3xl border bg-white px-6 py-5 shadow-sm transition ${cardBorder}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
@@ -65,7 +107,11 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                   </div>
                   <div className="text-right">
                     <p className="text-sm uppercase text-gray-500">Status</p>
-                    <p className="text-lg font-semibold text-gray-900">{order.orderStatus}</p>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${badge}`}
+                    >
+                      {order.orderStatus}
+                    </span>
                   </div>
                   <div className="text-right">
                     <p className="text-sm uppercase text-gray-500">Total</p>
@@ -85,7 +131,19 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                 {order.orderItems.length > 4 && (
                   <p className="mt-2 text-sm text-gray-500">+{order.orderItems.length - 4} more items</p>
                 )}
+                {order.isDraft && (
+                  <div className="mt-4 flex justify-end">
+                    <Link
+                      href={`/store/checkout/${order.id}/details`}
+                      className="rounded-2xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-400"
+                    >
+                      Continue checkout
+                    </Link>
+                  </div>
+                )}
               </div>
+                );
+              })()
             ))}
           </div>
         )}
