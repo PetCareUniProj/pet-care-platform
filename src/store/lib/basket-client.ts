@@ -1,154 +1,95 @@
 export interface BasketItem {
-    product_id: number;
-    quantity: number;
-    name?: string;
-    price?: number;
-    pictureFileName?: string;
+  product_id: number;
+  quantity: number;
+  name?: string;
+  price?: number;
+  pictureFileName?: string;
 }
 
 export interface CustomerBasket {
-    items: BasketItem[];
+  items: BasketItem[];
 }
 
 interface BasketClientOptions {
-    resourcePath?: string;
+  resourcePath?: string;
 }
 
-class BasketClient {
-    private readonly endpoint: string;
+export default class BasketClient {
+  private readonly endpoint: string;
 
-    constructor(baseUrl: string = '', options?: BasketClientOptions) {
-        const normalizedBase = (baseUrl || process.env.NEXT_PUBLIC_BASKET_API_URL || '').replace(/\/+$/, '');
-        const resourcePath = options?.resourcePath ?? '/api/basket';
-        this.endpoint = resourcePath
-            ? `${normalizedBase}${resourcePath.startsWith('/') ? resourcePath : `/${resourcePath}`}` || '/api/basket'
-            : normalizedBase || '/api/basket';
+  constructor(baseUrl: string = "", options?: BasketClientOptions) {
+    const normalizedBase = (baseUrl || process.env.NEXT_PUBLIC_BASKET_API_URL || "").replace(/\/+$/, "");
+    const resourcePath = options?.resourcePath ?? "/api/basket";
+
+    if (resourcePath) {
+      const normalizedResource = resourcePath.startsWith("/") ? resourcePath : `/${resourcePath}`;
+      this.endpoint = `${normalizedBase}${normalizedResource}` || normalizedResource;
+    } else {
+      this.endpoint = normalizedBase || "/api/basket";
+    }
+  }
+
+  private buildUrl(path?: string) {
+    if (!path) {
+      return this.endpoint;
     }
 
-    /**
-     * Get the current basket for the user
-     */
-    async getBasket(): Promise<CustomerBasket> {
-        try {
-            const response = await fetch(this.endpoint, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-            });
+    return `${this.endpoint}${path.startsWith("/") ? path : `/${path}`}`;
+  }
 
-            if (!response.ok) {
-                if (response.status === 404) {
-                    return { items: [] };
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+  private async request<T>(path: string, init: RequestInit) {
+    const url = this.buildUrl(path);
+    const headers = new Headers(init.headers);
 
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Error fetching basket:', error);
-            return { items: [] };
-        }
+    if (init.body && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
     }
 
-    /**
-     * Add an item to the basket
-     */
-    async addItem(productId: number, quantity: number = 1): Promise<CustomerBasket> {
-        try {
-            const basket = await this.getBasket();
-            const existingItem = basket.items.find(item => item.product_id === productId);
+    const response = await fetch(url, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
 
-            if (existingItem) {
-                existingItem.quantity += quantity;
-            } else {
-                basket.items.push({ product_id: productId, quantity });
-            }
-
-            return this.updateBasket(basket.items);
-        } catch (error) {
-            console.error('Error adding item to basket:', error);
-            throw error;
-        }
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "");
+      throw new Error(
+        `Basket request to ${url} failed with status ${response.status}${errorBody ? `: ${errorBody}` : ""}`,
+      );
     }
 
-    /**
-     * Remove an item from the basket
-     */
-    async removeItem(productId: number): Promise<CustomerBasket> {
-        try {
-            const basket = await this.getBasket();
-            basket.items = basket.items.filter(item => item.product_id !== productId);
-            return this.updateBasket(basket.items);
-        } catch (error) {
-            console.error('Error removing item from basket:', error);
-            throw error;
-        }
+    if (response.status === 204) {
+      return undefined as T;
     }
 
-    /**
-     * Update the basket with new items
-     */
-    async updateBasket(items: BasketItem[]): Promise<CustomerBasket> {
-        try {
-            const response = await fetch(this.endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ items }),
-            });
+    return (await response.json()) as T;
+  }
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+  async getBasket(): Promise<CustomerBasket> {
+    return this.request<CustomerBasket>("", { method: "GET" });
+  }
 
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Error updating basket:', error);
-            throw error;
-        }
-    }
+  async updateBasket(items: BasketItem[]): Promise<CustomerBasket> {
+    return this.request<CustomerBasket>("", {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    });
+  }
 
-    /**
-     * Clear the basket
-     */
-    async clearBasket(): Promise<void> {
-        try {
-            const response = await fetch(this.endpoint, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-            });
+  async addItem(productId: number, quantity: number = 1): Promise<CustomerBasket> {
+    return this.request<CustomerBasket>("/items", {
+      method: "POST",
+      body: JSON.stringify({ productId, quantity }),
+    });
+  }
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-        } catch (error) {
-            console.error('Error clearing basket:', error);
-            throw error;
-        }
-    }
+  async removeItem(productId: number): Promise<CustomerBasket> {
+    return this.request<CustomerBasket>(`/items/${productId}`, {
+      method: "DELETE",
+    });
+  }
 
-    /**
-     * Get the total number of items in the basket
-     */
-    async getItemCount(): Promise<number> {
-        try {
-            const basket = await this.getBasket();
-            return basket.items.reduce((sum, item) => sum + item.quantity, 0);
-        } catch (error) {
-            console.error('Error getting item count:', error);
-            return 0;
-        }
-    }
+  async clearBasket(): Promise<void> {
+    await this.request<void>("", { method: "DELETE" });
+  }
 }
-
-export default BasketClient;
-
