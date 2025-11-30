@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ShoppingCart, X, Plus, Minus, Trash2, Loader2 } from 'lucide-react';
 import { useCart } from '@/app/context/CartContext';
 
@@ -19,6 +19,36 @@ const CartPopup: React.FC<CartPopupProps> = ({
 }) => {
     const { items: cartItems, loading, error, updateQuantity, removeItem, clearCart, enrichItems } = useCart();
     const normalizedCatalogApiUrl = useMemo(() => catalogApiUrl.replace(/\/+$/, ''), [catalogApiUrl]);
+    const [imageFallbacks, setImageFallbacks] = useState<Record<string, boolean>>({});
+
+    const getItemTitle = (productId: string | number, name?: string) => name || `Product ${productId}`;
+
+    const getItemImageSrc = (productId: string | number, name: string | undefined, pictureFileName?: string) => {
+        const productKey = String(productId);
+
+        if (imageFallbacks[productKey]) {
+            const encodedTitle = encodeURIComponent(getItemTitle(productId, name));
+            return `https://placehold.co/350/234532/CCCCCC?text=${encodedTitle}`;
+        }
+
+        if (pictureFileName) {
+            return `${normalizedCatalogApiUrl}/images/${pictureFileName}`;
+        }
+
+        return undefined;
+    };
+
+    const handleImageError = (productId: string | number) => {
+        const productKey = String(productId);
+
+        setImageFallbacks((previous) => {
+            if (previous[productKey]) {
+                return previous;
+            }
+
+            return { ...previous, [productKey]: true };
+        });
+    };
 
     useEffect(() => {
         if (isOpen && cartItems.length > 0) {
@@ -84,63 +114,69 @@ const CartPopup: React.FC<CartPopupProps> = ({
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {cartItems.map((item) => (
-                                <div
-                                    key={item.product_id}
-                                    className="flex gap-4 p-4 bg-gray-50 rounded-xl hover:shadow-md transition-shadow"
-                                >
-                                    <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                                        {item.pictureFileName ? (
-                                                <img
-                                                src={`${normalizedCatalogApiUrl}/images/${item.pictureFileName}`}
-                                                alt={item.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-3xl">
-                                                🐾
-                                            </div>
-                                        )}
-                                    </div>
+                            {cartItems.map((item) => {
+                                const itemTitle = getItemTitle(item.product_id, item.name);
+                                const imageSrc = getItemImageSrc(item.product_id, item.name, item.pictureFileName);
 
-                                    <div className="flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <h3 className="font-semibold text-base line-clamp-1">
-                                                {item.name || `Product ${item.product_id}`}
-                                            </h3>
-                                            <p className="text-orange-500 font-bold mt-1">
-                                                ${(item.price || 0).toFixed(2)}
-                                            </p>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                                                disabled={item.quantity <= 1}
-                                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:border-orange-500 hover:text-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="w-12 text-center font-semibold">
-                                                {item.quantity}
-                                            </span>
-                                            <button
-                                                onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
-                                                className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:border-orange-500 hover:text-orange-500 transition-colors"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        onClick={() => removeItem(item.product_id)}
-                                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 hover:text-red-500 transition-colors self-start"
+                                return (
+                                    <div
+                                        key={item.product_id}
+                                        className="flex gap-4 p-4 bg-gray-50 rounded-xl hover:shadow-md transition-shadow"
                                     >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </div>
-                            ))}
+                                        <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                            {imageSrc ? (
+                                                <img
+                                                    src={imageSrc}
+                                                    alt={itemTitle}
+                                                    onError={() => handleImageError(item.product_id)}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-3xl">
+                                                    🐾
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 flex flex-col justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-base line-clamp-1">
+                                                    {itemTitle}
+                                                </h3>
+                                                <p className="text-orange-500 font-bold mt-1">
+                                                    ${(item.price || 0).toFixed(2)}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
+                                                    disabled={item.quantity <= 1}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:border-orange-500 hover:text-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <Minus className="w-4 h-4" />
+                                                </button>
+                                                <span className="w-12 text-center font-semibold">
+                                                    {item.quantity}
+                                                </span>
+                                                <button
+                                                    onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-300 hover:border-orange-500 hover:text-orange-500 transition-colors"
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => removeItem(item.product_id)}
+                                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 hover:text-red-500 transition-colors self-start"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

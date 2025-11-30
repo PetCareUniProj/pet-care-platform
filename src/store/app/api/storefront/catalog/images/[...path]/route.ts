@@ -11,7 +11,7 @@ interface RouteParams {
 export async function GET(_: NextRequest, { params }: RouteParams) {
   const relativePath = params.path.join("/");
   try {
-    const url = createCatalogResourceUrl(`/images/${relativePath}`);
+    const url = await createCatalogResourceUrl(`/images/${relativePath}`);
     const upstream = await fetch(url, { cache: "no-store" });
     const body = await upstream.arrayBuffer();
     const response = new NextResponse(body, { status: upstream.status });

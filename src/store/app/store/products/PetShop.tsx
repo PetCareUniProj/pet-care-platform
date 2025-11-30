@@ -33,15 +33,30 @@ interface ProductCardProps {
     catalogImageBase: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onAddToCart, catalogImageBase }) => (
-    <Link href={`/store/products/${product.slug}`}>
-        <div className="border border-gray-50 rounded-[20px] overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full">
-            <div className="w-full h-80 bg-gray-100 flex items-center justify-center relative group">
-                {product.pictureFileName ? (
-                    <img src={`${catalogImageBase}/images/${product.pictureFileName}`} alt={product.name} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="text-gray-400 text-6xl">🐾</div>
-                )}
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onAddToCart, catalogImageBase }) => {
+    const [imageFallback, setImageFallback] = useState<boolean>(false);
+    const productTitle = product.name ?? `Product ${product.id}`;
+    const catalogImageSrc = product.pictureFileName
+        ? `${catalogImageBase}/images/${product.pictureFileName}`
+        : undefined;
+    const imageSrc = imageFallback
+        ? `https://placehold.co/350x300/234532/CCCCCC?text=${encodeURIComponent(productTitle)}`
+        : catalogImageSrc;
+
+    return (
+        <Link href={`/store/products/${product.slug}`}>
+            <div className="border border-gray-50 rounded-[20px] overflow-hidden hover:shadow-xl transition-shadow cursor-pointer h-full">
+                <div className="w-full h-80 bg-gray-100 flex items-center justify-center relative group">
+                    {imageSrc ? (
+                        <img
+                            src={imageSrc}
+                            alt={productTitle}
+                            onError={() => setImageFallback(true)}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="text-gray-400 text-6xl">🐾</div>
+                    )}
                 {/* Add to cart button overlay */}
                 <button
                     onClick={(e) => {
@@ -79,7 +94,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onA
             </div>
         </div>
     </Link>
-);
+    );
+};
 
 interface PetShopProps {
     basketApiUrl: string;

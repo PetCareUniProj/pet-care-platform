@@ -37,6 +37,7 @@ export default function ProductDetailsClient({
     const [successMessage, setSuccessMessage] = useState('');
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [wishlist, setWishlist] = useState<number[]>([]);
+    const [imageFallback, setImageFallback] = useState(false);
     const normalizedCatalogApiUrl = useMemo(() => catalogApiUrl.replace(/\/+$/, ''), [catalogApiUrl]);
     const pageError = initialError ?? '';
 
@@ -110,6 +111,13 @@ export default function ProductDetailsClient({
         );
     }
 
+    const productTitle = product.name ?? `Product ${product.id}`;
+    const productImageSrc = imageFallback
+        ? `https://placehold.co/300x300/234532/CCCCCC?text=${encodeURIComponent(productTitle)}`
+        : product.pictureFileName
+            ? `${normalizedCatalogApiUrl}/images/${product.pictureFileName}`
+            : undefined;
+
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="w-full px-4 md:px-20 lg:px-80 relative bg-gray-50 flex flex-col items-center overflow-hidden">
@@ -127,10 +135,11 @@ export default function ProductDetailsClient({
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                         <div className="bg-white rounded-[20px] p-8 flex items-center justify-center min-h-[500px]">
-                            {product.pictureFileName ? (
+                            {productImageSrc ? (
                                 <img
-                                    src={`${normalizedCatalogApiUrl}/images/${product.pictureFileName}`}
-                                    alt={product.name}
+                                    src={productImageSrc}
+                                    alt={productTitle}
+                                    onError={() => setImageFallback(true)}
                                     className="w-full h-full object-contain max-h-96"
                                 />
                             ) : (
