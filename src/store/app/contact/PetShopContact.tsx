@@ -54,8 +54,8 @@ export const PetShopContact : React.FC<PetShopContactProps> = ({
                             <span className="text-orange-500 text-base font-bold uppercase">Pet shop</span>
                             <h1 className="text-black text-5xl font-bold leading-tight">If animals could talk, they'd talk about us!</h1>
                         </div>
-                        <p className="text-black/80 text-base leading-6 max-w-md">At et vehicula sodales est proin turpis pellentesque sinulla a aliquam amet rhoncus quisque eget sit</p>
-                        <NavLink href="/store/products#shop-by-pet">
+                        <p className="text-black/80 text-base leading-6 max-w-md">Trusted by pet owners, loved by pets. We are dedicated to providing premium supplies and exceptional care advice for every animal companion.</p>
+                        <NavLink href="/store/products">
                             <button className="px-10 py-4 bg-neutral-950 rounded-xl text-white text-xl font-semibold hover:bg-neutral-800 transition-colors w-fit">
                                 Shop Now
                             </button>
@@ -98,8 +98,8 @@ export const PetShopContact : React.FC<PetShopContactProps> = ({
                     <div className="flex flex-col gap-10">
                         <h2 className="text-black text-4xl font-semibold leading-[48px]">Feel free to contact us</h2>
                         <p className="text-black/80 text-base leading-6">
-                            At et vehicula sodales est proin turpis pellentesque sinulla a aliquam<br />
-                            amet rhoncus quisque eget sit. Sociis blandit et pellentesque aliquet at quisque tortor lacinia nullam
+                            Founded in Kyiv, Ukraine, with a deep love for all animals.<br />
+                            We are dedicated to delivering the highest quality supplies and compassionate service to every corner of the country and beyond.
                         </p>
                     </div>
 
@@ -108,21 +108,21 @@ export const PetShopContact : React.FC<PetShopContactProps> = ({
                             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <MapPin className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-black text-xl font-semibold leading-5">8592 Fairground St. Tallahassee, FL 32303</span>
+                            <span className="text-black text-xl font-semibold leading-5">24 Khreshchatyk St, Kyiv, 01001, Ukraine</span>
                         </div>
 
                         <div className="flex items-center gap-5">
                             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <Mail className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-black text-xl font-semibold leading-5">rgarton@outlook.com</span>
+                            <span className="text-black text-xl font-semibold leading-5">info@petshopname.ua</span>
                         </div>
 
                         <div className="flex items-center gap-5">
                             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                                 <Phone className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-black text-xl font-semibold leading-5">+775 378-6348</span>
+                            <span className="text-black text-xl font-semibold leading-5">+380 44 123 4567</span>
                         </div>
 
                         <div className="flex items-center gap-5">
@@ -138,22 +138,15 @@ export const PetShopContact : React.FC<PetShopContactProps> = ({
             {/* Map Section */}
             <div className="w-full px-4 md:px-20 lg:px-80 py-14 flex flex-col items-center">
                 <div className="w-full h-96 bg-gray-200 rounded-[20px] relative overflow-hidden">
-                    {/* Map Placeholder */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 bg-orange-500 rounded-lg flex items-center justify-center">
-                            <MapPin className="w-12 h-12 text-white" />
-                        </div>
-                    </div>
-                    {/* You can integrate Google Maps or any other map service here */}
-                    <iframe
-                        title="Store Location"
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3446.123456789!2d-84.123456!3d30.123456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzDCsDA3JzI0LjQiTiA4NMKwMDcnMjQuNCJX!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus"
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        allowFullScreen
-                        loading="lazy"
-                        className="rounded-[20px]"
+                    <iframe 
+                    title="Store Location"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2136.357761934853!2d30.521516064196234!3d50.44907513699611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40d4ce56b2456d3b%3A0xd062ae171b57e947!2z0LLRg9C70LjRhtGPINCl0YDQtdGJ0LDRgtC40LosINCa0LjRl9CyLCAwMjAwMA!5e0!3m2!1suk!2sua!4v1764542730576!5m2!1suk!2sua" 
+                    width="100%" 
+                    height="100%" 
+                    style={{border:0}} 
+                    allowFullScreen 
+                    loading="lazy" 
+                    className="rounded-[20px]"
                     />
                 </div>
             </div>
