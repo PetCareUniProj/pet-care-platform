@@ -2,6 +2,8 @@
 
 import { Platform } from 'react-native';
 
+const LOCALHOST_NAME = 'localhost';
+
 /**
  * Get the correct localhost address based on platform
  * - Web: localhost
@@ -11,13 +13,13 @@ import { Platform } from 'react-native';
  */
 function getLocalhostAddress(): string {
   if (Platform.OS === 'web') {
-    return 'localhost';
+    return LOCALHOST_NAME;
   }
   if (Platform.OS === 'android') {
     return '10.0.2.2';
   }
   // iOS and others
-  return 'localhost';
+  return LOCALHOST_NAME;
 }
 
 const LOCALHOST = getLocalhostAddress();
@@ -32,7 +34,7 @@ export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL
 export const API_BASE_URL = `http://${LOCALHOST}:8888/`;
 
 // Keycloak URL
-export const KEYCLOAK_URL = process.env.EXPO_PUBLIC_KEYCLOAK_URL || `http://${LOCALHOST}:8080`;
+export const KEYCLOAK_URL = process.env.EXPO_PUBLIC_KEYCLOAK_URL || `http://${LOCALHOST_NAME}:8080`;
 
 export const API_ENDPOINTS = {
   // ============ Catalog API ============

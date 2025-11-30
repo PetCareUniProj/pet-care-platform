@@ -1,209 +1,183 @@
-// Subscriptions service
-// Local storage for subscriptions (mock implementation)
+// Subscriptions service - uses Ordering API for recurring orders
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
-import {
-  RecurrenceInterval,
-  RECURRENCE_LABELS,
-} from '@/types/order.types';
+import { ordersService } from './orders.service';
+import { OrderResponse, RecurrenceInterval, RECURRENCE_LABELS } from '@/types/order.types';
 
-const SUBSCRIPTIONS_STORAGE_KEY = '@pet_connect_subscriptions';
+/**
+ * Subscription is a recurring order (isRecurring = true)
+ * This service provides a higher-level abstraction for working with subscriptions
+ */
 
-export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
+export type SubscriptionStatus = 'active' | 'shipped' | 'cancelled';
 
-export interface LocalSubscription {
-  id: string;
-  productId?: string;
+/**
+ * Subscription view model for UI
+ */
+export interface Subscription {
+  id: number;
+  orderId: number;
   productName: string;
   productImage?: string;
-  frequency: RecurrenceInterval;
-  nextDelivery: string;
+  frequency: string;
+  frequencyLabel: string;
+  nextDelivery: string | null;
   price: number;
   quantity: number;
   status: SubscriptionStatus;
   createdAt: string;
-  updatedAt: string;
+  items: {
+    productId: number;
+    productName: string;
+    unitPrice: number;
+    units: number;
+    pictureUrl: string;
+  }[];
 }
 
-export interface CreateLocalSubscriptionDto {
-  productId?: string;
-  productName: string;
-  productImage?: string;
-  frequency: RecurrenceInterval;
-  price: number;
-  quantity?: number;
+/**
+ * Map order status to subscription status
+ */
+function mapOrderStatusToSubscriptionStatus(orderStatus: string): SubscriptionStatus {
+  switch (orderStatus.toLowerCase()) {
+    case 'cancelled':
+      return 'cancelled';
+    case 'shipped':
+      return 'shipped';
+    default:
+      return 'active';
+  }
 }
 
-// Mock subscriptions
-const mockSubscriptions: LocalSubscription[] = [
-  {
-    id: '1',
-    productName: 'Royal Canin Indoor Cat 4kg',
-    frequency: 'Monthly',
-    nextDelivery: '2025-12-15',
-    price: 890,
-    quantity: 1,
-    status: 'active',
-    createdAt: '2024-06-01T10:00:00Z',
-    updatedAt: '2024-11-01T10:00:00Z',
-  },
-  {
-    id: '2',
-    productName: 'Наповнювач Catsan 10л',
-    frequency: 'Biweekly',
-    nextDelivery: '2025-12-05',
-    price: 320,
-    quantity: 2,
-    status: 'active',
-    createdAt: '2024-08-15T14:00:00Z',
-    updatedAt: '2024-11-15T14:00:00Z',
-  },
-  {
-    id: '3',
-    productName: 'Корм для собак Pedigree 10kg',
-    frequency: 'Monthly',
-    nextDelivery: '2025-12-20',
-    price: 650,
-    quantity: 1,
-    status: 'paused',
-    createdAt: '2024-05-01T09:00:00Z',
-    updatedAt: '2024-10-01T09:00:00Z',
-  },
-];
+/**
+ * Parse recurrence interval from backend format (TimeSpan) to display format
+ */
+function parseRecurrenceInterval(interval: string | null | undefined): string {
+  if (!interval) return 'Monthly';
+  
+  // Backend returns TimeSpan format like "30.00:00:00" (30 days)
+  // or might return already formatted
+  if (interval.includes('.')) {
+    const days = parseInt(interval.split('.')[0], 10);
+    if (days <= 7) return '7.00:00:00';
+    if (days <= 14) return '14.00:00:00';
+    if (days <= 30) return '30.00:00:00';
+    if (days <= 60) return '60.00:00:00';
+    return '90.00:00:00';
+  }
+  
+  return interval as RecurrenceInterval;
+}
+
+/**
+ * Get recurrence label for display
+ */
+function getRecurrenceLabel(interval: string): string {
+  const normalized = parseRecurrenceInterval(interval);
+  return RECURRENCE_LABELS[normalized as RecurrenceInterval] || interval;
+}
+
+/**
+ * Convert OrderResponse to Subscription
+ */
+function orderToSubscription(order: OrderResponse): Subscription {
+  const items = order.orderItems || [];
+  const firstItem = items[0];
+  
+  // Calculate total quantity and price from items
+  const totalQuantity = items.reduce((sum, item) => sum + item.units, 0);
+  
+  return {
+    id: order.id,
+    orderId: order.id,
+    productName: items.length === 1 
+      ? firstItem?.productName || 'Підписка'
+      : `${items.length} товарів`,
+    productImage: firstItem?.pictureUrl,
+    frequency: order.recurrenceInterval || '30.00:00:00',
+    frequencyLabel: getRecurrenceLabel(order.recurrenceInterval || '30.00:00:00'),
+    nextDelivery: order.nextRecurrenceDate || null,
+    price: order.total,
+    quantity: totalQuantity,
+    status: mapOrderStatusToSubscriptionStatus(order.orderStatus),
+    createdAt: order.orderDate,
+    items: items.map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      unitPrice: item.unitPrice,
+      units: item.units,
+      pictureUrl: item.pictureUrl,
+    })),
+  };
+}
 
 class SubscriptionsService {
-  private initialized = false;
-
-  private async initializeIfNeeded(): Promise<void> {
-    if (this.initialized) return;
-    
-    const stored = await AsyncStorage.getItem(SUBSCRIPTIONS_STORAGE_KEY);
-    if (!stored) {
-      await AsyncStorage.setItem(SUBSCRIPTIONS_STORAGE_KEY, JSON.stringify(mockSubscriptions));
+  /**
+   * Get all subscriptions (recurring orders) for current user
+   */
+  async getAll(): Promise<Subscription[]> {
+    try {
+      const response = await ordersService.getUserOrders();
+      const orders = response.items || [];
+      
+      // Filter only recurring orders that are not drafts
+      const recurringOrders = orders.filter(
+        order => order.isRecurring && !order.isDraft
+      );
+      
+      return recurringOrders.map(orderToSubscription);
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+      return [];
     }
-    this.initialized = true;
   }
 
-  private async getLocalSubscriptions(): Promise<LocalSubscription[]> {
-    await this.initializeIfNeeded();
-    const stored = await AsyncStorage.getItem(SUBSCRIPTIONS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+  /**
+   * Get active subscriptions (not cancelled, not shipped)
+   */
+  async getActive(): Promise<Subscription[]> {
+    const all = await this.getAll();
+    return all.filter(sub => sub.status === 'active');
   }
 
-  private async saveLocalSubscriptions(subscriptions: LocalSubscription[]): Promise<void> {
-    await AsyncStorage.setItem(SUBSCRIPTIONS_STORAGE_KEY, JSON.stringify(subscriptions));
-  }
-
-  async getAll(): Promise<LocalSubscription[]> {
-    return this.getLocalSubscriptions();
-  }
-
-  async getActive(): Promise<LocalSubscription[]> {
-    const subs = await this.getLocalSubscriptions();
-    return subs.filter(s => s.status === 'active');
-  }
-
-  async getPaused(): Promise<LocalSubscription[]> {
-    const subs = await this.getLocalSubscriptions();
-    return subs.filter(s => s.status === 'paused');
-  }
-
-  async getById(id: string): Promise<LocalSubscription | null> {
-    const subs = await this.getLocalSubscriptions();
-    return subs.find(s => s.id === id) || null;
-  }
-
-  async create(data: CreateLocalSubscriptionDto): Promise<LocalSubscription> {
-    const now = new Date();
-    const nextDelivery = new Date(now);
-    
-    // Calculate next delivery based on frequency
-    switch (data.frequency) {
-      case 'Weekly':
-        nextDelivery.setDate(nextDelivery.getDate() + 7);
-        break;
-      case 'Biweekly':
-        nextDelivery.setDate(nextDelivery.getDate() + 14);
-        break;
-      case 'Monthly':
-        nextDelivery.setMonth(nextDelivery.getMonth() + 1);
-        break;
+  /**
+   * Get subscription by ID
+   */
+  async getById(id: number): Promise<Subscription | null> {
+    try {
+      const order = await ordersService.getOrderById(id);
+      if (!order.isRecurring) return null;
+      return orderToSubscription(order);
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      return null;
     }
-
-    const newSubscription: LocalSubscription = {
-      id: Crypto.randomUUID(),
-      productId: data.productId,
-      productName: data.productName,
-      productImage: data.productImage,
-      frequency: data.frequency,
-      nextDelivery: nextDelivery.toISOString().split('T')[0],
-      price: data.price,
-      quantity: data.quantity || 1,
-      status: 'active',
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-    };
-
-    const subs = await this.getLocalSubscriptions();
-    subs.push(newSubscription);
-    await this.saveLocalSubscriptions(subs);
-
-    return newSubscription;
   }
 
-  async pause(id: string): Promise<LocalSubscription> {
-    const subs = await this.getLocalSubscriptions();
-    const index = subs.findIndex(s => s.id === id);
-    if (index === -1) throw new Error('Subscription not found');
-
-    subs[index].status = 'paused';
-    subs[index].updatedAt = new Date().toISOString();
-    await this.saveLocalSubscriptions(subs);
-
-    return subs[index];
+  /**
+   * Cancel a subscription
+   */
+  async cancel(id: number): Promise<void> {
+    await ordersService.cancelOrder(id);
   }
 
-  async resume(id: string): Promise<LocalSubscription> {
-    const subs = await this.getLocalSubscriptions();
-    const index = subs.findIndex(s => s.id === id);
-    if (index === -1) throw new Error('Subscription not found');
-
-    subs[index].status = 'active';
-    subs[index].updatedAt = new Date().toISOString();
-    await this.saveLocalSubscriptions(subs);
-
-    return subs[index];
+  /**
+   * Get recurrence label for display
+   */
+  getFrequencyLabel(frequency: string): string {
+    return getRecurrenceLabel(frequency);
   }
 
-  async cancel(id: string): Promise<void> {
-    const subs = await this.getLocalSubscriptions();
-    const filtered = subs.filter(s => s.id !== id);
-    await this.saveLocalSubscriptions(filtered);
-  }
-
-  async updateFrequency(id: string, frequency: RecurrenceInterval): Promise<LocalSubscription> {
-    const subs = await this.getLocalSubscriptions();
-    const index = subs.findIndex(s => s.id === id);
-    if (index === -1) throw new Error('Subscription not found');
-
-    subs[index].frequency = frequency;
-    subs[index].updatedAt = new Date().toISOString();
-    await this.saveLocalSubscriptions(subs);
-
-    return subs[index];
-  }
-
-  getFrequencyLabel(frequency: RecurrenceInterval): string {
-    return RECURRENCE_LABELS[frequency] || frequency;
-  }
-
-  calculateMonthlyTotal(subscriptions: LocalSubscription[]): number {
+  /**
+   * Calculate total monthly cost of active subscriptions
+   */
+  calculateMonthlyTotal(subscriptions: Subscription[]): number {
     return subscriptions
-      .filter(s => s.status === 'active')
+      .filter(sub => sub.status === 'active')
       .reduce((sum, sub) => {
-        const multiplier = sub.frequency === 'Weekly' ? 4 : sub.frequency === 'Biweekly' ? 2 : 1;
-        return sum + (sub.price * sub.quantity * multiplier);
+        // Parse frequency to get multiplier
+        const days = parseInt(sub.frequency.split('.')[0], 10) || 30;
+        const multiplier = 30 / days; // How many times per month
+        return sum + (sub.price * multiplier);
       }, 0);
   }
 }
