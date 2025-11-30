@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
-import { getServiceEndpoint } from "@/service-discovery";
+import { ensureCatalogAccessToken, ensureCatalogBaseUrl, buildCatalogError } from "../catalog-actions-utils";
 
 interface CatalogItemPayload {
   readonly slug: string;
@@ -16,22 +15,6 @@ interface CatalogItemPayload {
   readonly maxStockThreshold: number;
   readonly onReorder: boolean;
   readonly categoryIds: number[];
-}
-
-function ensureBaseUrl() {
-  const catalogApiBaseUrl = getServiceEndpoint("catalog-api");
-  if (!catalogApiBaseUrl) {
-    throw new Error("Catalog endpoint not found. Start Aspire or register catalog-api.");
-  }
-  return catalogApiBaseUrl;
-}
-
-async function ensureAccessToken() {
-  const session = await auth();
-  if (!session?.accessToken) {
-    throw new Error("Sign in to manage catalog items.");
-  }
-  return session.accessToken;
 }
 
 function buildCatalogItemPayload(formData: FormData): CatalogItemPayload {
@@ -72,8 +55,8 @@ function validateCatalogItemPayload(payload: CatalogItemPayload) {
 }
 
 export async function createCatalogItemAction(formData: FormData) {
-  const accessToken = await ensureAccessToken();
-  const baseUrl = ensureBaseUrl();
+  const accessToken = await ensureCatalogAccessToken("Sign in to manage catalog items.");
+  const baseUrl = ensureCatalogBaseUrl();
   const payload = buildCatalogItemPayload(formData);
   validateCatalogItemPayload(payload);
 
@@ -89,16 +72,15 @@ export async function createCatalogItemAction(formData: FormData) {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Failed to create catalog item.");
+    throw await buildCatalogError(response, "Failed to create catalog item.");
   }
 
   revalidatePath("/admin/catalog/items");
 }
 
 export async function deleteCatalogItemAction(formData: FormData) {
-  const accessToken = await ensureAccessToken();
-  const baseUrl = ensureBaseUrl();
+  const accessToken = await ensureCatalogAccessToken("Sign in to manage catalog items.");
+  const baseUrl = ensureCatalogBaseUrl();
   const id = Number(formData.get("itemId"));
 
   if (!Number.isFinite(id) || id <= 0) {
@@ -115,16 +97,15 @@ export async function deleteCatalogItemAction(formData: FormData) {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Failed to delete catalog item.");
+    throw await buildCatalogError(response, "Failed to delete catalog item.");
   }
 
   revalidatePath("/admin/catalog/items");
 }
 
 export async function updateCatalogItemAction(formData: FormData) {
-  const accessToken = await ensureAccessToken();
-  const baseUrl = ensureBaseUrl();
+  const accessToken = await ensureCatalogAccessToken("Sign in to manage catalog items.");
+  const baseUrl = ensureCatalogBaseUrl();
   const id = Number(formData.get("itemId"));
 
   if (!Number.isFinite(id) || id <= 0) {
@@ -146,8 +127,7 @@ export async function updateCatalogItemAction(formData: FormData) {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Failed to update catalog item.");
+    throw await buildCatalogError(response, "Failed to update catalog item.");
   }
 
   revalidatePath("/admin/catalog/items");

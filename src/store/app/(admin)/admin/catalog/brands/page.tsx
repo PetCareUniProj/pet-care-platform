@@ -1,58 +1,89 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { auth } from "@/auth";
+import { getServiceEndpoint } from "@/service-discovery";
+import type { BrandResponse, BrandsResponse } from "@/lib/api/types/catalog";
+import { buildCatalogError } from "../catalog-actions-utils";
+import type {
+  CatalogTaxonomyApiResponse,
+  CatalogTaxonomyFilters,
+  RouteSearchParams,
+} from "../taxonomy-shared";
+import { buildTaxonomyApiQueryString, buildTaxonomyFiltersFromSearchParamsRecord } from "../taxonomy-shared";
+import CatalogBrandsClient from "./catalog-brands-client";
+import { Agent as UndiciAgent, type Dispatcher } from "undici";
 
-const brands = [
-  { id: 1, name: "PetPrime", items: 64 },
-  { id: 2, name: "Furever", items: 18 },
-  { id: 3, name: "CalmPaws", items: 11 }
-];
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export default function CatalogBrandsPage() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Catalog · Brands</h1>
-        <p className="text-muted-foreground text-sm">Create or rename brands via `/api/brand` (admin role required).</p>
-      </div>
-      <Card>
-        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Brands</CardTitle>
-            <CardDescription>Keep brand taxonomy tidy for marketing and filtering.</CardDescription>
-          </div>
-          <Button>Create brand</Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="text-right">Items</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {brands.map((brand) => (
-                <TableRow key={brand.id}>
-                  <TableCell>#{brand.id}</TableCell>
-                  <TableCell>{brand.name}</TableCell>
-                  <TableCell className="text-right">{brand.items}</TableCell>
-                  <TableCell className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm">
-                      Rename
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
+const allowInsecureCatalogTls = process.env.ALLOW_INSECURE_CATALOG_TLS === "true";
+const insecureCatalogDispatcher: Dispatcher | undefined = allowInsecureCatalogTls
+  ? new UndiciAgent({ connect: { rejectUnauthorized: false } })
+  : undefined;
+
+type CatalogBrandsSearchParams = RouteSearchParams | Promise<RouteSearchParams> | undefined;
+
+interface CatalogBrandsPageProps {
+  readonly searchParams?: CatalogBrandsSearchParams;
+}
+
+export default async function CatalogBrandsPage({ searchParams }: CatalogBrandsPageProps) {
+  const resolvedSearchParams = await Promise.resolve(searchParams);
+  const filters = buildTaxonomyFiltersFromSearchParamsRecord(resolvedSearchParams);
+  const { data, error } = await loadCatalogBrands(filters);
+  return <CatalogBrandsClient data={data} loadError={error} />;
+}
+
+async function loadCatalogBrands(
+  filters: CatalogTaxonomyFilters
+): Promise<{ data: CatalogTaxonomyApiResponse<BrandResponse> | null; error: string | null }> {
+  const session = await auth();
+  if (!session?.accessToken) {
+    return { data: null, error: "Sign in to load catalog brands." };
+  }
+
+  const catalogApiBaseUrl = getServiceEndpoint("catalog-api");
+  if (!catalogApiBaseUrl) {
+    return {
+      data: null,
+      error: "Catalog endpoint not found. Start Aspire or ensure catalog-api is registered.",
+    };
+  }
+
+  const headers = new Headers({ Accept: "application/json" });
+  headers.set("Authorization", `Bearer ${session.accessToken}`);
+
+  type ExtendedRequestInit = RequestInit & { dispatcher?: Dispatcher };
+
+  const fetchInit: ExtendedRequestInit = {
+    method: "GET",
+    headers,
+    cache: "no-store",
+    ...(insecureCatalogDispatcher ? { dispatcher: insecureCatalogDispatcher } : {}),
+  };
+
+  const queryString = buildTaxonomyApiQueryString(filters);
+  const requestUrl = `${catalogApiBaseUrl}/api/catalog/brand?${queryString}`;
+
+  try {
+    const response = await fetch(requestUrl, fetchInit);
+    if (!response.ok) {
+      throw await createResponseError(response, "Failed to load catalog brands.");
+    }
+
+    const payload = (await response.json()) as BrandsResponse;
+    const data: CatalogTaxonomyApiResponse<BrandResponse> = {
+      items: payload.items,
+      total: payload.total,
+      page: payload.page,
+      pageSize: payload.pageSize,
+    };
+
+    return { data, error: null };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load catalog brands.";
+    return { data: null, error: message };
+  }
+}
+
+async function createResponseError(response: Response, fallback: string) {
+  return buildCatalogError(response, fallback);
 }

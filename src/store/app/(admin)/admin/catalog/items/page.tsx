@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getServiceEndpoint } from "@/service-discovery";
 import type { BrandsResponse, CategoriesResponse, ItemsResponse } from "@/lib/api/types/catalog";
 import { Agent as UndiciAgent, type Dispatcher } from "undici";
+import { buildCatalogError } from "../catalog-actions-utils";
 import CatalogItemsClient from "./catalog-items-client";
 import {
   CatalogFilters,
@@ -106,6 +107,5 @@ async function loadCatalogData(filters: CatalogFilters): Promise<{ data: Catalog
 }
 
 async function createResponseError(response: Response, fallback: string) {
-  const message = await response.text();
-  return new Error(message || fallback);
+  return buildCatalogError(response, fallback);
 }
