@@ -122,3 +122,8 @@ export function ProductCard({ product, width, brandName, onPress, onAddToCart }:
   );
 }
 
+
+
+
+
+

@@ -2,6 +2,7 @@
 
 export { apiClient } from './client';
 export { authService } from './auth.service';
+export type { KeycloakUser, LoginCredentials } from './auth.service';
 export { petsService } from './pets.service';
 export { remindersService } from './reminders.service';
 export { catalogService } from './catalog.service';

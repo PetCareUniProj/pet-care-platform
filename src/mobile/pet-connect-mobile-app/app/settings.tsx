@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   Text,
@@ -7,6 +7,7 @@ import {
   Switch,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,15 +15,43 @@ import { useRouter, Stack } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, ThemeMode } from '@/context/ThemeContext';
+import { useAuthStore } from '@/store';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { themeMode, colorScheme, setThemeMode, isDark } = useTheme();
+  const { user, isAuthenticated, logout } = useAuthStore();
   
   // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [eventReminders, setEventReminders] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Вийти з акаунта',
+      'Ви впевнені, що хочете вийти?',
+      [
+        { text: 'Скасувати', style: 'cancel' },
+        {
+          text: 'Вийти',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoggingOut(true);
+            try {
+              await logout();
+              router.replace('/(auth)/onboarding');
+            } catch (error) {
+              Alert.alert('Помилка', 'Не вдалося вийти з акаунта');
+            } finally {
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleToggleNotifications = async (value: boolean) => {
     if (value) {
@@ -119,12 +148,21 @@ export default function SettingsScreen() {
               <MaterialIcons name="person" size={32} color="white" />
             </View>
             <View className="flex-1">
-              <Text className="text-white font-bold text-lg">Користувач</Text>
-              <Text className="text-white/80">user@example.com</Text>
+              <Text className="text-white font-bold text-lg">
+                {user?.name || 'Користувач'}
+              </Text>
+              <Text className="text-white/80">
+                {user?.email || 'Не авторизовано'}
+              </Text>
             </View>
-            <TouchableOpacity className="bg-white/20 p-2 rounded-xl">
-              <MaterialIcons name="edit" size={20} color="white" />
-            </TouchableOpacity>
+            {isAuthenticated && (
+              <TouchableOpacity 
+                className="bg-white/20 p-2 rounded-xl"
+                onPress={() => router.push('/profile')}
+              >
+                <MaterialIcons name="edit" size={20} color="white" />
+              </TouchableOpacity>
+            )}
           </View>
         </LinearGradient>
 
@@ -307,11 +345,18 @@ export default function SettingsScreen() {
 
           {/* Logout Button */}
           <TouchableOpacity
-            onPress={() => Alert.alert('Вихід', 'Функція буде доступна пізніше')}
-            className="bg-red-50 border border-red-200 p-4 rounded-2xl flex-row items-center justify-center gap-3"
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+            className={`${isDark ? 'bg-red-900/30' : 'bg-red-50'} border border-red-200 p-4 rounded-2xl flex-row items-center justify-center gap-3`}
           >
-            <MaterialIcons name="logout" size={22} color="#ef4444" />
-            <Text className="text-red-500 font-bold">Вийти з акаунта</Text>
+            {isLoggingOut ? (
+              <ActivityIndicator color="#ef4444" />
+            ) : (
+              <>
+                <MaterialIcons name="logout" size={22} color="#ef4444" />
+                <Text className="text-red-500 font-bold">Вийти з акаунта</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           {/* Version Info */}

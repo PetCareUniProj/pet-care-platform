@@ -1,13 +1,38 @@
 // API Configuration Constants
 
+import { Platform } from 'react-native';
+
+/**
+ * Get the correct localhost address based on platform
+ * - Web: localhost
+ * - Android emulator: 10.0.2.2 (special IP that maps to host localhost)
+ * - iOS simulator: localhost
+ * - Physical device: Use actual server IP/domain
+ */
+function getLocalhostAddress(): string {
+  if (Platform.OS === 'web') {
+    return 'localhost';
+  }
+  if (Platform.OS === 'android') {
+    return '10.0.2.2';
+  }
+  // iOS and others
+  return 'localhost';
+}
+
+const LOCALHOST = getLocalhostAddress();
+
 // Base URLs for microservices
-export const CATALOG_API_URL = process.env.EXPO_PUBLIC_CATALOG_API_URL || 'http://10.0.2.2:8888/';
-export const ORDERING_API_URL = process.env.EXPO_PUBLIC_ORDERING_API_URL || 'http://10.0.2.2:8888/';
-export const BASKET_API_URL = process.env.EXPO_PUBLIC_BASKET_API_URL || 'http://10.0.2.2:8888/';
-export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL || 'http://10.0.2.2:8888/';
+export const CATALOG_API_URL = process.env.EXPO_PUBLIC_CATALOG_API_URL || `http://${LOCALHOST}:8888/`;
+export const ORDERING_API_URL = process.env.EXPO_PUBLIC_ORDERING_API_URL || `http://${LOCALHOST}:8888/`;
+export const BASKET_API_URL = process.env.EXPO_PUBLIC_BASKET_API_URL || `http://${LOCALHOST}:8888/`;
+export const SUBSCRIPTION_API_URL = process.env.EXPO_PUBLIC_SUBSCRIPTION_API_URL || `http://${LOCALHOST}:8888/`;
 
 // Legacy - for backward compatibility
-export const API_BASE_URL = 'http://10.0.2.2:8888/';
+export const API_BASE_URL = `http://${LOCALHOST}:8888/`;
+
+// Keycloak URL
+export const KEYCLOAK_URL = process.env.EXPO_PUBLIC_KEYCLOAK_URL || `http://${LOCALHOST}:8080`;
 
 export const API_ENDPOINTS = {
   // ============ Catalog API ============
@@ -42,8 +67,6 @@ export const API_ENDPOINTS = {
   },
 
   // ============ Basket (Local storage) ============
-  // Note: Basket is managed locally, not through API
-  // Use ordersService.createDraft() to convert basket to order draft
   BASKET: {
     BASE: '/api/basket',
     GET: '/api/basket',
@@ -53,7 +76,6 @@ export const API_ENDPOINTS = {
   },
 
   // ============ Subscriptions ============
-  // Note: Subscriptions are recurring orders, managed through Orders API
   SUBSCRIPTIONS: {
     BASE: '/api/subscriptions',
     GET_ALL: '/api/subscriptions',
@@ -62,7 +84,6 @@ export const API_ENDPOINTS = {
   },
 
   // ============ Pets API (Mocked) ============
-  // Pet profiles are mocked since there's no veterinary clinic backend
   PETS: {
     BASE: '/api/pets',
     GET_ALL: '/api/pets',
@@ -74,7 +95,6 @@ export const API_ENDPOINTS = {
   },
 
   // ============ Reminders API (Mocked) ============
-  // Reminders are mocked since there's no veterinary clinic backend
   REMINDERS: {
     BASE: '/api/reminders',
     GET_ALL: '/api/reminders',
@@ -91,9 +111,25 @@ export const API_ENDPOINTS = {
 
   // ============ Keycloak Auth ============
   AUTH: {
-    KEYCLOAK_BASE: process.env.EXPO_PUBLIC_KEYCLOAK_URL || 'http://10.0.2.2:8080',
+    // Keycloak server configuration - dynamically resolved based on platform
+    KEYCLOAK_BASE: KEYCLOAK_URL,
     REALM: process.env.EXPO_PUBLIC_KEYCLOAK_REALM || 'pet-care-platform',
-    CLIENT_ID: process.env.EXPO_PUBLIC_KEYCLOAK_CLIENT_ID || 'pet-connect-mobile',
+    // Use public-client-web from Keycloak realm (public client, no secret required)
+    CLIENT_ID: process.env.EXPO_PUBLIC_KEYCLOAK_CLIENT_ID || 'public-client-web',
+    
+    // Keycloak OIDC endpoints
+    get AUTHORIZATION_ENDPOINT() {
+      return `${this.KEYCLOAK_BASE}/realms/${this.REALM}/protocol/openid-connect/auth`;
+    },
+    get TOKEN_ENDPOINT() {
+      return `${this.KEYCLOAK_BASE}/realms/${this.REALM}/protocol/openid-connect/token`;
+    },
+    get USERINFO_ENDPOINT() {
+      return `${this.KEYCLOAK_BASE}/realms/${this.REALM}/protocol/openid-connect/userinfo`;
+    },
+    get LOGOUT_ENDPOINT() {
+      return `${this.KEYCLOAK_BASE}/realms/${this.REALM}/protocol/openid-connect/logout`;
+    },
   },
 } as const;
 
@@ -105,6 +141,23 @@ export const RETRY_CONFIG = {
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000, // 1 second
 } as const;
+
+// ============ App Configuration ============
+
+/**
+ * App deep link scheme
+ * Must match the scheme in app.json
+ */
+export const APP_SCHEME = 'petconnectmobileapp';
+
+/**
+ * Trusted origins
+ */
+export const TRUSTED_ORIGINS = [
+  `${APP_SCHEME}://`,
+  'http://localhost:8081',
+  `http://${LOCALHOST}:8081`,
+];
 
 // ============ Helpers ============
 

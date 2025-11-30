@@ -1,269 +1,131 @@
-// Register screen
+// Registration Screen
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { authService } from '@/services/api';
-import { RegisterData } from '@/types/auth.types';
-import { validators } from '@/utils/validation';
+import { useAuthStore } from '@/store';
 
 export default function RegisterScreen() {
-  const [formData, setFormData] = useState<RegisterData>({
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    phone: '',
-  });
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!validators.required(formData.email)) {
-      newErrors.email = 'Email обов\'язковий';
-    } else if (!validators.email(formData.email)) {
-      newErrors.email = 'Невірний формат email';
-    }
-
-    if (!validators.required(formData.password)) {
-      newErrors.password = 'Пароль обов\'язковий';
-    } else if (!validators.password(formData.password)) {
-      newErrors.password =
-        'Пароль має містити мінімум 8 символів, велику літеру, малу літеру та цифру';
-    }
-
-    if (formData.password !== confirmPassword) {
-      newErrors.confirmPassword = 'Паролі не співпадають';
-    }
-
-    if (formData.phone && !validators.phone(formData.phone)) {
-      newErrors.phone = 'Невірний формат телефону. Використовуйте формат: +380 XX XXX XX XX або 0XX XXX XX XX';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const { register, isLoading } = useAuthStore();
+  const [error, setError] = useState('');
 
   const handleRegister = async () => {
-    if (!validate()) {
-      return;
-    }
-
-    setIsLoading(true);
+    setError('');
     try {
-      await authService.register(formData);
-      router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Помилка реєстрації', error.message || 'Не вдалося зареєструватися');
-    } finally {
-      setIsLoading(false);
+      await register();
+      router.replace('/(tabs)/dashboard');
+    } catch (err: any) {
+      if (!err.message?.includes('скасовано') && !err.message?.includes('Redirecting')) {
+        setError(err.message || 'Помилка реєстрації');
+      }
     }
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header with Gradient */}
-        <LinearGradient
-          colors={['#fb923c', '#f59e0b']} // orange-400 to amber-500
-          start={{ x: 1, y: 0 }}
-          end={{ x: 0, y: 0 }}
-        >
-          <View className="items-center gap-4 mt-8 rounded-b-[40px] px-6 pt-16 pb-12">
-            <View className="relative">
-              <View className="absolute bg-white/20 w-24 h-24 rounded-full blur-xl" />
-              <View className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-white shadow-lg">
-                <MaterialIcons name="person-add" size={40} color="#f97316" />
-              </View>
-            </View>
-            
-            <View className="items-center gap-2">
-              <Text className="text-white text-3xl font-extrabold text-center">
-                Створіть акаунт
-              </Text>
-              <Text className="text-white text-base text-center opacity-90 px-4">
-                Приєднуйся до спільноти Pet Connect
-              </Text>
-            </View>
+    <ScrollView className="flex-1 bg-white" keyboardShouldPersistTaps="handled">
+      {/* Header */}
+      <LinearGradient colors={['#fb923c', '#f59e0b']} start={{ x: 1, y: 0 }} end={{ x: 0, y: 0 }}>
+        <View className="items-center gap-4 px-6 pt-20 pb-12">
+          <View className="w-20 h-20 bg-white rounded-full items-center justify-center">
+            <MaterialIcons name="person-add" size={40} color="#f97316" />
           </View>
-        </LinearGradient>
+          <Text className="text-white text-3xl font-bold">Реєстрація</Text>
+          <Text className="text-white/80 text-center">Створіть новий акаунт</Text>
+        </View>
+      </LinearGradient>
 
-        {/* Form Section */}
-        <View className="px-6 pt-8 pb-8">
-          <View className="gap-5">
-            {/* Name and Last Name Row */}
-            <View className="flex-row gap-3">
-              <View className="flex-1">
-                <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Ім'я</Text>
-                <View className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4">
-                  <TextInput
-                    className="text-gray-800 text-base"
-                    placeholder="Ваше ім'я"
-                    placeholderTextColor="#9CA3AF"
-                    value={formData.firstName}
-                    onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                    autoCapitalize="words"
-                  />
-                </View>
-              </View>
-
-              <View className="flex-1">
-                <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Прізвище</Text>
-                <View className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4">
-                  <TextInput
-                    className="text-gray-800 text-base"
-                    placeholder="Ваше прізвище"
-                    placeholderTextColor="#9CA3AF"
-                    value={formData.lastName}
-                    onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                    autoCapitalize="words"
-                  />
-                </View>
-              </View>
-            </View>
-
-            {/* Email Input */}
-            <View>
-              <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Email *</Text>
-              <View className={`bg-gray-50 border rounded-2xl px-4 py-4 flex-row items-center ${
-                errors.email ? 'border-red-300' : 'border-gray-200'
-              }`}>
-                <View className="bg-orange-100 p-2 rounded-xl mr-3">
-                  <MaterialIcons name="email" size={20} color="#f97316" />
-                </View>
-                <TextInput
-                  className="flex-1 text-gray-800 text-base"
-                  placeholder="your@email.com"
-                  placeholderTextColor="#9CA3AF"
-                  value={formData.email}
-                  onChangeText={(text) => setFormData({ ...formData, email: text })}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                />
-              </View>
-              {errors.email && (
-                <Text className="text-red-500 text-sm mt-2 ml-1">{errors.email}</Text>
-              )}
-            </View>
-
-            {/* Phone Input */}
-            <View>
-              <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Телефон</Text>
-              <View className={`bg-gray-50 border rounded-2xl px-4 py-4 flex-row items-center ${
-                errors.phone ? 'border-red-300' : 'border-gray-200'
-              }`}>
-                <View className="bg-orange-100 p-2 rounded-xl mr-3">
-                  <MaterialIcons name="phone" size={20} color="#f97316" />
-                </View>
-                <TextInput
-                  className="flex-1 text-gray-800 text-base"
-                  placeholder="+380 XX XXX XX XX"
-                  placeholderTextColor="#9CA3AF"
-                  value={formData.phone}
-                  onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                  keyboardType="phone-pad"
-                  autoComplete="tel"
-                />
-              </View>
-              {errors.phone && (
-                <Text className="text-red-500 text-sm mt-2 ml-1">{errors.phone}</Text>
-              )}
-            </View>
-
-            {/* Password Input */}
-            <View>
-              <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Пароль *</Text>
-              <View className={`bg-gray-50 border rounded-2xl px-4 py-4 flex-row items-center ${
-                errors.password ? 'border-red-300' : 'border-gray-200'
-              }`}>
-                <View className="bg-orange-100 p-2 rounded-xl mr-3">
-                  <MaterialIcons name="lock" size={20} color="#f97316" />
-                </View>
-                <TextInput
-                  className="flex-1 text-gray-800 text-base"
-                  placeholder="••••••••"
-                  placeholderTextColor="#9CA3AF"
-                  value={formData.password}
-                  onChangeText={(text) => setFormData({ ...formData, password: text })}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoComplete="password-new"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  className="ml-2 p-1">
-                  <MaterialIcons
-                    name={showPassword ? 'visibility-off' : 'visibility'}
-                    size={22}
-                    color="#9CA3AF"
-                  />
-                </TouchableOpacity>
-              </View>
-              {errors.password && (
-                <Text className="text-red-500 text-sm mt-2 ml-1">{errors.password}</Text>
-              )}
-            </View>
-
-            {/* Confirm Password Input */}
-            <View>
-              <Text className="text-sm font-bold text-gray-700 mb-2 ml-1">Підтвердження паролю *</Text>
-              <View className={`bg-gray-50 border rounded-2xl px-4 py-4 flex-row items-center ${
-                errors.confirmPassword ? 'border-red-300' : 'border-gray-200'
-              }`}>
-                <View className="bg-orange-100 p-2 rounded-xl mr-3">
-                  <MaterialIcons name="lock-outline" size={20} color="#f97316" />
-                </View>
-                <TextInput
-                  className="flex-1 text-gray-800 text-base"
-                  placeholder="••••••••"
-                  placeholderTextColor="#9CA3AF"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-              </View>
-              {errors.confirmPassword && (
-                <Text className="text-red-500 text-sm mt-2 ml-1">{errors.confirmPassword}</Text>
-              )}
-            </View>
-
-            {/* Register Button */}
-            <TouchableOpacity
-              className="bg-orange-500 py-4 rounded-2xl items-center shadow-lg shadow-orange-200 active:scale-[0.98] mt-2"
-              onPress={handleRegister}
-              disabled={isLoading}>
-              <Text className="text-white font-bold text-lg">
-                {isLoading ? 'Реєстрація...' : 'Зареєструватися'}
+      {/* Content */}
+      <View className="px-6 pt-8 gap-5">
+        {/* Info Card */}
+        <View className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+          <View className="flex-row items-start gap-3">
+            <MaterialIcons name="info-outline" size={24} color="#f59e0b" />
+            <View className="flex-1">
+              <Text className="text-amber-800 font-semibold mb-1">Безпечна реєстрація</Text>
+              <Text className="text-amber-700">
+                Ви будете перенаправлені на захищену сторінку для створення акаунту. Після реєстрації ви автоматично увійдете в застосунок.
               </Text>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View className="flex-row items-center gap-4 my-4">
-              <View className="flex-1 h-[1px] bg-gray-200" />
-              <Text className="text-gray-400 text-sm">або</Text>
-              <View className="flex-1 h-[1px] bg-gray-200" />
-            </View>
-
-            {/* Login Link */}
-            <View className="flex-row justify-center items-center gap-2">
-              <Text className="text-gray-600">Вже є акаунт? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-                <Text className="text-orange-500 font-bold">Увійти</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
-      </ScrollView>
-    </View>
+
+        {/* Features */}
+        <View className="gap-3">
+          <Text className="text-gray-700 font-semibold ml-1">Що ви отримаєте:</Text>
+          
+          <View className="flex-row items-center gap-3 bg-gray-50 p-4 rounded-xl">
+            <View className="bg-green-100 w-10 h-10 rounded-full items-center justify-center">
+              <MaterialIcons name="pets" size={20} color="#22c55e" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-gray-800 font-medium">Профілі улюбленців</Text>
+              <Text className="text-gray-500 text-sm">Додавайте та відстежуйте своїх тварин</Text>
+            </View>
+          </View>
+
+          <View className="flex-row items-center gap-3 bg-gray-50 p-4 rounded-xl">
+            <View className="bg-blue-100 w-10 h-10 rounded-full items-center justify-center">
+              <MaterialIcons name="notifications" size={20} color="#3b82f6" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-gray-800 font-medium">Нагадування</Text>
+              <Text className="text-gray-500 text-sm">Не пропускайте важливі події</Text>
+            </View>
+          </View>
+
+          <View className="flex-row items-center gap-3 bg-gray-50 p-4 rounded-xl">
+            <View className="bg-purple-100 w-10 h-10 rounded-full items-center justify-center">
+              <MaterialIcons name="shopping-cart" size={20} color="#a855f7" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-gray-800 font-medium">Магазин товарів</Text>
+              <Text className="text-gray-500 text-sm">Купуйте все необхідне для улюбленців</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Error */}
+        {error && (
+          <View className="bg-red-50 border border-red-200 rounded-xl p-3">
+            <Text className="text-red-600 text-center">{error}</Text>
+          </View>
+        )}
+
+        {/* Register Button */}
+        <TouchableOpacity
+          className="bg-orange-500 py-4 rounded-xl items-center flex-row justify-center gap-2"
+          onPress={handleRegister}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <>
+              <MaterialIcons name="person-add" size={22} color="white" />
+              <Text className="text-white font-bold text-lg">Зареєструватися</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* Login Link */}
+        <View className="flex-row justify-center gap-1 mt-2">
+          <Text className="text-gray-600">Вже є акаунт?</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+            <Text className="text-orange-500 font-semibold">Увійти</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Back */}
+        <TouchableOpacity
+          className="py-4 items-center"
+          onPress={() => router.back()}
+          disabled={isLoading}
+        >
+          <Text className="text-gray-500">← Назад</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
-
-

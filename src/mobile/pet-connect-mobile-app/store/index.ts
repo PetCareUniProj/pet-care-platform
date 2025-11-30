@@ -4,6 +4,9 @@ import { CalendarEvent } from '@/types/reminder.types';
 import { petsService } from '@/services/api/pets.service';
 import { remindersService } from '@/services/api/reminders.service';
 
+// Re-export auth store
+export { useAuthStore, useUser, useIsAuthenticated, useAuthLoading, useAuthError } from './auth.store';
+
 interface PetsState {
   pets: Pet[];
   selectedPet: Pet | null;

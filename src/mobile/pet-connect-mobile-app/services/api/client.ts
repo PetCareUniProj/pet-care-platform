@@ -3,6 +3,7 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { CATALOG_API_URL, ORDERING_API_URL, BASKET_API_URL, SUBSCRIPTION_API_URL, REQUEST_TIMEOUT, RETRY_CONFIG } from '@/constants/api';
 import { tokenStorage } from '@/utils/storage';
+import { keycloakService } from '@/lib/keycloak';
 import { ApiError } from '@/types/api.types';
 
 class ApiClient {
@@ -50,9 +51,16 @@ class ApiClient {
       // Request interceptor - add auth token
       client.interceptors.request.use(
         async (config: InternalAxiosRequestConfig) => {
-          const token = await tokenStorage.getAccessToken();
+          // Try to get Keycloak access token
+          const token = keycloakService.getAccessToken();
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
+          } else {
+            // Fallback to legacy token storage
+            const legacyToken = await tokenStorage.getAccessToken();
+            if (legacyToken && config.headers) {
+              config.headers.Authorization = `Bearer ${legacyToken}`;
+            }
           }
           return config;
         },

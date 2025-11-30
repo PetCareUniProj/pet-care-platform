@@ -1,92 +1,67 @@
-// Authentication service
+// Auth Service - wrapper for keycloak auth
 
-import { apiClient } from './client';
-import { API_ENDPOINTS } from '@/constants/api';
-import { LoginCredentials, RegisterData, User, AuthTokens } from '@/types/auth.types';
-import { tokenStorage, userStorage } from '@/utils/storage';
+import { authService as keycloakAuth, LoginCredentials, AuthUser } from '@/lib/keycloak';
 
-class AuthService {
-  async login(credentials: LoginCredentials): Promise<{ user: User; tokens: AuthTokens }> {
-    // TODO: Implement Keycloak OAuth2/OIDC integration
-    // For now, using mock structure
-    const response = await apiClient.post<{ user: User; tokens: AuthTokens }>(
-      '/auth/login',
-      credentials
-    );
+export interface RegisterData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
 
-    // Save tokens and user data
-    await tokenStorage.saveTokens(response.tokens.accessToken, response.tokens.refreshToken);
-    await userStorage.saveUser(response.user);
-
-    return response;
+class AuthApiService {
+  /**
+   * Login with email and password
+   */
+  async login(email: string, password: string): Promise<AuthUser> {
+    return keycloakAuth.loginWithCredentials({ email, password });
   }
 
-  async register(data: RegisterData): Promise<{ user: User; tokens: AuthTokens }> {
-    const response = await apiClient.post<{ user: User; tokens: AuthTokens }>(
-      '/auth/register',
-      data
-    );
-
-    await tokenStorage.saveTokens(response.tokens.accessToken, response.tokens.refreshToken);
-    await userStorage.saveUser(response.user);
-
-    return response;
+  /**
+   * Login via browser OAuth
+   */
+  async loginWithBrowser(): Promise<AuthUser> {
+    return keycloakAuth.loginWithBrowser();
   }
 
+  /**
+   * Register new user
+   * Note: Keycloak usually requires admin API for user creation
+   * This will try to login after registration attempt
+   */
+  async register(data: RegisterData): Promise<AuthUser> {
+    // For now, redirect to browser login which can handle registration
+    // Keycloak login page has "Register" link
+    return keycloakAuth.loginWithBrowser();
+  }
+
+  /**
+   * Logout
+   */
   async logout(): Promise<void> {
-    try {
-      await apiClient.post('/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      await tokenStorage.clearTokens();
-      await userStorage.clearUser();
-    }
+    await keycloakAuth.logout();
   }
 
-  async refreshToken(refreshToken: string): Promise<AuthTokens> {
-    const response = await apiClient.post<AuthTokens>('/auth/refresh', {
-      refreshToken,
-    });
-
-    await tokenStorage.saveTokens(response.accessToken, response.refreshToken);
-
-    return response;
+  /**
+   * Get current access token
+   */
+  getAccessToken(): string | null {
+    return keycloakAuth.getAccessToken();
   }
 
-  async getCurrentUser(): Promise<User | null> {
-    try {
-      const user = await apiClient.get<User>('/auth/me');
-      await userStorage.saveUser(user);
-      return user;
-    } catch (error) {
-      return null;
-    }
+  /**
+   * Get current user
+   */
+  getCurrentUser(): AuthUser | null {
+    return keycloakAuth.getUser();
   }
 
-  async forgotPassword(email: string): Promise<void> {
-    await apiClient.post('/auth/forgot-password', { email });
-  }
-
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    await apiClient.post('/auth/reset-password', { token, newPassword });
-  }
-
-  async checkAuth(): Promise<boolean> {
-    const token = await tokenStorage.getAccessToken();
-    if (!token) {
-      return false;
-    }
-
-    try {
-      const user = await this.getCurrentUser();
-      return user !== null;
-    } catch {
-      return false;
-    }
+  /**
+   * Check if authenticated
+   */
+  isAuthenticated(): boolean {
+    return keycloakAuth.isAuthenticated();
   }
 }
 
-export const authService = new AuthService();
-
-
+export const authService = new AuthApiService();
