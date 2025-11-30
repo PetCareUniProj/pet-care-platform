@@ -248,12 +248,22 @@ function buildRecurringLabel(value?: string | null) {
   if (!value) {
     return null;
   }
-  const [h = "00", m = "00", sPart = "00"] = value.split(":");
-  const [s] = sPart.split(".");
-  const hours = Number(h);
-  const minutes = Number(m);
-  const seconds = Number(s);
+
+  const match = value.match(/^(?:(\d+)\.)?(\d{1,2}):(\d{2})(?::(\d{2}))?.*$/);
+  if (!match) {
+    return value;
+  }
+
+  const [, daysRaw, hoursRaw, minutesRaw, secondsRaw] = match;
+  const days = daysRaw ? Number(daysRaw) : 0;
+  const hours = hoursRaw ? Number(hoursRaw) : 0;
+  const minutes = minutesRaw ? Number(minutesRaw) : 0;
+  const seconds = secondsRaw ? Number(secondsRaw) : 0;
   const parts: string[] = [];
+
+  if (days) {
+    parts.push(`${days}d`);
+  }
   if (hours) {
     parts.push(`${hours}h`);
   }
@@ -263,5 +273,6 @@ function buildRecurringLabel(value?: string | null) {
   if (seconds && parts.length === 0) {
     parts.push(`${seconds}s`);
   }
+
   return parts.length > 0 ? parts.join(" ") : value;
 }
