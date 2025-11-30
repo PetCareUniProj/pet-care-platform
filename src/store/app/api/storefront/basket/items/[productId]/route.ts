@@ -27,9 +27,25 @@ function handleError(error: unknown) {
   return NextResponse.json({ message: "Basket service unavailable." }, { status: 500 });
 }
 
+function parseProductId(raw: string | string[] | undefined) {
+  if (raw === undefined) {
+    return Number.NaN;
+  }
+
+  const value = Array.isArray(raw) ? raw[0] ?? "" : raw;
+  const normalized = value.split("?")[0]?.trim();
+  if (!normalized) {
+    return Number.NaN;
+  }
+
+  return Number(normalized);
+}
+
 export async function DELETE(_: NextRequest, context: { params: { productId: string } }) {
   try {
-    const productId = Number(context.params.productId);
+    const prms = await context.params;
+    const productId = parseProductId(prms.productId);
+    console.log("Removing product from basket:", productId);
     if (!Number.isInteger(productId) || productId <= 0) {
       return NextResponse.json({ message: "Product id must be a positive integer." }, { status: 400 });
     }

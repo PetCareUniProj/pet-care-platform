@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import BasketClient, { BasketItem } from '@/lib/basket-client';
 
 interface CartContextType {
@@ -24,9 +24,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode; basketApiUrl?: 
     catalogApiUrl = '/api/storefront/catalog'
 }) => {
     const [items, setItems] = useState<BasketItem[]>([]);
+    const latestItemsRef = useRef<BasketItem[]>(items);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [basketClient] = useState(() => new BasketClient(basketApiUrl, { resourcePath: '' }));
+
+    useEffect(() => {
+        latestItemsRef.current = items;
+    }, [items]);
 
     // Встановлюємо catalogApiUrl в sessionStorage
     useEffect(() => {
@@ -56,33 +61,51 @@ export const CartProvider: React.FC<{ children: React.ReactNode; basketApiUrl?: 
         fetchCart();
     }, [fetchCart]);
 
-    const enrichItems = useCallback(async (catalogApiUrl: string) => {
-        const apiBaseUrl = catalogApiUrl.replace(/\/+$/, '');
-        const enrichedItems = await Promise.all(
-            items.map(async (item) => {
-                if (item.name && item.price) return item; // Already enriched
+    const enrichItems = useCallback(async (rawCatalogApiUrl: string) => {
+        const currentItems = latestItemsRef.current;
+        if (currentItems.length === 0) {
+            return;
+        }
 
+        const apiBaseUrl = rawCatalogApiUrl.replace(/\/+$/, '');
+        const itemsToEnrich = currentItems.filter((item) => !item.name || item.price === undefined);
+        if (itemsToEnrich.length === 0) {
+            return;
+        }
+
+        const updates = new Map<number, Partial<BasketItem>>();
+
+        await Promise.all(
+            itemsToEnrich.map(async (item) => {
                 try {
                     const response = await fetch(`${apiBaseUrl}/items/${item.product_id}`);
-                    if (response.ok) {
-                        const product = await response.json();
-                        return {
-                            ...item,
-                            name: product.name,
-                            price: product.price,
-                            pictureFileName: product.pictureFileName,
-                        };
+                    if (!response.ok) {
+                        return;
                     }
+
+                    const product = await response.json();
+                    updates.set(item.product_id, {
+                        name: product.name,
+                        price: product.price,
+                        pictureFileName: product.pictureFileName,
+                    });
                 } catch (error) {
                     console.error(`Error fetching product ${item.product_id}:`, error);
                 }
-
-                return item;
             })
         );
 
-        setItems(enrichedItems);
-    }, [items]);
+        if (updates.size === 0) {
+            return;
+        }
+
+        setItems((prev) =>
+            prev.map((item) => {
+                const update = updates.get(item.product_id);
+                return update ? { ...item, ...update } : item;
+            })
+        );
+    }, []);
 
     const addItem = useCallback(async (productId: number, quantity: number = 1) => {
         setError(null);
