@@ -15,5 +15,6 @@ public static class ApiEndpoints
         public const string GetById = $"{Base}/{{id:int}}";
         public const string GetByUser = $"{Base}/user/me";
         public const string GetByUserId = $"{Base}/user/{{userId:guid}}";
+        public const string GetAll = $"{Base}/";
     }
 }
