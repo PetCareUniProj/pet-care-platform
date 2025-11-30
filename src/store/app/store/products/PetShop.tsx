@@ -275,15 +275,6 @@ const PetShop: React.FC<PetShopProps> = ({
 
     const totalPages: number = Math.ceil(totalItems / pageSizeState);
 
-    const pets: Pet[] = [
-        { name: 'Cat', image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop', bgColor: 'bg-gradient-to-l from-orange-400 to-amber-500' },
-        { name: 'Hamster', image: 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=200&h=200&fit=crop', bgColor: 'bg-gray-50' },
-        { name: 'Dog', image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&h=200&fit=crop', bgColor: 'bg-gray-50' },
-        { name: 'Parrot', image: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=200&h=200&fit=crop', bgColor: 'bg-gray-50' },
-        { name: 'Rabbit', image: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=200&h=200&fit=crop', bgColor: 'bg-gray-50' },
-        { name: 'Turtle', image: 'https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=200&h=200&fit=crop', bgColor: 'bg-gray-50' }
-    ];
-
     return (
         <div className="w-full bg-white">
             {/* Hero Section */}
@@ -312,28 +303,6 @@ const PetShop: React.FC<PetShopProps> = ({
                 </div>
 
                 <div className="w-32 h-32 absolute right-40 bottom-0 rotate-[5deg] bg-gradient-to-l from-orange-400 to-amber-500 rounded-lg opacity-30" />
-            </div>
-
-            {/* Shop by Pet */}
-            <div id="shop-by-pet" className="px-16 py-14">
-                <div className="flex justify-between items-end mb-14">
-                    <h2 className="text-4xl font-semibold">Shop by pet</h2>
-                </div>
-
-                <div className="grid grid-cols-6 gap-6 max-w-[1296px] mx-auto">
-                    {pets.map((pet, index) => (
-                        <div key={index} className="flex flex-col items-center gap-6 cursor-pointer group">
-                            <div className={`w-44 h-48 ${pet.bgColor} rounded-2xl relative overflow-hidden`}>
-                                <img
-                                    src={pet.image}
-                                    alt={pet.name}
-                                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-48 object-cover group-hover:scale-110 transition-transform"
-                                />
-                            </div>
-                            <div className="text-xl font-semibold">{pet.name}</div>
-                        </div>
-                    ))}
-                </div>
             </div>
 
             {/* Products Section with Filters */}
