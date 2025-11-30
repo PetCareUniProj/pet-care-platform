@@ -8,6 +8,7 @@ import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 
 import { auth } from "@/auth";
+import { fetchCatalogItem } from "@/lib/server/catalog-service";
 import type { BasketItem, CustomerBasket } from "@/lib/basket-client";
 import { getServiceEndpoint } from "@/service-discovery";
 
@@ -146,13 +147,53 @@ function sanitizeItems(items: BasketItem[]): GrpcBasketItem[] {
   });
 }
 
-function normalizeBasket(response?: CustomerBasketResponse): CustomerBasket {
+async function enrichBasketItems(items: BasketItem[]): Promise<BasketItem[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const uniqueIds = Array.from(new Set(items.map((item) => item.product_id)));
+  const catalogEntries = new Map<number, { name?: string; price?: number; pictureFileName?: string }>();
+
+  await Promise.all(
+    uniqueIds.map(async (productId) => {
+      try {
+        const catalogItem = await fetchCatalogItem(productId.toString());
+        catalogEntries.set(productId, {
+          name: catalogItem.name,
+          price: catalogItem.price,
+          pictureFileName: catalogItem.pictureFileName ?? undefined,
+        });
+      } catch (error) {
+        console.warn(`Unable to load catalog item ${productId} for basket enrichment`, error);
+      }
+    }),
+  );
+
+  return items.map((item) => {
+    const catalogItem = catalogEntries.get(item.product_id);
+    if (!catalogItem) {
+      return item;
+    }
+
+    return {
+      ...item,
+      name: catalogItem.name,
+      price: catalogItem.price,
+      pictureFileName: catalogItem.pictureFileName,
+    };
+  });
+}
+
+async function normalizeBasket(response?: CustomerBasketResponse): Promise<CustomerBasket> {
   const items = Array.isArray(response?.items) ? response?.items : [];
+  const normalizedItems = items.map((item) => ({
+    product_id: Number(item.product_id),
+    quantity: Number(item.quantity),
+  }));
+
   return {
-    items: items.map((item) => ({
-      product_id: Number(item.product_id),
-      quantity: Number(item.quantity),
-    })),
+    items: await enrichBasketItems(normalizedItems),
   };
 }
 
