@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, ShoppingCart, Heart, Menu, X } from "lucide-react";
+import { Search, ShoppingCart, Menu, X } from "lucide-react";
 import NavLink from "./NavLink";
 import Link from "next/link";
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -17,14 +17,12 @@ interface ItemResponse {
 
 interface NavigationProps {
     cartCount?: number;
-    wishlistCount?: number;
     basketApiUrl: string;
     catalogApiUrl: string;
 }
 
 export default function Navigation({
                                        cartCount: initialCartCount = 0,
-                                       wishlistCount = 0,
                                        basketApiUrl,
                                        catalogApiUrl,
                                    }: NavigationProps) {
@@ -265,7 +263,7 @@ export default function Navigation({
                         )}
                     </div>
 
-                    {/* Cart/Wishlist */}
+                    {/* Cart */}
                     <div className="flex gap-6">
                         <button
                             onClick={() => setIsCartOpen(true)}
@@ -275,15 +273,6 @@ export default function Navigation({
                             {cartCount > 0 && (
                                 <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                                     {cartCount}
-                                </span>
-                            )}
-                        </button>
-
-                        <button className="relative">
-                            <Heart className="w-6 h-6" />
-                            {wishlistCount > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                                    {wishlistCount}
                                 </span>
                             )}
                         </button>

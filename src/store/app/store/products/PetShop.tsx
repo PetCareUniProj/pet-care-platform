@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, ChevronLeft, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
+import { ShoppingCart, ChevronLeft, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
 import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
 import { useCart } from '@/app/context/CartContext';
@@ -27,12 +27,11 @@ interface Pet {
 
 interface ProductCardProps {
     product: ItemResponse;
-    onAddToWishlist: (product: ItemResponse) => void;
     onAddToCart: (product: ItemResponse) => void;
     catalogImageBase: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onAddToCart, catalogImageBase }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, catalogImageBase }) => {
     const [imageFallback, setImageFallback] = useState<boolean>(false);
     const productTitle = product.name ?? `Product ${product.id}`;
     const catalogImageSrc = product.pictureFileName
@@ -81,15 +80,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToWishlist, onA
                         </div>
                     )}
                 </div>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        onAddToWishlist(product);
-                    }}
-                    className="w-7 h-7 bg-gray-50 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors group"
-                >
-                    <Heart className="w-5 h-5 text-orange-500 group-hover:text-white" />
-                </button>
             </div>
         </div>
     </Link>
@@ -250,11 +240,6 @@ const PetShop: React.FC<PetShopProps> = ({
         setCurrentPage(1);
     };
 
-    const handleAddToWishlist = (product: ItemResponse): void => {
-        console.log('Added to wishlist:', product);
-        alert(`Added ${product.name} to wishlist!`);
-    };
-
     const handleAddToCart = async (product: ItemResponse): Promise<void> => {
         if (product.availableStock <= 0) {
             alert('This product is out of stock');
@@ -403,7 +388,6 @@ const PetShop: React.FC<PetShopProps> = ({
                                 <ProductCard
                                     key={product.id}
                                     product={product}
-                                    onAddToWishlist={handleAddToWishlist}
                                     onAddToCart={handleAddToCart}
                                     catalogImageBase={API_BASE_URL}
                                 />

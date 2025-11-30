@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Heart, Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowLeft, Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Navigation from '@/app/components/Navigation';
 import Footer from '@/app/components/Footer';
@@ -35,28 +35,9 @@ export default function ProductDetailsClient({
     const [actionError, setActionError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [isAddingToCart, setIsAddingToCart] = useState(false);
-    const [wishlist, setWishlist] = useState<number[]>([]);
     const [imageFallback, setImageFallback] = useState(false);
     const normalizedCatalogApiUrl = useMemo(() => catalogApiUrl.replace(/\/+$/, ''), [catalogApiUrl]);
     const pageError = initialError ?? '';
-
-    useEffect(() => {
-        const storedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        setWishlist(storedWishlist);
-    }, []);
-
-    const handleAddToWishlist = () => {
-        if (!product) {
-            return;
-        }
-
-        const updatedWishlist = wishlist.includes(product.id)
-            ? wishlist.filter((id) => id !== product.id)
-            : [...wishlist, product.id];
-
-        setWishlist(updatedWishlist);
-        localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-    };
 
     const handleAddToCart = async () => {
         if (!product) {
@@ -151,19 +132,6 @@ export default function ProductDetailsClient({
                                         <h1 className="text-4xl font-bold mb-2">{product.name}</h1>
                                         {brand && <p className="text-gray-600 text-lg">Brand: {brand.name}</p>}
                                     </div>
-                                    <button
-                                        onClick={handleAddToWishlist}
-                                        className={`p-3 rounded-full transition-all ${
-                                            wishlist.includes(product.id)
-                                                ? 'bg-red-100 text-red-500'
-                                                : 'bg-gray-100 text-gray-400 hover:text-red-500'
-                                        }`}
-                                    >
-                                        <Heart
-                                            className="w-6 h-6"
-                                            fill={wishlist.includes(product.id) ? 'currentColor' : 'none'}
-                                        />
-                                    </button>
                                 </div>
 
                                 <div className="text-4xl font-bold text-orange-500 mb-4">
@@ -266,7 +234,7 @@ export default function ProductDetailsClient({
                         <h2 className="text-2xl font-bold mb-6">Specifications</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                             <div>
-                                <p className="text-gray-600 text-sm mb-1">SKU</p>
+                                <p className="text-gray-600 text-sm mb-1">Serial Number</p>
                                 <p className="font-semibold text-lg">{product.id}</p>
                             </div>
                             <div>

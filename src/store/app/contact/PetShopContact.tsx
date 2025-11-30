@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Search, ShoppingBag, Heart, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Clock } from 'lucide-react';
+import { Search, ShoppingBag, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Clock } from 'lucide-react';
 import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
 import NavLink from "@/app/components/NavLink";
