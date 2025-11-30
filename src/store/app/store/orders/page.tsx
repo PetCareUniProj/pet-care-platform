@@ -70,6 +70,14 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   return (
     <div className="min-h-screen bg-[#F7F5F2] px-4 py-10 md:px-10">
       <div className="mx-auto max-w-5xl space-y-6">
+        <div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-gray-900 hover:underline"
+          >
+            ← Go back to store
+          </Link>
+        </div>
         <header className="space-y-2">
           <p className="text-sm font-semibold uppercase tracking-widest text-orange-500">Orders</p>
           <h1 className="text-3xl font-bold text-gray-900">Your recent orders</h1>

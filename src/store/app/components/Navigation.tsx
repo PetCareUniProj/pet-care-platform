@@ -176,6 +176,12 @@ const Navigation: React.FC<NavigationProps> = ({
                                 >
                                     Manage account
                                 </Link>
+                                <Link
+                                    href="/store/orders"
+                                    className="rounded-full border border-gray-200 px-5 py-2.5 text-center text-sm font-semibold transition-colors hover:bg-gray-100"
+                                >
+                                    My Orders
+                                </Link>
                             </>
                         )}
                         <button
@@ -318,6 +324,12 @@ const Navigation: React.FC<NavigationProps> = ({
                                         className="rounded-xl border border-gray-200 px-4 py-2 text-center text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
                                     >
                                         Manage account
+                                    </Link>
+                                    <Link
+                                        href="/store/orders"
+                                        className="rounded-xl border border-gray-200 px-4 py-2 text-center text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                                    >
+                                        My Orders
                                     </Link>
                                     <button
                                         type="button"

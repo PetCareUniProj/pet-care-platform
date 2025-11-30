@@ -67,6 +67,7 @@ export async function createDraftOrderAction(prevState: CheckoutActionState | un
       recurrenceInterval,
       items,
     });
+    await clearCustomerBasket();
     return { draftId: draft.id } satisfies CheckoutActionState;
   } catch (error) {
     console.error("Failed to create order draft", error);
