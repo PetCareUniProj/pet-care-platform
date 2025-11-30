@@ -2,7 +2,7 @@ import type { GetOrdersParams } from "@/lib/api/ordering";
 import { ORDER_STATUS_VALUES, type OrderStatusValue } from "@/lib/api/types/ordering";
 
 export const DEFAULT_PAGE_SIZE = 10;
-export const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+export const PAGE_SIZE_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
 
 export interface OrdersFilterState {
   statuses: OrderStatusValue[];
