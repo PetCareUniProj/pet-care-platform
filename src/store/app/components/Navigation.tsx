@@ -22,12 +22,12 @@ interface NavigationProps {
     catalogApiUrl: string;
 }
 
-const Navigation: React.FC<NavigationProps> = ({
-                                                   cartCount: initialCartCount = 0,
-                                                   wishlistCount = 0,
-                                                   basketApiUrl,
-                                                   catalogApiUrl,
-                                                }) => {
+export default function Navigation({
+                                       cartCount: initialCartCount = 0,
+                                       wishlistCount = 0,
+                                       basketApiUrl,
+                                       catalogApiUrl,
+                                   }: NavigationProps) {
     const normalizedCatalogApiUrl = useMemo(() => catalogApiUrl.replace(/\/+$/, ''), [catalogApiUrl]);
     const [open, setOpen] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -96,7 +96,7 @@ const Navigation: React.FC<NavigationProps> = ({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isProfileMenuOpen]);
 
-    // Пошук товарів
+    // Search products from the catalog API
     const handleSearch = async (query: string) => {
         setSearchQuery(query);
 
@@ -124,7 +124,7 @@ const Navigation: React.FC<NavigationProps> = ({
         }
     };
 
-    // Закриття результатів при кліку поза пошуком
+    // Close search results when clicking outside of the search container
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
@@ -142,9 +142,13 @@ const Navigation: React.FC<NavigationProps> = ({
 
     return (
         <>
-            <div className="bg-white rounded-[40px] shadow-lg px-10 py-6 flex justify-between items-center relative z-30">
-                {/* LEFT — LOGO */}
-                <div className="text-xl font-bold">🐾 Pet Shop</div>
+            <div className="w-full">
+                <div className="mb-6 mt-6 flex justify-center">
+                    <div className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-400 px-6 py-3 text-2xl font-bold text-white shadow-lg">
+                        <span className="tracking-[0.2em]">PET SHOP</span>
+                    </div>
+                </div>
+                <div className="bg-white rounded-[40px] shadow-lg px-10 py-6 flex justify-between items-center relative z-30">
 
                 {/* MOBILE BURGER */}
                 <button className="lg:hidden" onClick={() => setOpen(!open)}>
@@ -158,7 +162,6 @@ const Navigation: React.FC<NavigationProps> = ({
                     transition-all duration-300 shadow-lg lg:shadow-none
                     ${open ? "opacity-100 visible" : "opacity-0 invisible lg:opacity-100 lg:visible"}`}
                 >
-                    <NavLink href="/">Home</NavLink>
                     <NavLink href="/store/products">Shop</NavLink>
                     <NavLink href="/contact">Contact Us</NavLink>
 
@@ -214,12 +217,12 @@ const Navigation: React.FC<NavigationProps> = ({
                             </button>
                         </div>
 
-                        {/* Результати пошуку */}
+                        {/* Search results */}
                         {showResults && (
                             <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
                                 {isSearching ? (
                                     <div className="p-4 text-center text-gray-500">
-                                        Пошук...
+                                        Searching...
                                     </div>
                                 ) : searchResults.length > 0 ? (
                                     <ul className="divide-y">
@@ -255,7 +258,7 @@ const Navigation: React.FC<NavigationProps> = ({
                                     </ul>
                                 ) : (
                                     <div className="p-4 text-center text-gray-500">
-                                        Товарів не знайдено
+                                        No products found
                                     </div>
                                 )}
                             </div>
@@ -344,6 +347,7 @@ const Navigation: React.FC<NavigationProps> = ({
                     </div>
                 </div>
             </div>
+        </div>
 
             <CartPopup
                 isOpen={isCartOpen}
@@ -353,6 +357,4 @@ const Navigation: React.FC<NavigationProps> = ({
             />
         </>
     );
-};
-
-export default Navigation;
+}

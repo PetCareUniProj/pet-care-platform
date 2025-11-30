@@ -33,7 +33,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode; basketApiUrl?: 
         latestItemsRef.current = items;
     }, [items]);
 
-    // Встановлюємо catalogApiUrl в sessionStorage
+    // Persist catalogApiUrl so client components can hydrate with matching API base
     useEffect(() => {
         if (catalogApiUrl) {
             sessionStorage.setItem('catalogApiUrl', catalogApiUrl);

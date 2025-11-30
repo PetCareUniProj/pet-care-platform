@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Heart, Loader2, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import TopBar from '@/app/components/TopBar';
 import Navigation from '@/app/components/Navigation';
 import Footer from '@/app/components/Footer';
 import { useCart } from '@/app/context/CartContext';
@@ -70,11 +69,11 @@ export default function ProductDetailsClient({
 
             await addItem(product.id, quantity);
 
-            setSuccessMessage(`${product.name} додано до кошика!`);
+            setSuccessMessage(`${product.name} was added to your cart.`);
             setTimeout(() => setSuccessMessage(''), 3000);
             setQuantity(1);
         } catch (error) {
-            setActionError(error instanceof Error ? error.message : 'Помилка при додаванні до кошика');
+            setActionError(error instanceof Error ? error.message : "Failed to add item to cart.");
         } finally {
             setIsAddingToCart(false);
         }
@@ -90,7 +89,6 @@ export default function ProductDetailsClient({
         return (
             <div className="w-full bg-white">
                 <div className="w-full px-4 md:px-20 lg:px-80 relative bg-gray-50 flex flex-col items-center overflow-hidden">
-                    <TopBar />
                     <Navigation catalogApiUrl={catalogApiUrl} basketApiUrl={basketApiUrl} />
 
                     <div className="container mx-auto px-4 py-12">
@@ -99,10 +97,10 @@ export default function ProductDetailsClient({
                             className="flex items-center gap-2 text-orange-500 hover:text-orange-600 mb-6"
                         >
                             <ArrowLeft className="w-5 h-5" />
-                            Повернутися назад
+                            Go back
                         </button>
                         <div className="bg-white rounded-lg p-8 text-center">
-                            <p className="text-red-500 text-lg">{pageError || 'Товар не знайдено'}</p>
+                            <p className="text-red-500 text-lg">{pageError || "Product not found"}</p>
                         </div>
                     </div>
                 </div>
@@ -121,7 +119,6 @@ export default function ProductDetailsClient({
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="w-full px-4 md:px-20 lg:px-80 relative bg-gray-50 flex flex-col items-center overflow-hidden">
-                <TopBar />
                 <Navigation catalogApiUrl={catalogApiUrl} basketApiUrl={basketApiUrl} />
 
                 <div className="container mx-auto px-4 py-8">
@@ -130,7 +127,7 @@ export default function ProductDetailsClient({
                         className="flex items-center gap-2 text-orange-500 hover:text-orange-600 mb-8"
                     >
                         <ArrowLeft className="w-5 h-5" />
-                        Повернутися до товарів
+                        Back to products
                     </button>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
@@ -152,7 +149,7 @@ export default function ProductDetailsClient({
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
                                         <h1 className="text-4xl font-bold mb-2">{product.name}</h1>
-                                        {brand && <p className="text-gray-600 text-lg">Бренд: {brand.name}</p>}
+                                        {brand && <p className="text-gray-600 text-lg">Brand: {brand.name}</p>}
                                     </div>
                                     <button
                                         onClick={handleAddToWishlist}
@@ -178,20 +175,20 @@ export default function ProductDetailsClient({
                                         <div className="flex items-center gap-2">
                                             <div className="w-3 h-3 bg-green-500 rounded-full" />
                                             <p className="text-green-600 font-semibold">
-                                                Є в наявності ({product.availableStock} шт.)
+                                                In stock ({product.availableStock} units)
                                             </p>
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-2">
                                             <div className="w-3 h-3 bg-red-500 rounded-full" />
-                                            <p className="text-red-600 font-semibold">Немає в наявності</p>
+                                            <p className="text-red-600 font-semibold">Out of stock</p>
                                         </div>
                                     )}
                                 </div>
 
                                 {categories.length > 0 && (
                                     <div className="mb-6">
-                                        <p className="text-gray-600 text-sm mb-2">Категорії:</p>
+                                        <p className="text-gray-600 text-sm mb-2">Categories:</p>
                                         <div className="flex flex-wrap gap-2">
                                             {categories.map((cat) => (
                                                 <span key={cat.id} className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
@@ -204,7 +201,7 @@ export default function ProductDetailsClient({
 
                                 {product.description && (
                                     <div className="mb-8">
-                                        <h2 className="text-xl font-semibold mb-3">Опис</h2>
+                                        <h2 className="text-xl font-semibold mb-3">Description</h2>
                                         <p className="text-gray-600 leading-relaxed">{product.description}</p>
                                     </div>
                                 )}
@@ -213,7 +210,7 @@ export default function ProductDetailsClient({
                             {product.availableStock > 0 && (
                                 <div>
                                     <div className="flex items-center gap-4 mb-6">
-                                        <p className="text-gray-700 font-semibold">Кількість:</p>
+                                        <p className="text-gray-700 font-semibold">Quantity:</p>
                                         <div className="flex items-center border border-gray-300 rounded-lg">
                                             <button onClick={() => handleQuantityChange(quantity - 1)} className="p-2 hover:bg-gray-100">
                                                 <Minus className="w-5 h-5" />
@@ -251,12 +248,12 @@ export default function ProductDetailsClient({
                                         {isAddingToCart ? (
                                             <>
                                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                                Додавання...
+                                                Adding...
                                             </>
                                         ) : (
                                             <>
                                                 <ShoppingCart className="w-5 h-5" />
-                                                Додати до кошика
+                                                Add to cart
                                             </>
                                         )}
                                     </button>
@@ -266,23 +263,23 @@ export default function ProductDetailsClient({
                     </div>
 
                     <div className="bg-white rounded-[20px] p-8 mb-12">
-                        <h2 className="text-2xl font-bold mb-6">Характеристики</h2>
+                        <h2 className="text-2xl font-bold mb-6">Specifications</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                             <div>
-                                <p className="text-gray-600 text-sm mb-1">Артикул</p>
+                                <p className="text-gray-600 text-sm mb-1">SKU</p>
                                 <p className="font-semibold text-lg">{product.id}</p>
                             </div>
                             <div>
-                                <p className="text-gray-600 text-sm mb-1">Максимум запасу</p>
-                                <p className="font-semibold text-lg">{product.maxStockThreshold} шт.</p>
+                                <p className="text-gray-600 text-sm mb-1">Max stock</p>
+                                <p className="font-semibold text-lg">{product.maxStockThreshold} units</p>
                             </div>
                             <div>
-                                <p className="text-gray-600 text-sm mb-1">Поріг перезамовлення</p>
-                                <p className="font-semibold text-lg">{product.restockThreshold} шт.</p>
+                                <p className="text-gray-600 text-sm mb-1">Restock threshold</p>
+                                <p className="font-semibold text-lg">{product.restockThreshold} units</p>
                             </div>
                             <div>
-                                <p className="text-gray-600 text-sm mb-1">На замовленні</p>
-                                <p className="font-semibold text-lg">{product.onReorder ? 'Так' : 'Ні'}</p>
+                                <p className="text-gray-600 text-sm mb-1">On reorder</p>
+                                <p className="font-semibold text-lg">{product.onReorder ? "Yes" : "No"}</p>
                             </div>
                         </div>
                     </div>

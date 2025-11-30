@@ -23,7 +23,7 @@ export default async function ProductSlugPage({ params }: ProductSlugPageProps) 
         product = await fetchCatalogItem(slug);
     } catch (error) {
         console.error(`Failed to fetch catalog item for slug ${slug}`, error);
-        errorMessage = error instanceof Error ? error.message : 'Не вдалося завантажити товар';
+        errorMessage = error instanceof Error ? error.message : "Failed to load product.";
     }
 
     if (product) {

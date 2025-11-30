@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Search, ShoppingBag, Heart, MapPin, Phone, Mail, Facebook, Twitter, Instagram, Youtube, Clock } from 'lucide-react';
 import Navigation from "@/app/components/Navigation";
-import TopBar from "@/app/components/TopBar";
 import Footer from "@/app/components/Footer";
 import NavLink from "@/app/components/NavLink";
 import Image from "next/image";
@@ -44,9 +43,6 @@ export const PetShopContact : React.FC<PetShopContactProps> = ({
             <div className="w-full px-4 md:px-20 lg:px-80 relative bg-gray-50 flex flex-col items-center overflow-hidden">
                 {/* Decorative shapes */}
                 <div className="w-32 h-32 absolute left-[543px] top-[229px] rotate-[-105deg] bg-gradient-to-l from-orange-400 to-amber-500 rounded-lg opacity-30" />
-
-                {/* Top Bar */}
-                <TopBar />
 
                 {/* Navigation */}
                 <Navigation basketApiUrl={basketApiUrl} catalogApiUrl={catalogApiUrl}/>

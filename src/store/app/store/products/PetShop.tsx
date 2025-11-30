@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, ChevronLeft, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
-import TopBar from "@/app/components/TopBar";
 import Navigation from "@/app/components/Navigation";
 import Footer from "@/app/components/Footer";
 import { useCart } from '@/app/context/CartContext';
@@ -291,7 +290,6 @@ const PetShop: React.FC<PetShopProps> = ({
             <div className="w-full px-4 md:px-20 lg:px-80 relative bg-gray-50 flex flex-col items-center overflow-hidden">
                 <div className="w-32 h-32 absolute left-[543px] top-[229px] rotate-[-105deg] bg-gradient-to-l from-orange-400 to-amber-500 rounded-lg opacity-30" />
 
-                <TopBar />
                 <Navigation basketApiUrl={basketApiUrl} catalogApiUrl={catalogApiUrl}/>
 
                 <div className="w-full max-w-7xl relative flex flex-wrap justify-between items-center py-16 gap-8">
