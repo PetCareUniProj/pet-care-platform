@@ -42,7 +42,7 @@ export function AdminTopBar({ accountSettingsUrl }: AdminTopBarProps) {
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="focus-visible:ring-ring/70 rounded-full focus-visible:outline-none focus-visible:ring-2">
+            <button type="button" className="focus-visible:ring-ring/70 rounded-full focus-visible:outline-none focus-visible:ring-2">
               <Avatar className="h-9 w-9">
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
