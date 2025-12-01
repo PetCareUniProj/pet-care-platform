@@ -139,16 +139,22 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                 {order.orderItems.length > 4 && (
                   <p className="mt-2 text-sm text-gray-500">+{order.orderItems.length - 4} more items</p>
                 )}
-                {order.isDraft && (
-                  <div className="mt-4 flex justify-end">
+                <div className="mt-4 flex flex-wrap justify-end gap-3">
+                  <Link
+                    href={`/store/orders/${order.id}`}
+                    className="rounded-2xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-400"
+                  >
+                    View details
+                  </Link>
+                  {order.isDraft && (
                     <Link
                       href={`/store/checkout/${order.id}/details`}
                       className="rounded-2xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-400"
                     >
                       Continue checkout
                     </Link>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
                 );
               })()
