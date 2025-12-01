@@ -12,12 +12,6 @@ app.CreateApiVersionSet();
 app.MapDefaultEndpoints();
 app.MapEndpoints();
 app.MapOpenApi();
-
-if (app.Environment.IsDevelopment())
-{
-    //app.ApplyMigrations();
-}
-
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

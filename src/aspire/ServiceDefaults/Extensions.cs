@@ -10,6 +10,12 @@ using OpenTelemetry.Trace;
 
 namespace ServiceDefaults;
 
+// CORS policy name for development
+public static class CorsPolicy
+{
+    public const string AllowAll = "AllowAll";
+}
+
 // Adds common .NET Aspire services: service discovery, resilience, health checks, and OpenTelemetry.
 // This project should be referenced by each service project in your solution.
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
@@ -31,6 +37,44 @@ public static partial class Extensions
 
             // Turn on service discovery by default
             http.AddServiceDiscovery();
+        });
+
+        // Add CORS for development
+        builder.AddDefaultCors();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds CORS policy that allows all origins in development mode.
+    /// In production, you should configure specific allowed origins.
+    /// </summary>
+    public static TBuilder AddDefaultCors<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(CorsPolicy.AllowAll, policy =>
+            {
+                if (builder.Environment.IsDevelopment())
+                {
+                    // Allow all origins in development for mobile app testing
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                }
+                else
+                {
+                    // In production, configure specific origins
+                    policy.WithOrigins(
+                            "http://localhost:8081",  // Expo web
+                            "http://localhost:19006", // Expo web alternative port
+                            "http://localhost:3000"   // Web store
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                }
+            });
         });
 
         return builder;
@@ -109,6 +153,9 @@ public static partial class Extensions
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
+        // Enable CORS
+        app.UseCors(CorsPolicy.AllowAll);
+
         // Adding health checks endpoints to applications in non-development environments has security implications.
         // See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
         if (app.Environment.IsDevelopment())
