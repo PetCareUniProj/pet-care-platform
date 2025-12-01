@@ -1,4 +1,5 @@
-﻿using Projects;
+﻿using AppHost;
+using Projects;
 using Scalar.Aspire;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -56,6 +57,11 @@ builder.AddJavaScriptApp("store-web", "../../store", "start:dev")
     .WithReference(basketApi).WaitFor(basketApi)
     .WithReference(catalogApi).WaitFor(catalogApi)
     .WaitFor(keycloak).WithEnvironment("Identity__Url", identityEndpoint);
+
+builder.AddYarp("mobile-bff")
+    .WithHostPort(8888)
+    .WithExternalHttpEndpoints()
+    .ConfigureMobileBffRoutes(catalogApi, orderingApi, basketApi, keycloak);
 
 // Add Scalar API Reference with debugging enabled
 var scalar = builder.AddScalarApiReference(options =>

@@ -23,7 +23,6 @@ app.UseHttpsRedirection();
 app.UseCors(ServiceDefaults.Extensions.DefaultCorsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
-
 await app.RunAsync();
 
 public partial class Program { }
