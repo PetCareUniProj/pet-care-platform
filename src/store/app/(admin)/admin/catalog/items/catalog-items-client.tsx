@@ -1,12 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition, FormEvent, ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  FormEvent,
+  ChangeEvent,
+  type MutableRefObject,
+  type ReactNode,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { BrandResponse, CategoryResponse, ItemResponse } from "@/lib/api/types/catalog";
 import {
   CatalogFilters,
@@ -17,6 +37,7 @@ import {
   buildRouterQueryString,
   normalizePageSize,
 } from "./catalog-items-shared";
+import { createCatalogItemAction, deleteCatalogItemAction, updateCatalogItemAction } from "./actions";
 
 interface CatalogFilterFormState {
   readonly name: string;
@@ -67,6 +88,65 @@ interface CatalogItemsClientProps {
 export default function CatalogItemsClient({ data, loadError }: CatalogItemsClientProps) {
   const { filters, applyFilters, isNavigating } = useQueryLinkedFilters();
   const filterForm = useCatalogFilterForm(filters, applyFilters);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ItemResponse | null>(null);
+  const createFormRef = useRef<HTMLFormElement | null>(null);
+  const [isCreatePending, startCreateTransition] = useTransition();
+  const [isDeletePending, startDeleteTransition] = useTransition();
+  const [editTarget, setEditTarget] = useState<ItemResponse | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const editFormRef = useRef<HTMLFormElement | null>(null);
+  const [isEditPending, startEditTransition] = useTransition();
+
+  const handleCreateItem = useCallback(
+    (formData: FormData) => {
+      setCreateError(null);
+      startCreateTransition(async () => {
+        try {
+          await createCatalogItemAction(formData);
+          createFormRef.current?.reset();
+          setIsCreateModalOpen(false);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Failed to create item.";
+          setCreateError(message);
+        }
+      });
+    },
+    []
+  );
+
+  const handleEditItem = useCallback((formData: FormData) => {
+    setEditError(null);
+    startEditTransition(async () => {
+      try {
+        await updateCatalogItemAction(formData);
+        editFormRef.current?.reset();
+        setEditTarget(null);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to update item.";
+        setEditError(message);
+      }
+    });
+  }, []);
+
+  const handleDeleteItem = useCallback(
+    (formData: FormData) => {
+      setDeleteError(null);
+      startDeleteTransition(async () => {
+        try {
+          await deleteCatalogItemAction(formData);
+          setDeleteTarget(null);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Failed to delete item.";
+          setDeleteError(message);
+        }
+      });
+    },
+    []
+  );
+
   const pagination = usePaginationControls({
     filters,
     applyFilters,
@@ -94,6 +174,46 @@ export default function CatalogItemsClient({ data, loadError }: CatalogItemsClie
         isLoading={isNavigating}
         loadError={loadError}
         pagination={pagination}
+        onCreateItem={() => setIsCreateModalOpen(true)}
+        onEditItem={setEditTarget}
+        onDeleteItem={setDeleteTarget}
+      />
+      <CreateItemModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        brandOptions={data?.brands ?? []}
+        categoryOptions={data?.categories ?? []}
+        onSubmit={handleCreateItem}
+        pending={isCreatePending}
+        errorMessage={createError}
+        formRef={createFormRef}
+      />
+      <EditItemModal
+        item={editTarget}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setEditTarget(null);
+            setEditError(null);
+          }
+        }}
+        brandOptions={data?.brands ?? []}
+        categoryOptions={data?.categories ?? []}
+        onSubmit={handleEditItem}
+        pending={isEditPending}
+        errorMessage={editError}
+        formRef={editFormRef}
+      />
+      <DeleteItemModal
+        item={deleteTarget}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+        onSubmit={handleDeleteItem}
+        pending={isDeletePending}
+        errorMessage={deleteError}
       />
     </div>
   );
@@ -246,9 +366,12 @@ type CatalogInventoryCardProps = {
   readonly isLoading: boolean;
   readonly loadError: string | null;
   readonly pagination: PaginationState;
+  readonly onCreateItem: () => void;
+  readonly onEditItem: (item: ItemResponse) => void;
+  readonly onDeleteItem: (item: ItemResponse) => void;
 };
 
-function CatalogInventoryCard({ items, total, isLoading, loadError, pagination }: CatalogInventoryCardProps) {
+function CatalogInventoryCard({ items, total, isLoading, loadError, pagination, onCreateItem, onEditItem, onDeleteItem }: CatalogInventoryCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -258,7 +381,7 @@ function CatalogInventoryCard({ items, total, isLoading, loadError, pagination }
             Mirrors GET `/api/items` with filters and pagination. Showing {items.length} of {total} records.
           </CardDescription>
         </div>
-        <Button>Create item</Button>
+        <Button onClick={onCreateItem}>Create item</Button>
       </CardHeader>
       <CardContent>
         {isLoading ? <p className="text-sm text-muted-foreground">Loading inventory…</p> : null}
@@ -292,10 +415,18 @@ function CatalogInventoryCard({ items, total, isLoading, loadError, pagination }
                     <TableCell className="text-right">{formatPrice(item.price)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEditItem(item)}
+                        >
                           Edit
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onDeleteItem(item)}
+                        >
                           Delete
                         </Button>
                       </div>
@@ -351,6 +482,258 @@ function CatalogInventoryCard({ items, total, isLoading, loadError, pagination }
         ) : null}
       </CardContent>
     </Card>
+  );
+}
+
+interface CatalogItemModalProps {
+  readonly mode: "create" | "edit";
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly brandOptions: BrandResponse[];
+  readonly categoryOptions: CategoryResponse[];
+  readonly onSubmit: (formData: FormData) => void;
+  readonly pending: boolean;
+  readonly errorMessage: string | null;
+  readonly formRef: MutableRefObject<HTMLFormElement | null>;
+  readonly item?: ItemResponse | null;
+}
+
+function CatalogItemModal({
+  mode,
+  open,
+  onOpenChange,
+  brandOptions,
+  categoryOptions,
+  onSubmit,
+  pending,
+  errorMessage,
+  formRef,
+  item,
+}: CatalogItemModalProps) {
+  const isEdit = mode === "edit";
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Edit catalog item" : "Create catalog item"}</DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Update the catalog record and save your changes."
+              : "Provide item details and submit to create a new SKU."}
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          key={item?.id ?? mode}
+          ref={formRef}
+          className="space-y-4"
+          action={onSubmit}
+        >
+          {isEdit ? <input type="hidden" name="itemId" value={item?.id ?? ""} /> : null}
+          <div className="grid gap-3 md:grid-cols-2">
+            <FormField label="Slug" required>
+              <Input
+                name="slug"
+                placeholder="example-item"
+                required
+                disabled={pending}
+                defaultValue={item?.slug}
+              />
+            </FormField>
+            <FormField label="Name" required>
+              <Input
+                name="name"
+                placeholder="Example Item"
+                required
+                disabled={pending}
+                defaultValue={item?.name}
+              />
+            </FormField>
+            <FormField label="Price" required>
+              <Input
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="19.99"
+                required
+                disabled={pending}
+                defaultValue={item?.price}
+              />
+            </FormField>
+            <FormField label="Brand" required>
+              <select
+                name="catalogBrandId"
+                className={selectInputClassName}
+                required
+                disabled={pending}
+                defaultValue={item?.catalogBrandId ?? ""}
+              >
+                <option value="">Select brand</option>
+                {brandOptions.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Available stock" required>
+              <Input
+                name="availableStock"
+                type="number"
+                min="0"
+                defaultValue={item?.availableStock ?? 0}
+                disabled={pending}
+              />
+            </FormField>
+            <FormField label="Restock threshold" required>
+              <Input
+                name="restockThreshold"
+                type="number"
+                min="0"
+                defaultValue={item?.restockThreshold ?? 0}
+                disabled={pending}
+              />
+            </FormField>
+            <FormField label="Max stock threshold" required>
+              <Input
+                name="maxStockThreshold"
+                type="number"
+                min="0"
+                defaultValue={item?.maxStockThreshold ?? 0}
+                disabled={pending}
+              />
+            </FormField>
+            <FormField label="Picture file name">
+              <Input
+                name="pictureFileName"
+                placeholder="item.png"
+                disabled={pending}
+                defaultValue={item?.pictureFileName ?? ""}
+              />
+            </FormField>
+          </div>
+          <FormField label="Description">
+            <Textarea
+              name="description"
+              placeholder="Optional description"
+              rows={3}
+              disabled={pending}
+              defaultValue={item?.description ?? ""}
+            />
+          </FormField>
+          <FormField label="Categories" required helperText="Hold Ctrl/Cmd to select multiple categories.">
+            <select
+              name="categoryIds"
+              multiple
+              className={`${selectInputClassName} h-32`}
+              required
+              disabled={pending}
+              defaultValue={item?.categoryIds.map((categoryId) => String(categoryId))}
+            >
+              {categoryOptions.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <div className="flex items-center gap-2">
+            <input
+              id={`onReorder-${mode}`}
+              name="onReorder"
+              type="checkbox"
+              disabled={pending}
+              defaultChecked={item?.onReorder ?? false}
+            />
+            <label htmlFor={`onReorder-${mode}`} className="text-sm">
+              Item currently on reorder
+            </label>
+          </div>
+          {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? (isEdit ? "Saving…" : "Creating…") : isEdit ? "Save changes" : "Create item"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type CreateItemModalProps = Omit<CatalogItemModalProps, "mode" | "item">;
+
+function CreateItemModal(props: CreateItemModalProps) {
+  return <CatalogItemModal mode="create" {...props} />;
+}
+
+interface EditItemModalProps extends Omit<CatalogItemModalProps, "mode" | "item" | "open"> {
+  readonly item: ItemResponse | null;
+}
+
+function EditItemModal({ item, ...rest }: EditItemModalProps) {
+  return <CatalogItemModal mode="edit" item={item} open={Boolean(item)} {...rest} />;
+}
+
+interface DeleteItemModalProps {
+  readonly item: ItemResponse | null;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSubmit: (formData: FormData) => void;
+  readonly pending: boolean;
+  readonly errorMessage: string | null;
+}
+
+function DeleteItemModal({ item, onOpenChange, onSubmit, pending, errorMessage }: DeleteItemModalProps) {
+  const open = item !== null;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete catalog item</DialogTitle>
+          <DialogDescription>Deleting an item removes it from the admin catalog feed.</DialogDescription>
+        </DialogHeader>
+        {item ? (
+          <form className="space-y-4" action={onSubmit}>
+            <input type="hidden" name="itemId" value={item.id} />
+            <p className="text-sm text-muted-foreground">
+              Confirm deletion of <strong>{item.name}</strong> (SKU {item.slug}). This action cannot be undone.
+            </p>
+            {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="destructive" disabled={pending}>
+                {pending ? "Deleting…" : "Delete item"}
+              </Button>
+            </DialogFooter>
+          </form>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface FormFieldProps {
+  readonly label: string;
+  readonly children: ReactNode;
+  readonly required?: boolean;
+  readonly helperText?: string;
+}
+
+function FormField({ label, children, required, helperText }: FormFieldProps) {
+  return (
+    <label className="flex flex-col gap-2 text-sm font-medium">
+      <span>
+        {label}
+        {required ? <span className="text-destructive"> *</span> : null}
+      </span>
+      {children}
+      {helperText ? <span className="text-xs font-normal text-muted-foreground">{helperText}</span> : null}
+    </label>
   );
 }
 

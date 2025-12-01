@@ -30,22 +30,9 @@ export const adminNav: AdminNavSection[] = [
     title: "Operations",
     items: [
       {
-        title: "Overview",
-        href: "/admin",
-        icon: LayoutDashboard,
-        description: "Platform vitals and quick actions"
-      },
-      {
         title: "Orders",
         href: "/admin/orders",
         icon: ShoppingCart,
-        badge: "live"
-      },
-      {
-        title: "Fulfillment queue",
-        href: "/admin/orders/queue",
-        icon: Activity,
-        description: "Monitor pending shipments"
       }
     ]
   },
@@ -67,34 +54,6 @@ export const adminNav: AdminNavSection[] = [
         title: "Brands",
         href: "/admin/catalog/brands",
         icon: BadgePercent
-      }
-    ]
-  },
-  {
-    title: "Customers",
-    items: [
-      {
-        title: "Profiles",
-        href: "/admin/customers",
-        icon: Users,
-        description: "CRM view (coming soon)",
-        badge: "soon"
-      }
-    ]
-  },
-  {
-    title: "Platform",
-    items: [
-      {
-        title: "Pricing presets",
-        href: "/admin/catalog/price-books",
-        icon: Cuboid,
-        badge: "todo"
-      },
-      {
-        title: "Settings",
-        href: "/admin/settings",
-        icon: Settings
       }
     ]
   }

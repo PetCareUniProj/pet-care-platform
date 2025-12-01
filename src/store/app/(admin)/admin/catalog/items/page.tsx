@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getServiceEndpoint } from "@/service-discovery";
 import type { BrandsResponse, CategoriesResponse, ItemsResponse } from "@/lib/api/types/catalog";
 import { Agent as UndiciAgent, type Dispatcher } from "undici";
+import { buildCatalogError } from "../catalog-actions-utils";
 import CatalogItemsClient from "./catalog-items-client";
 import {
   CatalogFilters,
@@ -60,7 +61,7 @@ async function loadCatalogData(filters: CatalogFilters): Promise<{ data: Catalog
   };
 
   try {
-    const taxonomyQuery = new URLSearchParams({ PageSize: String(MAX_PAGE_SIZE), Page: "1", SortBy: "name" }).toString();
+    const taxonomyQuery = new URLSearchParams({ SortBy: "name" }).toString();
     const itemsQuery = buildApiItemsQueryString(filters);
     const itemsUrl = `${catalogApiBaseUrl}/api/catalog/items?${itemsQuery}`;
     const brandsUrl = `${catalogApiBaseUrl}/api/catalog/brand?${taxonomyQuery}`;
@@ -106,6 +107,5 @@ async function loadCatalogData(filters: CatalogFilters): Promise<{ data: Catalog
 }
 
 async function createResponseError(response: Response, fallback: string) {
-  const message = await response.text();
-  return new Error(message || fallback);
+  return buildCatalogError(response, fallback);
 }

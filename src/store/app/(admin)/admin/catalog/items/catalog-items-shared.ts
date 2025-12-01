@@ -3,6 +3,13 @@ import type {
   CategoryResponse,
   ItemResponse,
 } from "@/lib/api/types/catalog";
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  MIN_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+  normalizePageSize,
+} from "../catalog-constants";
 
 export interface CatalogItemsApiResponse {
   readonly items: ItemResponse[];
@@ -22,11 +29,6 @@ export interface CatalogFilters {
   readonly pageSize: number;
 }
 
-export const DEFAULT_PAGE_SIZE = 20;
-export const MIN_PAGE_SIZE = 1;
-export const MAX_PAGE_SIZE = 25;
-export const PAGE_SIZE_OPTIONS = Array.from({ length: MAX_PAGE_SIZE }, (_, index) => index + 1);
-
 export type RouteSearchParams = Record<string, string | string[] | undefined> | undefined;
 
 export function parseNumber(value: string | null | undefined): number | undefined {
@@ -38,12 +40,7 @@ export function parseNumber(value: string | null | undefined): number | undefine
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
-export function normalizePageSize(value: number | undefined) {
-  if (!Number.isFinite(value)) {
-    return DEFAULT_PAGE_SIZE;
-  }
-  return Math.min(Math.max(value ?? DEFAULT_PAGE_SIZE, MIN_PAGE_SIZE), MAX_PAGE_SIZE);
-}
+export { DEFAULT_PAGE_SIZE, MIN_PAGE_SIZE, MAX_PAGE_SIZE, PAGE_SIZE_OPTIONS, normalizePageSize } from "../catalog-constants";
 
 export function buildRouterQueryString(filters: CatalogFilters) {
   const query = new URLSearchParams();
