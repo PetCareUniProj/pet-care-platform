@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -15,6 +14,7 @@ import { useRouter, Stack } from 'expo-router';
 import { basketService } from '@/services/api/basket.service';
 import { LocalBasketItem } from '@/types/basket.types';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { platformAlert } from '@/utils/alert';
 
 // Placeholder styles for cart items
 const PLACEHOLDER_STYLE = { bg: '#fef3c7', color: '#d97706', icon: 'pets' as keyof typeof MaterialIcons.glyphMap };
@@ -58,13 +58,13 @@ export default function CartScreen() {
       const updatedBasket = await basketService.updateItemQuantity(itemId, newQuantity);
       setItems(updatedBasket.items);
     } catch (error) {
-      Alert.alert('Помилка', 'Не вдалося оновити кількість');
+      platformAlert.alert('Помилка', 'Не вдалося оновити кількість');
     }
   };
 
   const handleRemoveItem = (itemId: string) => {
     const item = items.find(i => i.id === itemId);
-    Alert.alert(
+    platformAlert.alert(
       'Видалити товар',
       `Видалити "${item?.productName || 'товар'}" з кошика?`,
       [
@@ -78,7 +78,7 @@ export default function CartScreen() {
               setItems(updatedBasket.items);
             } catch (error) {
               console.error('Error removing item:', error);
-              Alert.alert('Помилка', 'Не вдалося видалити товар');
+              platformAlert.alert('Помилка', 'Не вдалося видалити товар');
             }
           },
         },
@@ -88,7 +88,7 @@ export default function CartScreen() {
 
   const handleClearCart = () => {
     if (items.length === 0) return;
-    Alert.alert(
+    platformAlert.alert(
       'Очистити кошик',
       'Видалити всі товари з кошика?',
       [
@@ -102,7 +102,7 @@ export default function CartScreen() {
               setItems([]);
             } catch (error) {
               console.error('Error clearing cart:', error);
-              Alert.alert('Помилка', 'Не вдалося очистити кошик');
+              platformAlert.alert('Помилка', 'Не вдалося очистити кошик');
             }
           },
         },
@@ -110,8 +110,15 @@ export default function CartScreen() {
     );
   };
 
-  const handleCheckout = () => {
-    Alert.alert('Оформлення замовлення', 'Ця функція буде доступна пізніше');
+  const handleCheckout = (isSubscription: boolean = false) => {
+    if (items.length === 0) {
+      platformAlert.alert('Кошик порожній', 'Додайте товари до кошика');
+      return;
+    }
+    router.push({
+      pathname: '/checkout',
+      params: { isSubscription: isSubscription.toString() },
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -258,20 +265,31 @@ export default function CartScreen() {
 
             {/* Checkout Footer */}
             <View className={`${theme.bgCard} border-t ${theme.borderColor} px-6 py-4`}>
-              <View className="flex-row items-center justify-between mb-4">
-                <View>
+              <View className="mb-4">
+                <View className="flex-row items-center justify-between mb-3">
                   <Text className={theme.textSecondary}>Товарів: {totalItems}</Text>
                   <Text className={`${theme.textPrimary} font-bold text-xl`}>
-                    Разом: {formatPrice(totalPrice)}
+                    {formatPrice(totalPrice)}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  onPress={handleCheckout}
-                  className="bg-orange-500 px-8 py-4 rounded-xl flex-row items-center gap-2"
-                >
-                  <MaterialIcons name="shopping-bag" size={22} color="white" />
-                  <Text className="text-white font-bold text-lg">Замовити</Text>
-                </TouchableOpacity>
+                
+                <View className="gap-3">
+                  <TouchableOpacity
+                    onPress={() => handleCheckout(false)}
+                    className="bg-orange-500 py-4 rounded-xl flex-row items-center justify-center gap-2"
+                  >
+                    <MaterialIcons name="shopping-bag" size={22} color="white" />
+                    <Text className="text-white font-bold text-lg">Оформити замовлення</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    onPress={() => handleCheckout(true)}
+                    className="bg-violet-500 py-4 rounded-xl flex-row items-center justify-center gap-2"
+                  >
+                    <MaterialIcons name="autorenew" size={22} color="white" />
+                    <Text className="text-white font-bold text-lg">Оформити підписку</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </>

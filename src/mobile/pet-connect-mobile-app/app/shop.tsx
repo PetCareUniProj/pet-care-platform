@@ -8,7 +8,6 @@ import {
   TextInput,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   Modal,
   ScrollView,
   useWindowDimensions,
@@ -21,6 +20,17 @@ import { basketService } from '@/services/api/basket.service';
 import { CatalogItem, Category, Brand, ProductSortField } from '@/types/product.types';
 import { getProductImageUrl } from '@/constants/api';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { platformAlert } from '@/utils/alert';
+import { RecurrenceInterval, RECURRENCE_LABELS } from '@/types/order.types';
+
+// Recurrence options for subscriptions
+const RECURRENCE_OPTIONS: { value: RecurrenceInterval; label: string }[] = [
+  { value: '7.00:00:00', label: RECURRENCE_LABELS['7.00:00:00'] },
+  { value: '14.00:00:00', label: RECURRENCE_LABELS['14.00:00:00'] },
+  { value: '30.00:00:00', label: RECURRENCE_LABELS['30.00:00:00'] },
+  { value: '60.00:00:00', label: RECURRENCE_LABELS['60.00:00:00'] },
+  { value: '90.00:00:00', label: RECURRENCE_LABELS['90.00:00:00'] },
+];
 
 const PAGE_SIZE = 10;
 
@@ -88,6 +98,7 @@ export default function ShopScreen() {
 
   // Subscription modal
   const [isSubscriptionModalVisible, setIsSubscriptionModalVisible] = useState(false);
+  const [selectedRecurrence, setSelectedRecurrence] = useState<RecurrenceInterval>('30.00:00:00');
 
   // Get placeholder style for a product based on its first category
   const getPlaceholderStyle = (categoryIds: number[]) => {
@@ -183,7 +194,7 @@ export default function ShopScreen() {
     } catch (error: any) {
       console.error('Error loading products:', error);
       if (page === 1) {
-        Alert.alert(
+        platformAlert.alert(
           'Помилка завантаження',
           `Не вдалося завантажити товари.\n\n${error?.message || 'Невідома помилка'}`,
           [{ text: 'OK' }]
@@ -283,11 +294,11 @@ export default function ShopScreen() {
       const basket = await basketService.getBasket();
       setCartCount(basket.items.reduce((sum, item) => sum + item.quantity, 0));
       
-      Alert.alert('Успішно', `${product.name} додано до кошика`);
+      platformAlert.alert('Успішно', `${product.name} додано до кошика`);
       setIsProductModalVisible(false);
       setQuantity(1);
     } catch (error) {
-      Alert.alert('Помилка', 'Не вдалося додати товар до кошика');
+      platformAlert.alert('Помилка', 'Не вдалося додати товар до кошика');
     }
   };
 
@@ -295,6 +306,9 @@ export default function ShopScreen() {
     if (!selectedProduct) return;
 
     try {
+      // Clear basket first, then add only this item for subscription
+      await basketService.clearBasket();
+      
       // Add item to basket
       await basketService.addItem({
         productId: selectedProduct.id,
@@ -312,20 +326,13 @@ export default function ShopScreen() {
       setIsProductModalVisible(false);
       setQuantity(1);
       
-      // Navigate to cart with subscription flag
-      Alert.alert(
-        'Товар додано',
-        `${selectedProduct.name} додано до кошика.\n\nОберіть опцію "Оформити підписку" при оформленні замовлення для регулярної доставки.`,
-        [
-          { text: 'Продовжити покупки', style: 'cancel' },
-          { 
-            text: 'До кошика', 
-            onPress: () => router.push('/cart')
-          },
-        ]
-      );
+      // Navigate directly to checkout with subscription flag
+      router.push({
+        pathname: '/checkout',
+        params: { isSubscription: 'true' },
+      });
     } catch (error) {
-      Alert.alert('Помилка', 'Не вдалося додати товар');
+      platformAlert.alert('Помилка', 'Не вдалося оформити підписку');
     }
   };
 
@@ -862,24 +869,51 @@ export default function ShopScreen() {
               </Text>
             </View>
 
-            <View className="bg-violet-50 p-4 rounded-xl">
-              <Text className="text-violet-800 text-center">
-                Товар буде додано до кошика. При оформленні замовлення оберіть опцію "Оформити підписку" для регулярної доставки.
-              </Text>
+            {/* Frequency Selection */}
+            <View>
+              <Text className="text-gray-700 font-semibold mb-3">Частота доставки:</Text>
+              <View className="gap-2">
+                {RECURRENCE_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    onPress={() => setSelectedRecurrence(option.value)}
+                    className={`flex-row items-center justify-between p-4 rounded-xl ${
+                      selectedRecurrence === option.value 
+                        ? 'bg-violet-100 border-2 border-violet-500' 
+                        : 'bg-gray-50 border border-gray-200'
+                    }`}
+                  >
+                    <Text className={
+                      selectedRecurrence === option.value 
+                        ? 'text-violet-700 font-semibold' 
+                        : 'text-gray-700'
+                    }>
+                      {option.label}
+                    </Text>
+                    {selectedRecurrence === option.value && (
+                      <MaterialIcons name="check-circle" size={22} color="#8b5cf6" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
-            <View className="bg-gray-50 p-4 rounded-xl">
-              <View className="flex-row justify-between">
-                <Text className="text-gray-600">Ціна за товар</Text>
-                <Text className="text-gray-800 font-semibold">
+            <View className="bg-violet-50 p-4 rounded-xl">
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-violet-700">Ціна за доставку:</Text>
+                <Text className="text-violet-800 font-bold">
                   {formatPrice((selectedProduct?.price || 0) * quantity)}
                 </Text>
               </View>
-              <View className="flex-row justify-between mt-2">
-                <Text className="text-gray-600">Кількість</Text>
-                <Text className="text-gray-800 font-semibold">{quantity} шт.</Text>
+              <View className="flex-row justify-between">
+                <Text className="text-violet-700">Кількість:</Text>
+                <Text className="text-violet-800 font-semibold">{quantity} шт.</Text>
               </View>
             </View>
+
+            <Text className="text-gray-500 text-sm text-center">
+              Ви будете перенаправлені на сторінку оформлення підписки
+            </Text>
 
             <View className="flex-row gap-4">
               <TouchableOpacity
@@ -889,10 +923,11 @@ export default function ShopScreen() {
                 <Text className="font-bold text-gray-700">Скасувати</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className="flex-1 bg-violet-500 p-4 rounded-xl items-center"
+                className="flex-1 bg-violet-500 p-4 rounded-xl items-center flex-row justify-center gap-2"
                 onPress={handleCreateSubscription}
               >
-                <Text className="font-bold text-white">Додати до кошика</Text>
+                <MaterialIcons name="arrow-forward" size={18} color="white" />
+                <Text className="font-bold text-white">Продовжити</Text>
               </TouchableOpacity>
             </View>
           </View>

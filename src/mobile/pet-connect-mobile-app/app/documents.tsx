@@ -4,7 +4,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   RefreshControl,
   Modal,
@@ -23,6 +22,7 @@ import { documentsService } from '@/services/api/documents.service';
 import { PetDocument, DocumentType, DOCUMENT_TYPE_INFO } from '@/types/document.types';
 import { usePetsStore } from '@/store';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { platformAlert } from '@/utils/alert';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -88,7 +88,7 @@ export default function DocumentsScreen() {
 
   const handleAddDocument = () => {
     if (pets.length === 0) {
-      Alert.alert('Увага', 'Спочатку додайте улюбленця');
+      platformAlert.alert('Увага', 'Спочатку додайте улюбленця');
       return;
     }
     setNewDocPetId(pets[0].id);
@@ -99,7 +99,7 @@ export default function DocumentsScreen() {
   };
 
   const handlePickDocument = async () => {
-    Alert.alert(
+    platformAlert.alert(
       'Додати документ',
       'Оберіть джерело',
       [
@@ -134,11 +134,11 @@ export default function DocumentsScreen() {
 
   const handleCreateDocument = async (fileUri?: string, fileSize?: number) => {
     if (!newDocName.trim()) {
-      Alert.alert('Помилка', 'Введіть назву документа');
+      platformAlert.alert('Помилка', 'Введіть назву документа');
       return;
     }
     if (!newDocPetId) {
-      Alert.alert('Помилка', 'Оберіть улюбленця');
+      platformAlert.alert('Помилка', 'Оберіть улюбленця');
       return;
     }
 
@@ -159,14 +159,14 @@ export default function DocumentsScreen() {
       setNewDocDescription('');
       setIsAddModalVisible(false);
       await loadDocuments();
-      Alert.alert('Успішно', 'Документ додано');
+      platformAlert.alert('Успішно', 'Документ додано');
     } catch (error) {
-      Alert.alert('Помилка', 'Не вдалося додати документ');
+      platformAlert.alert('Помилка', 'Не вдалося додати документ');
     }
   };
 
   const handleDeleteDocument = (doc: PetDocument) => {
-    Alert.alert(
+    platformAlert.alert(
       'Видалити документ',
       `Ви впевнені, що хочете видалити "${doc.name}"?`,
       [
@@ -178,9 +178,9 @@ export default function DocumentsScreen() {
             try {
               await documentsService.delete(doc.id);
               await loadDocuments();
-              Alert.alert('Готово', 'Документ видалено');
+              platformAlert.alert('Готово', 'Документ видалено');
             } catch (error) {
-              Alert.alert('Помилка', 'Не вдалося видалити документ');
+              platformAlert.alert('Помилка', 'Не вдалося видалити документ');
             }
           },
         },
@@ -201,14 +201,14 @@ export default function DocumentsScreen() {
           if (canShare) {
             await Sharing.shareAsync(doc.fileUri);
           } else {
-            Alert.alert('Помилка', 'Не вдається відкрити цей тип файлу');
+            platformAlert.alert('Помилка', 'Не вдається відкрити цей тип файлу');
           }
         } catch (error) {
-          Alert.alert('Помилка', 'Не вдалося відкрити документ');
+          platformAlert.alert('Помилка', 'Не вдалося відкрити документ');
         }
       }
     } else {
-      Alert.alert(
+      platformAlert.alert(
         doc.name,
         `Тип: ${DOCUMENT_TYPE_INFO[doc.type].label}\n` +
         `Дата: ${formatDate(doc.date)}\n` +
@@ -221,7 +221,7 @@ export default function DocumentsScreen() {
 
   const handleShareDocument = async (doc: PetDocument) => {
     if (!doc.fileUri) {
-      Alert.alert('Помилка', 'Немає файлу для поширення');
+      platformAlert.alert('Помилка', 'Немає файлу для поширення');
       return;
     }
     try {
@@ -232,11 +232,11 @@ export default function DocumentsScreen() {
           dialogTitle: `Поділитися: ${doc.name}`,
         });
       } else {
-        Alert.alert('Помилка', 'Поширення не доступне на цьому пристрої');
+        platformAlert.alert('Помилка', 'Поширення не доступне на цьому пристрої');
       }
     } catch (error) {
       console.error('Error sharing document:', error);
-      Alert.alert('Помилка', 'Не вдалося поділитися документом');
+      platformAlert.alert('Помилка', 'Не вдалося поділитися документом');
     }
   };
 

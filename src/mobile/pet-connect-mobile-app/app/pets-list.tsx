@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Modal,
   TextInput,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -17,6 +16,7 @@ import { useRouter, Stack } from 'expo-router';
 import { usePetsStore } from '@/store';
 import { Pet } from '@/types/pet.types';
 import * as ImagePicker from 'expo-image-picker';
+import { platformAlert } from '@/utils/alert';
 
 const PET_TYPE_EMOJI: Record<string, string> = {
   cat: '🐱',
@@ -96,11 +96,11 @@ export default function PetsListScreen() {
     const { status: mediaLibraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (cameraStatus !== 'granted' || mediaLibraryStatus !== 'granted') {
-      Alert.alert('Потрібні дозволи', 'Для фото потрібні дозволи на доступ до камери та галереї.');
+      platformAlert.alert('Потрібні дозволи', 'Для фото потрібні дозволи на доступ до камери та галереї.');
       return;
     }
 
-    Alert.alert('Виберіть джерело', 'Звідки ви хочете вибрати фото?', [
+    platformAlert.alert('Виберіть джерело', 'Звідки ви хочете вибрати фото?', [
       {
         text: 'Камера',
         onPress: async () => {
@@ -112,7 +112,7 @@ export default function PetsListScreen() {
           });
           if (!result.canceled) {
             await uploadPetPhoto(pet.id, result.assets[0].uri);
-            Alert.alert('Успішно', 'Фото оновлено');
+            platformAlert.alert('Успішно', 'Фото оновлено');
           }
         },
       },
@@ -127,7 +127,7 @@ export default function PetsListScreen() {
           });
           if (!result.canceled) {
             await uploadPetPhoto(pet.id, result.assets[0].uri);
-            Alert.alert('Успішно', 'Фото оновлено');
+            platformAlert.alert('Успішно', 'Фото оновлено');
           }
         },
       },
@@ -138,27 +138,27 @@ export default function PetsListScreen() {
   const handleAddWeight = async () => {
     const weightValue = parseFloat(newWeight);
     if (isNaN(weightValue) || weightValue <= 0) {
-      Alert.alert('Помилка', 'Введіть коректну вагу');
+      platformAlert.alert('Помилка', 'Введіть коректну вагу');
       return;
     }
     if (selectedPetForWeight) {
       await addPetWeight(selectedPetForWeight.id, weightValue);
       setNewWeight('');
       setIsWeightModalVisible(false);
-      Alert.alert('Успішно', `Вагу ${selectedPetForWeight.name} оновлено: ${weightValue} кг`);
+      platformAlert.alert('Успішно', `Вагу ${selectedPetForWeight.name} оновлено: ${weightValue} кг`);
     }
   };
 
   const handleAddNote = async () => {
     if (!newNote.trim()) {
-      Alert.alert('Помилка', 'Введіть текст нотатки');
+      platformAlert.alert('Помилка', 'Введіть текст нотатки');
       return;
     }
     if (selectedPetForNote) {
       await addPetNote(selectedPetForNote.id, newNote.trim());
       setNewNote('');
       setIsNoteModalVisible(false);
-      Alert.alert('Успішно', 'Нотатку додано');
+      platformAlert.alert('Успішно', 'Нотатку додано');
     }
   };
 

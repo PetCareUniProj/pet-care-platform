@@ -113,16 +113,18 @@ function orderToSubscription(order: OrderResponse): Subscription {
 class SubscriptionsService {
   /**
    * Get all subscriptions (recurring orders) for current user
+   * Uses API filtering by isRecurring=true for better performance
    */
   async getAll(): Promise<Subscription[]> {
     try {
-      const response = await ordersService.getUserOrders();
+      // Use the API filter to get only recurring orders
+      const response = await ordersService.getSubscriptionOrders({
+        sortBy: '-orderDate', // Sort by date descending
+      });
       const orders = response.items || [];
       
-      // Filter only recurring orders that are not drafts
-      const recurringOrders = orders.filter(
-        order => order.isRecurring && !order.isDraft
-      );
+      // Additional client-side filter to exclude drafts (for safety)
+      const recurringOrders = orders.filter(order => !order.isDraft);
       
       return recurringOrders.map(orderToSubscription);
     } catch (error) {

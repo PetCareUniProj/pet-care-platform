@@ -7,7 +7,6 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   RefreshControl,
   Modal,
 } from 'react-native';
@@ -17,6 +16,7 @@ import { useRouter, Stack } from 'expo-router';
 import { ordersService } from '@/services/api/orders.service';
 import { OrderResponse, OrderStatus } from '@/types/order.types';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { platformAlert } from '@/utils/alert';
 
 // Status configuration
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: keyof typeof MaterialIcons.glyphMap }> = {
@@ -45,15 +45,17 @@ export default function OrderHistoryScreen() {
   const loadOrders = async () => {
     try {
       setIsLoading(true);
-      const response = await ordersService.getUserOrders();
-      // Sort by date descending, filter out drafts
+      // Get only regular (non-recurring) orders using the API filter
+      const response = await ordersService.getRegularOrders({
+        sortBy: '-orderDate', // Sort by date descending
+      });
+      // Filter out drafts (additional client-side filter for safety)
       const sortedOrders = (response.items || [])
-        .filter(order => !order.isDraft)
-        .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        .filter(order => !order.isDraft);
       setOrders(sortedOrders);
     } catch (error) {
       console.error('Error loading orders:', error);
-      Alert.alert('Помилка', 'Не вдалося завантажити історію замовлень');
+      platformAlert.alert('Помилка', 'Не вдалося завантажити історію замовлень');
     } finally {
       setIsLoading(false);
     }
@@ -96,11 +98,11 @@ export default function OrderHistoryScreen() {
     const canCancel = ['submitted', 'awaitingvalidation', 'stockconfirmed'].includes(order.orderStatus.toLowerCase());
     
     if (!canCancel) {
-      Alert.alert('Неможливо скасувати', 'Це замовлення вже не можна скасувати');
+      platformAlert.alert('Неможливо скасувати', 'Це замовлення вже не можна скасувати');
       return;
     }
 
-    Alert.alert(
+    platformAlert.alert(
       'Скасувати замовлення',
       `Ви впевнені, що хочете скасувати замовлення #${order.id}?`,
       [
@@ -113,9 +115,9 @@ export default function OrderHistoryScreen() {
               await ordersService.cancelOrder(order.id);
               await loadOrders();
               setIsDetailModalVisible(false);
-              Alert.alert('Готово', 'Замовлення скасовано');
+              platformAlert.alert('Готово', 'Замовлення скасовано');
             } catch (error) {
-              Alert.alert('Помилка', 'Не вдалося скасувати замовлення');
+              platformAlert.alert('Помилка', 'Не вдалося скасувати замовлення');
             }
           },
         },

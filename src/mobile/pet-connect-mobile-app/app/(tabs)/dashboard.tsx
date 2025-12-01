@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Image } from 'expo-image';
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput, Alert } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import { usePetsStore, useEventsStore } from '@/store';
 import { CalendarEvent } from '@/types/reminder.types';
 import { Pet } from '@/types/pet.types';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { platformAlert } from '@/utils/alert';
 
 // Quick Actions - Real functions
 const quickActions = [
@@ -124,7 +125,7 @@ export default function DashboardScreen() {
         setSelectedPetForWeight(pets[0].id);
         setIsWeightModalVisible(true);
       } else {
-        Alert.alert('Увага', 'Спочатку додайте улюбленця');
+        platformAlert.alert('Увага', 'Спочатку додайте улюбленця');
       }
     }
   };
@@ -132,14 +133,14 @@ export default function DashboardScreen() {
   const handleAddWeight = async () => {
     const weightValue = parseFloat(newWeight);
     if (isNaN(weightValue) || weightValue <= 0) {
-      Alert.alert('Помилка', 'Введіть коректну вагу');
+      platformAlert.alert('Помилка', 'Введіть коректну вагу');
       return;
     }
     if (selectedPetForWeight) {
       await addPetWeight(selectedPetForWeight, weightValue);
       setNewWeight('');
       setIsWeightModalVisible(false);
-      Alert.alert('Успішно', 'Вагу збережено');
+      platformAlert.alert('Успішно', 'Вагу збережено');
     }
   };
 

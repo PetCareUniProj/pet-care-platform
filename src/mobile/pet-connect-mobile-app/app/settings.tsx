@@ -5,7 +5,6 @@ import {
   View,
   TouchableOpacity,
   Switch,
-  Alert,
   Linking,
   ActivityIndicator,
 } from 'react-native';
@@ -16,6 +15,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme, ThemeMode } from '@/context/ThemeContext';
 import { useAuthStore } from '@/store';
+import { platformAlert } from '@/utils/alert';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function SettingsScreen() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    Alert.alert(
+    platformAlert.alert(
       'Вийти з акаунта',
       'Ви впевнені, що хочете вийти?',
       [
@@ -43,7 +43,7 @@ export default function SettingsScreen() {
               await logout();
               router.replace('/(auth)/onboarding');
             } catch (error) {
-              Alert.alert('Помилка', 'Не вдалося вийти з акаунта');
+              platformAlert.alert('Помилка', 'Не вдалося вийти з акаунта');
             } finally {
               setIsLoggingOut(false);
             }
@@ -57,7 +57,7 @@ export default function SettingsScreen() {
     if (value) {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
+        platformAlert.alert(
           'Дозвіл потрібний',
           'Для отримання сповіщень потрібно надати дозвіл в налаштуваннях пристрою',
           [
@@ -77,7 +77,7 @@ export default function SettingsScreen() {
   };
 
   const handleClearCache = async () => {
-    Alert.alert(
+    platformAlert.alert(
       'Очистити кеш',
       'Ви впевнені? Це видалить всі локальні дані застосунку.',
       [
@@ -88,9 +88,9 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               await AsyncStorage.clear();
-              Alert.alert('Готово', 'Кеш очищено. Перезапустіть застосунок.');
+              platformAlert.alert('Готово', 'Кеш очищено. Перезапустіть застосунок.');
             } catch (error) {
-              Alert.alert('Помилка', 'Не вдалося очистити кеш');
+              platformAlert.alert('Помилка', 'Не вдалося очистити кеш');
             }
           },
         },
@@ -266,7 +266,7 @@ export default function SettingsScreen() {
             <Text className={`text-lg font-bold ${textColor} ml-1`}>Дані</Text>
             <View className={`${cardBg} rounded-2xl border ${borderColor} shadow-sm overflow-hidden`}>
               <TouchableOpacity 
-                onPress={() => Alert.alert('Скоро', 'Ця функція буде доступна пізніше')}
+                onPress={() => platformAlert.alert('Скоро', 'Ця функція буде доступна пізніше')}
                 className={`flex-row items-center p-4 border-b ${borderColor}`}
               >
                 <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
@@ -300,7 +300,7 @@ export default function SettingsScreen() {
             <Text className={`text-lg font-bold ${textColor} ml-1`}>Допомога</Text>
             <View className={`${cardBg} rounded-2xl border ${borderColor} shadow-sm overflow-hidden`}>
               <TouchableOpacity 
-                onPress={() => Alert.alert('FAQ', 'Скоро буде доступно')}
+                onPress={() => platformAlert.alert('FAQ', 'Скоро буде доступно')}
                 className={`flex-row items-center p-4 border-b ${borderColor}`}
               >
                 <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">
@@ -328,7 +328,7 @@ export default function SettingsScreen() {
               </TouchableOpacity>
               
               <TouchableOpacity 
-                onPress={() => Alert.alert('Pet Connect', 'Версія 1.0.0\n\n© 2025 Pet Connect\nВсі права захищені')}
+                onPress={() => platformAlert.alert('Pet Connect', 'Версія 1.0.0\n\n© 2025 Pet Connect\nВсі права захищені')}
                 className="flex-row items-center p-4"
               >
                 <View className="bg-amber-100 w-10 h-10 rounded-xl items-center justify-center mr-4">

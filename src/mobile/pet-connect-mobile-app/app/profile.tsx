@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
@@ -15,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store';
 import { useTheme } from '@/context/ThemeContext';
+import { platformAlert } from '@/utils/alert';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!firstName.trim()) {
-      Alert.alert('Помилка', "Введіть ім'я");
+      platformAlert.alert('Помилка', "Введіть ім'я");
       return;
     }
 
@@ -47,14 +47,14 @@ export default function ProfileScreen() {
         lastName: lastName.trim(),
         email: email.trim(),
       });
-      Alert.alert('Готово', 'Профіль оновлено');
+      platformAlert.alert('Готово', 'Профіль оновлено');
       router.back();
     } catch (error: any) {
       if (error.message?.includes('сторінку налаштувань')) {
         // User was redirected to Keycloak account page
-        Alert.alert('Інформація', 'Відкрито сторінку налаштувань акаунту в браузері');
+        platformAlert.alert('Інформація', 'Відкрито сторінку налаштувань акаунту в браузері');
       } else {
-        Alert.alert('Помилка', error.message || 'Не вдалося оновити профіль');
+        platformAlert.alert('Помилка', error.message || 'Не вдалося оновити профіль');
       }
     } finally {
       setIsSaving(false);
@@ -65,7 +65,7 @@ export default function ProfileScreen() {
     try {
       await openAccountSettings();
     } catch (error) {
-      Alert.alert('Помилка', 'Не вдалося відкрити налаштування');
+      platformAlert.alert('Помилка', 'Не вдалося відкрити налаштування');
     }
   };
 

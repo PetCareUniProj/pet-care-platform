@@ -12,6 +12,7 @@ import {
 } from '@/types/reminder.types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
+import { petsService } from './pets.service';
 
 const REMINDERS_STORAGE_KEY = '@pet_connect_reminders';
 const MOCK_EVENTS_STORAGE_KEY = '@pet_connect_mock_events';
@@ -144,12 +145,17 @@ class RemindersService {
   }
 
   private async getPetName(petId: string): Promise<string> {
-    // Mock pet names - in real app, would fetch from pets service
-    const petNames: Record<string, string> = {
-      '1': 'Мурзик',
-      '2': 'Барон',
-    };
-    return petNames[petId] || 'Улюбленець';
+    try {
+      // Get pet name from pets service
+      const pet = await petsService.getById(petId).catch(() => null);
+      if (pet) {
+        return pet.name;
+      }
+    } catch (error) {
+      console.error('Error fetching pet name:', error);
+    }
+    // Fallback to default name
+    return 'Улюбленець';
   }
 
   private async remindersToCalendarEvents(

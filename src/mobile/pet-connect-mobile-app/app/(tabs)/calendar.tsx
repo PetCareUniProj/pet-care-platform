@@ -1,7 +1,7 @@
 // Calendar screen with events
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -16,6 +16,7 @@ import { exportEventToCalendar, exportEventsToCalendar } from '@/utils/calendar'
 import { requestNotificationPermissions } from '@/utils/notifications';
 import { useEventsStore } from '@/store';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { platformAlert } from '@/utils/alert';
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function CalendarScreen() {
   const [error, setError] = useState<string | null>(null);
   
   // Use events from shared store
-  const { events, fetchEvents, isLoading } = useEventsStore();
+  const { events, fetchEvents, refreshEvents, isLoading } = useEventsStore();
   
   // Create event modal
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -133,19 +134,19 @@ export default function CalendarScreen() {
   const handleExportEvent = async (event: CalendarEvent) => {
     const success = await exportEventToCalendar(event);
     if (success) {
-      Alert.alert('Успіх', 'Подію додано до календаря телефону');
+      platformAlert.alert('Успіх', 'Подію додано до календаря телефону');
     }
   };
 
   // Export all day events
   const handleExportDayEvents = async () => {
     if (dayEvents.length === 0) {
-      Alert.alert('Немає подій', 'На вибрану дату немає подій для експорту');
+      platformAlert.alert('Немає подій', 'На вибрану дату немає подій для експорту');
       return;
     }
 
     const count = await exportEventsToCalendar(dayEvents);
-    Alert.alert(
+    platformAlert.alert(
       'Експорт завершено',
       `Експортовано ${count} з ${dayEvents.length} подій до календаря телефону`
     );
@@ -155,8 +156,9 @@ export default function CalendarScreen() {
   const handleCreateEvent = async (data: CreateReminderDto) => {
     try {
       await remindersService.create(data);
-      Alert.alert('Успіх', 'Подію створено та нагадування встановлено');
-      loadEvents(); // Reload events
+      platformAlert.alert('Успіх', 'Подію створено та нагадування встановлено');
+      // Force refresh events from store (bypasses cache)
+      await refreshEvents();
     } catch (error) {
       throw error; // Let modal handle the error
     }
@@ -407,7 +409,7 @@ export default function CalendarScreen() {
                       .filter((e) => e.date >= selectedDate)
                       .slice(0, 5);
                     exportEventsToCalendar(upcoming).then((count) => {
-                      Alert.alert(
+                      platformAlert.alert(
                         'Експорт завершено',
                         `Експортовано ${count} подій до календаря телефону`
                       );

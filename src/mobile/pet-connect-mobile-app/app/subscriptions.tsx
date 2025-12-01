@@ -6,7 +6,6 @@ import {
   View,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, Stack } from 'expo-router';
 import { subscriptionsService, Subscription } from '@/services/api/subscriptions.service';
 import { useThemedStyles } from '@/hooks/useThemedStyles';
+import { platformAlert } from '@/utils/alert';
 
 // Placeholder style for subscription images
 const PLACEHOLDER_STYLE = { bg: '#f3e8ff', color: '#8b5cf6' };
@@ -60,7 +60,7 @@ export default function SubscriptionsScreen() {
   };
 
   const handleCancelSubscription = (sub: Subscription) => {
-    Alert.alert(
+    platformAlert.alert(
       '⚠️ Скасувати підписку',
       `Ви впевнені, що хочете скасувати підписку на "${sub.productName}"?\n\nЦю дію неможливо буде відмінити.`,
       [
@@ -72,9 +72,9 @@ export default function SubscriptionsScreen() {
             try {
               await subscriptionsService.cancel(sub.id);
               await loadSubscriptions();
-              Alert.alert('Готово', 'Підписку скасовано');
+              platformAlert.alert('Готово', 'Підписку скасовано');
             } catch (error) {
-              Alert.alert('Помилка', 'Не вдалося скасувати підписку');
+              platformAlert.alert('Помилка', 'Не вдалося скасувати підписку');
             }
           },
         },
