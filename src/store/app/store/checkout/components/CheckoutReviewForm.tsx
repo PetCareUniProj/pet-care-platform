@@ -52,7 +52,15 @@ export function CheckoutReviewForm({ items, total }: CheckoutReviewFormProps) {
             <div key={item.productId} className="flex gap-4 p-4">
               <div className="h-20 w-20 flex-shrink-0 rounded-2xl bg-gray-50 overflow-hidden">
                 {item.pictureUrl ? (
-                  <img src={item.pictureUrl} alt={item.name} className="h-full w-full object-cover" />
+                  <img
+                    src={item.pictureUrl}
+                    alt={item.name}
+                    className="h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = `https://placehold.co/80x80/f5f5f5/999999?text=${encodeURIComponent(item.name ?? "Pet")}`;
+                    }}
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-2xl">🐾</div>
                 )}

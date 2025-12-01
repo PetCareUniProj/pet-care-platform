@@ -233,12 +233,18 @@ export default function Navigation({
                                                         setShowResults(false)
                                                     }
                                                 >
-                                                    {item.pictureFileName && (
+                                                    {item.pictureFileName ? (
                                                         <img
                                                             src={`${normalizedCatalogApiUrl}/images/${item.pictureFileName}`}
                                                             alt={item.name}
                                                             className="w-10 h-10 object-cover rounded"
+                                                            onError={(event) => {
+                                                                event.currentTarget.onerror = null;
+                                                                event.currentTarget.src = `https://placehold.co/40x40/f5f5f5/999999?text=${encodeURIComponent(item.name ?? "Pet")}`;
+                                                            }}
                                                         />
+                                                    ) : (
+                                                        <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-50 text-lg">🐾</div>
                                                     )}
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-medium truncate">

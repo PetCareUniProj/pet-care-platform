@@ -91,11 +91,10 @@ export default function ProductDetailsClient({
     }
 
     const productTitle = product.name ?? `Product ${product.id}`;
-    const productImageSrc = imageFallback
-        ? `https://placehold.co/300x300/234532/CCCCCC?text=${encodeURIComponent(productTitle)}`
-        : product.pictureFileName
-            ? `${normalizedCatalogApiUrl}/images/${product.pictureFileName}`
-            : undefined;
+    const placeholderImage = `https://placehold.co/300x300/234532/CCCCCC?text=${encodeURIComponent(productTitle)}`;
+    const productImageSrc = !imageFallback && product.pictureFileName
+        ? `${normalizedCatalogApiUrl}/images/${product.pictureFileName}`
+        : placeholderImage;
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -113,16 +112,12 @@ export default function ProductDetailsClient({
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                         <div className="bg-white rounded-[20px] p-8 flex items-center justify-center min-h-[500px]">
-                            {productImageSrc ? (
-                                <img
-                                    src={productImageSrc}
-                                    alt={productTitle}
-                                    onError={() => setImageFallback(true)}
-                                    className="w-full h-full object-contain max-h-96"
-                                />
-                            ) : (
-                                <div className="text-gray-400 text-8xl">🐾</div>
-                            )}
+                            <img
+                                src={productImageSrc}
+                                alt={productTitle}
+                                onError={() => setImageFallback(true)}
+                                className="w-full h-full object-contain max-h-96"
+                            />
                         </div>
 
                         <div className="bg-white rounded-[20px] p-8 flex flex-col justify-between">
