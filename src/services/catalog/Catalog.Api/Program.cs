@@ -20,6 +20,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(ServiceDefaults.Extensions.DefaultCorsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 

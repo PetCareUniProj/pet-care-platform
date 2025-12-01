@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+html {
+    scroll-behavior: smooth !important;
+}
+
+/*---break---*/
+@custom-variant dark (&:is(.dark *));
+
+img {
+    max-width: 1000px;
+    height: auto;
+}

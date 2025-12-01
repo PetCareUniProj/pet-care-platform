@@ -5,25 +5,16 @@ using Ordering.Api.Infrastructure;
 using Ordering.Application.Abstractions.Authentication;
 using Ordering.Application.Orders;
 using Ordering.Application.Orders.GetByUser;
-using Ordering.Domain.Orders;
-using static Ordering.Api.Endpoints.Orders.GetOrdersByUser;
 
 namespace Ordering.Api.Endpoints.Orders;
 
 internal sealed class GetOrdersByUserId : IEndpoint
 {
-    public sealed record GetOrdersByUserIdRequest : PagedRequest
-    {
-        public string? SortBy { get; init; }
-        public OrderStatus[]? Statuses { get; init; }
-        public bool? IsRecurring { get; init; }
-    }
     public const string Name = "GetOrdersByUserId";
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiEndpoints.Orders.GetByUserId,
-            async ([FromRoute] Guid userId, [AsParameters] GetOrdersByUserRequest request,
-            IIdentityService identityService, IMediator mediator, CancellationToken cancellationToken) =>
+            async ([FromRoute] Guid userId, IIdentityService identityService, IMediator mediator, CancellationToken cancellationToken) =>
         {
             if (userId == Guid.Empty)
             {
@@ -37,18 +28,8 @@ internal sealed class GetOrdersByUserId : IEndpoint
                 return Results.Forbid();
             }
 
-            var query = new GetOrdersByUserQuery
-            {
-                UserId = userId,
-                SortField = request.SortBy?.Trim('+', '-'),
-                SortOrder = request.SortBy is null ? SortOrder.Unsorted :
-                request.SortBy.StartsWith('-') ? SortOrder.Descending : SortOrder.Ascending,
-                Page = request.Page.GetValueOrDefault(PagedRequest.DefaultPage),
-                PageSize = request.PageSize.GetValueOrDefault(PagedRequest.DefaultPageSize),
-                Statuses = request.Statuses,
-                IsRecurring = request.IsRecurring
-            };
-            var orders = await mediator.Send(query, cancellationToken);
+            var orders = await mediator.Send(new GetOrdersByUserQuery() { UserId = userId }, cancellationToken);
+
             return orders.Match(
                 orders => Results.Ok(orders),
                 CustomResults.Problem);

@@ -8,8 +8,8 @@ var rabbitMq = builder.AddRabbitMQ("eventbus")
 
 var postgres = builder.AddPostgres("postgres", port: 5432)
     .WithDataVolume()
-    .WithPgAdmin();
-//.WithLifetime(ContainerLifetime.Persistent);
+    .WithPgAdmin()
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var catalogDb = postgres.AddDatabase("catalogDb");
 var orderDb = postgres.AddDatabase("orderingDb");
@@ -51,6 +51,7 @@ var catalogApi = builder.AddProject<Catalog_Api>("catalog-api")
 
 builder.AddJavaScriptApp("store-web", "../../store", "start:dev")
     .WithHttpEndpoint(env: "PORT")
+    .WithExternalHttpEndpoints()
     .WithReference(orderingApi).WaitFor(orderingApi)
     .WithReference(basketApi).WaitFor(basketApi)
     .WithReference(catalogApi).WaitFor(catalogApi)
