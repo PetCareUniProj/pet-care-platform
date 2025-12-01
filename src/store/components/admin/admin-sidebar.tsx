@@ -37,7 +37,9 @@ export function AdminSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((item) => {
-                  const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                  const matchesExactPath = pathname === item.href;
+                  const matchesNestedPath = item.href !== "/admin" && pathname?.startsWith(`${item.href}/`);
+                  const isActive = Boolean(matchesExactPath || matchesNestedPath);
                   const Icon = item.icon;
                   return (
                     <SidebarMenuItem key={item.title}>
